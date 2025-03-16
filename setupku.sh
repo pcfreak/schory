@@ -73,56 +73,27 @@ wget -q https://raw.githubusercontent.com/kanghory/schory/main/tools.sh && chmod
 rm tools.sh
 clear
 # izin
-# Mendapatkan IP VPS
-MYIP=$(wget -qO- ipv4.icanhazip.com)
-
-echo "Memeriksa VPS Anda..."
-
-# Fungsi untuk mengecek status izin dan masa berlaku
-CEKEXPIRED() {
-    today=$(date +%Y-%m-%d)
-    
-    # Ambil tanggal izin berdasarkan IP
-    Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep -w "$MYIP" | awk '{print $(NF-1)}')
-
-    if [[ -z "$Exp1" ]]; then
-        echo "Gagal mendapatkan data izin. Pastikan koneksi internet tersedia atau format izin salah."
-        exit 1
-    fi
-
-    # Jika Exp1 berisi "Lifetime", maka abaikan pengecekan kedaluwarsa
-    if [[ "$Exp1" == "Lifetime" ]]; then
-        echo "Status script: AKTIF (Lifetime)"
+# izin
+MYIP=$(wget -qO- ipinfo.io/ip);
+echo "memeriksa vps anda"
+sleep 0.5
+CEKEXPIRED () {
+        today=$(date -d +1day +%Y -%m -%d)
+        Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/VPN/main/izin | grep $MYIP | awk '{print $3}')
+        if [[ $today < $Exp1 ]]; then
+        echo "status script aktif.."
+        else
+        echo "SCRIPT ANDA EXPIRED";
         exit 0
-    fi
-
-    # Konversi tanggal ke UNIX timestamp untuk perbandingan
-    today_ts=$(date -d "$today" +%s)
-    Exp1_ts=$(date -d "$Exp1" +%s 2>/dev/null)
-
-    # Jika tanggal tidak valid (misalnya "2099-09-99"), skrip akan error, jadi kita tangani
-    if [[ -z "$Exp1_ts" ]]; then
-        echo "Format tanggal salah: $Exp1"
-        exit 1
-    fi
-
-    if [[ "$today_ts" -lt "$Exp1_ts" ]]; then
-        echo "Status script: AKTIF"
-    else
-        echo "SCRIPT ANDA EXPIRED!"
-        exit 1
-    fi
+fi
 }
-
-# Mengecek apakah IP diizinkan
-IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep -w "$MYIP")
-
-if [[ -n "$IZIN" ]]; then
-    echo "IZIN DITERIMA!"
-    CEKEXPIRED
+IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/VPN/main/izin | awk '{print $4}' | grep $MYIP)
+if [ $MYIP = $IZIN ]; then
+echo "IZIN DI TERIMA!!"
+CEKEXPIRED
 else
-    echo "Akses ditolak! Benget sia hurung!!"
-    exit 1
+echo "Akses di tolak!! Benget sia hurung!!";
+exit 0
 fi
 
 clear
