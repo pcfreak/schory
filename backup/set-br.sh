@@ -14,7 +14,7 @@ LIGHT='\033[0;37m'
 MYIP=$(wget -qO- ipinfo.io/ip);
 echo "Checking VPS"
 # Link Hosting Kalian
-akbarvpn="raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup"
+akbarvpn="raw.githubusercontent.com/kanghory/schory/main/backup"
 
 apt install rclone -y
 printf "q\n" | rclone config
@@ -43,11 +43,11 @@ logfile ~/.msmtp.log
 EOF
 chown -R www-data:www-data /etc/msmtprc
 cd /usr/bin
-wget -O autobackup "https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup/autobackup.sh"
-wget -O backup "https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup/backup.sh"
-wget -O restore "https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup/restore.sh"
-wget -O strt "https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup/strt.sh"
-wget -O limitspeed "https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/backup/limitspeed.sh"
+wget -O autobackup "https://raw.githubusercontent.com/kanghory/schory/main/backup/autobackup.sh"
+wget -O backup "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
+wget -O restore "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
+wget -O strt "https://raw.githubusercontent.com/kanghory/schory/main/backup/strt.sh"
+wget -O limitspeed "https://raw.githubusercontent.com/kanghory/schory/main/backup/limitspeed.sh"
 chmod +x autobackup
 chmod +x backup
 chmod +x restore
