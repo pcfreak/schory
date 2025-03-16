@@ -23,35 +23,35 @@ touch /etc/xray/domain
 touch /etc/v2ray/domain
 touch /etc/xray/scdomain
 touch /etc/v2ray/scdomain
-    touch /etc/.{ssh,noobzvpns,vmess,vless,trojan,shadowsocks}.db
-    mkdir -p /etc/{xray,bot,vmess,vless,trojan,shadowsocks,ssh,noobzvpns,limit,usr}
-    touch /etc/noobzvpns/users.json
-    mkdir -p /etc/xray/limit
-    mkdir -p /etc/xray/limit/{ssh,vmess,vless,trojan,shadowsocks}
-    mkdir -p /etc/klmpk/limit/vmess/ip
-    mkdir -p /etc/klmpk/limit/vless/ip
-    mkdir -p /etc/klmpk/limit/trojan/ip
-    mkdir -p /etc/klmpk/limit/ssh/ip
-    mkdir -p /etc/limit/vmess
-    mkdir -p /etc/limit/vless
-    mkdir -p /etc/limit/trojan
-    mkdir -p /etc/limit/ssh
-    mkdir -p /etc/vmess
-    mkdir -p /etc/vless
-    mkdir -p /etc/trojan
-    mkdir -p /etc/shadowsocks
-    mkdir -p /etc/ssh
-    touch /etc/vmess/.vmess.db
-    touch /etc/vless/.vless.db
-    touch /etc/trojan/.trojan.db
-    touch /etc/shadowsocks/.shadowsocks.db
-    touch /etc/ssh/.ssh.db
-    touch /etc/bot/.bot.db
-    echo "& plughin Account" >>/etc/vmess/.vmess.db
-    echo "& plughin Account" >>/etc/vless/.vless.db
-    echo "& plughin Account" >>/etc/trojan/.trojan.db
-    echo "& plughin Account" >>/etc/shadowsocks/.shadowsocks.db
-    echo "& plughin Account" >>/etc/ssh/.ssh.db
+touch /etc/.{ssh,noobzvpns,vmess,vless,trojan,shadowsocks}.db
+mkdir -p /etc/{xray,bot,vmess,vless,trojan,shadowsocks,ssh,noobzvpns,limit,usr}
+touch /etc/noobzvpns/users.json
+mkdir -p /etc/xray/limit
+mkdir -p /etc/xray/limit/{ssh,vmess,vless,trojan,shadowsocks}
+mkdir -p /etc/klmpk/limit/vmess/ip
+mkdir -p /etc/klmpk/limit/vless/ip
+mkdir -p /etc/klmpk/limit/trojan/ip
+mkdir -p /etc/klmpk/limit/ssh/ip
+mkdir -p /etc/limit/vmess
+mkdir -p /etc/limit/vless
+mkdir -p /etc/limit/trojan
+mkdir -p /etc/limit/ssh
+mkdir -p /etc/vmess
+mkdir -p /etc/vless
+mkdir -p /etc/trojan
+mkdir -p /etc/shadowsocks
+mkdir -p /etc/ssh
+touch /etc/vmess/.vmess.db
+touch /etc/vless/.vless.db
+touch /etc/trojan/.trojan.db
+touch /etc/shadowsocks/.shadowsocks.db
+touch /etc/ssh/.ssh.db
+touch /etc/bot/.bot.db
+echo "& plughin Account" >>/etc/vmess/.vmess.db
+echo "& plughin Account" >>/etc/vless/.vless.db
+echo "& plughin Account" >>/etc/trojan/.trojan.db
+echo "& plughin Account" >>/etc/shadowsocks/.shadowsocks.db
+echo "& plughin Account" >>/etc/ssh/.ssh.db
 
 ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1
