@@ -73,24 +73,40 @@ wget -q https://raw.githubusercontent.com/kanghory/schory/main/tools.sh && chmod
 rm tools.sh
 clear
 # izin
-
 # Mendapatkan IP VPS
 MYIP=$(wget -qO- ipv4.icanhazip.com)
 
 echo "Memeriksa VPS Anda..."
-sleep 0.5
 
 # Fungsi untuk mengecek status izin dan masa berlaku
 CEKEXPIRED() {
-    today=$(date +%Y-%m-%d) # Format tanggal yang benar
-    Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
+    today=$(date +%Y-%m-%d)
     
+    # Ambil tanggal izin berdasarkan IP
+    Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep -w "$MYIP" | awk '{print $(NF-1)}')
+
     if [[ -z "$Exp1" ]]; then
-        echo "Gagal mendapatkan data izin. Pastikan koneksi internet tersedia."
+        echo "Gagal mendapatkan data izin. Pastikan koneksi internet tersedia atau format izin salah."
         exit 1
     fi
 
-    if [[ "$today" < "$Exp1" ]]; then
+    # Jika Exp1 berisi "Lifetime", maka abaikan pengecekan kedaluwarsa
+    if [[ "$Exp1" == "Lifetime" ]]; then
+        echo "Status script: AKTIF (Lifetime)"
+        exit 0
+    fi
+
+    # Konversi tanggal ke UNIX timestamp untuk perbandingan
+    today_ts=$(date -d "$today" +%s)
+    Exp1_ts=$(date -d "$Exp1" +%s 2>/dev/null)
+
+    # Jika tanggal tidak valid (misalnya "2099-09-99"), skrip akan error, jadi kita tangani
+    if [[ -z "$Exp1_ts" ]]; then
+        echo "Format tanggal salah: $Exp1"
+        exit 1
+    fi
+
+    if [[ "$today_ts" -lt "$Exp1_ts" ]]; then
         echo "Status script: AKTIF"
     else
         echo "SCRIPT ANDA EXPIRED!"
@@ -99,7 +115,7 @@ CEKEXPIRED() {
 }
 
 # Mengecek apakah IP diizinkan
-IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | awk '{print $1}' | grep -w "$MYIP")
+IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep -w "$MYIP")
 
 if [[ -n "$IZIN" ]]; then
     echo "IZIN DITERIMA!"
@@ -108,7 +124,6 @@ else
     echo "Akses ditolak! Benget sia hurung!!"
     exit 1
 fi
-
 clear
 echo "Add Domain for vmess/vless/trojan dll"
 echo " "
