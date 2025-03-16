@@ -46,6 +46,13 @@ wget -q -O /root/versi "https://raw.githubusercontent.com/kanghory/schory/main/a
 wget -q -O /usr/bin/renel "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/renel.sh"
 wget -q -O /usr/bin/cekl "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/cekl.sh"
 wget -q -O /usr/bin/dell "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/dell.sh"
+#limitssh
+wget -O /usr/local/sbin/ceklim https://raw.githubusercontent.com/kanghory/schory/limit/main/ceklim
+chmod +x /usr/local/sbin/ceklim
+wget -O /usr/local/sbin/limitssh-ip https://raw.githubusercontent.com/kanghory/schory/limit/main/limitssh-ip
+chmod +x /usr/local/sbin/limitssh-ip
+wget -O /usr/local/sbin/cekssh https://raw.githubusercontent.com/kanghory/schory/limit/main/cekssh
+chmod +x /usr/local/sbin/cekssh
 #wget -q -O /usr/bin/ns-menu "https://raw.githubusercontent.com/kanghory/VPN/main/autoscript-ssh-slowdns-main/slowdns.sh && chmod +x slowdns.sh && ./slowdns.sh"
 wget https://raw.githubusercontent.com/kanghory/schory/main/backup/set-br.sh
 bash set-br.sh
