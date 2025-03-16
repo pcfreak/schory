@@ -1,132 +1,113 @@
 #!/bin/bash
-# SL
-# ==========================================
-# Color
-RED='\033[0;31m'
-NC='\033[0m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT='\033[0;37m'
-# ==========================================
-# Getting
-clear
-IP=$(wget -qO- ipinfo.io/ip);
-date=$(date +"%Y-%m-%d");
-Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
-Info="${Green_font_prefix}[ON]${Font_color_suffix}"
-Error="${Red_font_prefix}[OFF]${Font_color_suffix}"
-cek=$(grep -c -E "^# BEGIN_Backup" /etc/crontab)
-if [[ "$cek" = "1" ]]; then
-sts="${Info}"
-else
-sts="${Error}"
-fi
-function start() {
-email=$(cat /home/email)
-if [[ "$email" = "" ]]; then
-echo "Please enter your email"
-read -rp "Email : " -e email
-cat <<EOF>>/home/email
-$email
-EOF
-fi
-cat << EOF >> /etc/crontab
-# BEGIN_Backup
-5 0 * * * root backup
-# END_Backup
-EOF
-service cron restart
-sleep 1
-echo " Please Wait"
-clear
-echo " Autobackup Has Been Started"
-echo " Data Will Be Backed Up Automatically at 00:05 GMT +7"
-exit 0
-}
-function stop() {
-email=$(cat /home/email)
-sed -i "/^$email/d" /home/email
-sed -i "/^# BEGIN_Backup/,/^# END_Backup/d" /etc/crontab
-service cron restart
-sleep 1
-echo " Please Wait"
-clear
-echo " Autobackup Has Been Stopped"
-exit 0
-}
+# Autobackup Script - Membuat Jadwal Backup via crontab
 
-function gantipenerima() {
-rm -rf /home/email
-echo "Please enter your email"
-read -rp "Email : " -e email
-cat <<EOF>>/home/email
-$email
-EOF
-}
-function gantipengirim() {
-echo "Please enter your email"
-read -rp "Email : " -e email
-echo "Please enter your Password email"
-read -rp "Password : " -e pwdd
-rm -rf /etc/msmtprc
-cat<<EOF>>/etc/msmtprc
-defaults
-tls on
-tls_starttls on
-tls_trust_file /etc/ssl/certs/ca-certificates.crt
-account default
-host smtp.gmail.com
-port 587
-auth on
-user $email
-from $email
-password $pwdd
-logfile ~/.msmtp.log
-EOF
-}
-function testemail() {
-email=$(cat /home/email)
-if [[ "$email" = "" ]]; then
-start
+BACKUP_SCRIPT="/usr/bin/backup"
+CONFIG_DIR="/root/.backup_config"
+ADMIN_ID_FILE="$CONFIG_DIR/admin_id"
+BOT_TOKEN_FILE="$CONFIG_DIR/bot_token"
+
+# Pastikan skrip backup ada
+if [[ ! -f "$BACKUP_SCRIPT" ]]; then
+    echo "Error: $BACKUP_SCRIPT tidak ditemukan!"
+    exit 1
 fi
-email=$(cat /home/email)
-echo -e "
-Ini adalah isi email percobaaan kirim email dari vps
-IP VPS : $IP
-Tanggal : $date
-" | mail -s "Percobaan Pengiriman Email" $email
-}
-clear
-echo -e "=============================="
-echo -e "     Autobackup Data $sts     "
-echo -e "=============================="
-echo -e "1. Start Autobackup"
-echo -e "2. Stop Autobackup"
-echo -e "3. Ganti Email Penerima"
-echo -e "4. Ganti Email Pengirim"
-echo -e "5. Test kirim Email"
-echo -e "=============================="
-read -rp "Please Enter The Correct Number : " -e num
-case $num in
-1)
-start
-;;
-2)
-stop
-;;
-3)
-gantipenerima
-;;
-4)
-gantipengirim
-;;
-5)
-testemail
-;;
-*)
-clear
-;;
+
+echo "=================================="
+echo "  Auto Backup Scheduler"
+echo "=================================="
+echo "Jadwal backup saat ini:"
+crontab -l | grep "$BACKUP_SCRIPT" || echo "Tidak ada jadwal backup yang ditemukan."
+echo "=================================="
+echo "1) Setiap 1 Jam"
+echo "2) Setiap 6 Jam"
+echo "3) Setiap 12 Jam"
+echo "4) Setiap 24 Jam (Harian)"
+echo "5) Hapus Jadwal Backup"
+echo "6) Cek Jadwal Backup"
+echo "7) Ganti ID Telegram & Token Bot"
+echo "8) Tes Notifikasi Backup"
+echo "=================================="
+read -rp "Pilih opsi (1-8): " pilihan
+
+case "$pilihan" in
+    1)
+        cron_time="0 * * * *"  # Setiap 1 jam
+        ;;
+    2)
+        cron_time="0 */6 * * *"  # Setiap 6 jam
+        ;;
+    3)
+        cron_time="0 */12 * * *"  # Setiap 12 jam
+        ;;
+    4)
+        cron_time="0 0 * * *"  # Harian (Tiap tengah malam)
+        ;;
+    5)
+        crontab -l | grep -v "$BACKUP_SCRIPT" | crontab -
+        echo "Jadwal backup dihapus."
+        exit 0
+        ;;
+    6)
+        echo "=================================="
+        echo "Jadwal Backup di Crontab:"
+        crontab -l | grep "$BACKUP_SCRIPT" || echo "Tidak ada jadwal backup yang ditemukan."
+        echo "=================================="
+        exit 0
+        ;;
+    7)
+        echo "=================================="
+        echo "Mengganti ID Telegram & Token Bot"
+        echo "=================================="
+        
+        # Cek apakah folder konfigurasi ada
+        if [[ ! -d "$CONFIG_DIR" ]]; then
+            echo "Folder konfigurasi tidak ditemukan, membuat folder..."
+            mkdir -p "$CONFIG_DIR"
+        fi
+        
+        echo "Masukkan ID Telegram baru:"
+        read -rp "> " new_admin_id
+        echo "$new_admin_id" > "$ADMIN_ID_FILE"
+        
+        echo "Masukkan Token Bot Telegram baru:"
+        read -rp "> " new_bot_token
+        echo "$new_bot_token" > "$BOT_TOKEN_FILE"
+        
+        echo "ID Telegram & Token Bot berhasil diperbarui!"
+        echo "=================================="
+        exit 0
+        ;;
+    8)
+        echo "=================================="
+        echo "Mengirim Tes Notifikasi Backup"
+        echo "=================================="
+        
+        if [[ ! -f "$ADMIN_ID_FILE" || ! -f "$BOT_TOKEN_FILE" ]]; then
+            echo "Error: File admin_id atau bot_token tidak ditemukan!"
+            exit 1
+        fi
+        
+        TELEGRAM_ID=$(cat "$ADMIN_ID_FILE")
+        TELEGRAM_TOKEN=$(cat "$BOT_TOKEN_FILE")
+        MESSAGE="🔔 *Notifikasi Backup* 🔔%0A%0ABackup berhasil dijalankan pada $(date +"%Y-%m-%d %H:%M:%S")"
+
+        # Kirim pesan ke Telegram
+        curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_ID" \
+            -d "text=$MESSAGE" \
+            -d "parse_mode=Markdown"
+
+        echo "Tes notifikasi backup telah dikirim ke Telegram!"
+        echo "=================================="
+        exit 0
+        ;;
+    *)
+        echo "Pilihan tidak valid!"
+        exit 1
+        ;;
 esac
+
+# Tambahkan jadwal ke crontab
+(crontab -l 2>/dev/null | grep -v "$BACKUP_SCRIPT"; echo "$cron_time /bin/bash $BACKUP_SCRIPT") | crontab -
+
+echo "Jadwal backup berhasil diatur!"
