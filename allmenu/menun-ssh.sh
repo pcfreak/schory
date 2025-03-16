@@ -109,7 +109,7 @@ echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━�
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
-function ceklim(){
+function ceklim-multilog(){
 clear
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo -e "\E[0;41;36m         CEK USER MULTI SSH        \E[0m"
@@ -382,6 +382,35 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function ceklimit(){
+clear
+touch /root/.system
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "            ️ ${g}USER LOGIN SSH${NC}  ️"
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "    ${ungu} LOGIN IP    LIMIT IP    USERNAME ${NC}"
+mulog=$(cekssh)
+data=( cat /etc/passwd | grep home | cut -d ' ' -f 1 | cut -d : -f 1);
+for user in "${data[@]}"
+do
+cekcek=$(echo -e "$mulog" | grep $user | wc -l)
+if [[ $cekcek -gt 0 ]]; then
+iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user)
+printf "  %-13s %-7s %-8s %2s\n" "     ${cekcek} IP        ${iplimit} IP      ${user}"
+echo "slot" >> /root/.system
+else
+echo > /dev/null
+fi
+echo send_log > /dev/null
+sleep 0.1
+done
+aktif=$(cat /root/.system | wc -l)
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "            $aktif User Online"
+echo -e "  ${y}───────────────────────────────────────${NC}"
+sed -i "d" /root/.system
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                         ⇱ SSH MENU  ⇲                         \E[0m"
@@ -396,6 +425,7 @@ echo -e "     ${BICyan}[${BIWhite}6${BICyan}] Auto Del user Exp     "
 echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
 echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
 echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
+echo -e "     ${BICyan}[${BIWhite}9${BICyan}] ceklimit"
 
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
@@ -409,11 +439,12 @@ case $opt in
 2) clear ; del ;;
 3) clear ; renew;;
 4) clear ; cek ;;
-5) clear ; ceklim ;;
+5) clear ; ceklim-multogin ;;
 6) clear ; autodel ;;
 7) clear ; autokill ;;
 8) clear ; member ;;
 9) clear ; trialssh ;;
+10) clear ; ceklimit ;;
 0) clear ; menu ;;
 x) exit ;;
 *) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
