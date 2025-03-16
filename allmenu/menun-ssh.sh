@@ -109,7 +109,7 @@ echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━�
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
-function ceklim-multilog(){
+function ceklim(){
 clear
 echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo -e "\E[0;41;36m         CEK USER MULTI SSH        \E[0m"
@@ -277,6 +277,36 @@ fi
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function ceklimit() {
+    clear
+    touch /root/.system
+    echo -e "  ${y}───────────────────────────────────────${NC}"
+    echo -e "            ️ ${g}USER LOGIN SSH${NC}  ️"
+    echo -e "  ${y}───────────────────────────────────────${NC}"
+    echo -e "    ${ungu} LOGIN IP    LIMIT IP    USERNAME ${NC}"
+    
+    mulog=$(cekssh) # Pastikan fungsi cekssh tersedia
+    data=( $(awk -F: '$3 >= 1000 {print $1}' /etc/passwd) ) # Hanya user non-system
+    
+    for user in "${data[@]}"; do
+        cekcek=$(echo "$mulog" | grep -w "$user" | wc -l)
+        if [[ $cekcek -gt 0 ]]; then
+            iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user 2>/dev/null || echo "N/A") # Tangani jika file tidak ada
+            printf "  %-13s %-7s %-8s %2s\n" "     ${cekcek} IP        ${iplimit} IP      ${user}"
+            echo "slot" >> /root/.system
+        fi
+        sleep 0.1
+    done
+    
+    aktif=$(wc -l < /root/.system)
+    echo -e "  ${y}───────────────────────────────────────${NC}"
+    echo -e "            $aktif User Online"
+    echo -e "  ${y}───────────────────────────────────────${NC}"
+    
+    > /root/.system # Kosongkan file tanpa menghapusnya
+    read -n 1 -s -r -p "Press any key to back on menu"
+    menu
+}
 function autokill(){
 clear
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
@@ -382,35 +412,6 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
-function ceklimit(){
-clear
-touch /root/.system
-echo -e "  ${y}───────────────────────────────────────${NC}"
-echo -e "            ️ ${g}USER LOGIN SSH${NC}  ️"
-echo -e "  ${y}───────────────────────────────────────${NC}"
-echo -e "    ${ungu} LOGIN IP    LIMIT IP    USERNAME ${NC}"
-mulog=$(cekssh)
-data=( cat /etc/passwd | grep home | cut -d ' ' -f 1 | cut -d : -f 1);
-for user in "${data[@]}"
-do
-cekcek=$(echo -e "$mulog" | grep $user | wc -l)
-if [[ $cekcek -gt 0 ]]; then
-iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user)
-printf "  %-13s %-7s %-8s %2s\n" "     ${cekcek} IP        ${iplimit} IP      ${user}"
-echo "slot" >> /root/.system
-else
-echo > /dev/null
-fi
-echo send_log > /dev/null
-sleep 0.1
-done
-aktif=$(cat /root/.system | wc -l)
-echo -e "  ${y}───────────────────────────────────────${NC}"
-echo -e "            $aktif User Online"
-echo -e "  ${y}───────────────────────────────────────${NC}"
-sed -i "d" /root/.system
-read -n 1 -s -r -p "Press any key to back on menu"
-menu
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                         ⇱ SSH MENU  ⇲                         \E[0m"
@@ -425,8 +426,7 @@ echo -e "     ${BICyan}[${BIWhite}6${BICyan}] Auto Del user Exp     "
 echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
 echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
 echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
-echo -e "     ${BICyan}[${BIWhite}9${BICyan}] ceklimit"
-
+echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Cek ssh usr limit"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -439,7 +439,7 @@ case $opt in
 2) clear ; del ;;
 3) clear ; renew;;
 4) clear ; cek ;;
-5) clear ; ceklim-multogin ;;
+5) clear ; ceklim ;;
 6) clear ; autodel ;;
 7) clear ; autokill ;;
 8) clear ; member ;;
