@@ -124,6 +124,7 @@ else
     echo "Akses ditolak! Benget sia hurung!!"
     exit 1
 fi
+
 clear
 echo "Add Domain for vmess/vless/trojan dll"
 echo " "
