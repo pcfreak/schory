@@ -23,6 +23,35 @@ touch /etc/xray/domain
 touch /etc/v2ray/domain
 touch /etc/xray/scdomain
 touch /etc/v2ray/scdomain
+    touch /etc/.{ssh,noobzvpns,vmess,vless,trojan,shadowsocks}.db
+    mkdir -p /etc/{xray,bot,vmess,vless,trojan,shadowsocks,ssh,noobzvpns,limit,usr}
+    touch /etc/noobzvpns/users.json
+    mkdir -p /etc/xray/limit
+    mkdir -p /etc/xray/limit/{ssh,vmess,vless,trojan,shadowsocks}
+    mkdir -p /etc/klmpk/limit/vmess/ip
+    mkdir -p /etc/klmpk/limit/vless/ip
+    mkdir -p /etc/klmpk/limit/trojan/ip
+    mkdir -p /etc/klmpk/limit/ssh/ip
+    mkdir -p /etc/limit/vmess
+    mkdir -p /etc/limit/vless
+    mkdir -p /etc/limit/trojan
+    mkdir -p /etc/limit/ssh
+    mkdir -p /etc/vmess
+    mkdir -p /etc/vless
+    mkdir -p /etc/trojan
+    mkdir -p /etc/shadowsocks
+    mkdir -p /etc/ssh
+    touch /etc/vmess/.vmess.db
+    touch /etc/vless/.vless.db
+    touch /etc/trojan/.trojan.db
+    touch /etc/shadowsocks/.shadowsocks.db
+    touch /etc/ssh/.ssh.db
+    touch /etc/bot/.bot.db
+    echo "& plughin Account" >>/etc/vmess/.vmess.db
+    echo "& plughin Account" >>/etc/vless/.vless.db
+    echo "& plughin Account" >>/etc/trojan/.trojan.db
+    echo "& plughin Account" >>/etc/shadowsocks/.shadowsocks.db
+    echo "& plughin Account" >>/etc/ssh/.ssh.db
 
 ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1
@@ -40,7 +69,7 @@ echo "IP=" >> /var/lib/scrz-prem/ipvps.conf
 sudo at install squid -y
 sudo apt install net-tools -y
 sudo apt install vnstat -y
-wget -q https://raw.githubusercontent.com/kanghory/schory/main/tools.sh && chmod +x tools.sh && ./tools.sh
+wget -q https://raw.githubusercontent.com/kanghory/VPN/main/tools.sh && chmod +x tools.sh && ./tools.sh
 rm tools.sh
 clear
 # izin
@@ -49,7 +78,7 @@ echo "memeriksa vps anda"
 sleep 0.5
 CEKEXPIRED () {
         today=$(date -d +1day +%Y -%m -%d)
-        Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep $MYIP | awk '{print $3}')
+        Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/VPN/main/izin | grep $MYIP | awk '{print $3}')
         if [[ $today < $Exp1 ]]; then
         echo "status script aktif.."
         else
@@ -57,7 +86,7 @@ CEKEXPIRED () {
         exit 0
 fi
 }
-IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | awk '{print $4}' | grep $MYIP)
+IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/VPN/main/izin | awk '{print $4}' | grep $MYIP)
 if [ $MYIP = $IZIN ]; then
 echo "IZIN DI TERIMA!!"
 CEKEXPIRED
@@ -90,10 +119,10 @@ echo -e "$green      Install SSH / WS               $NC"
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 sleep 2
 clear
-wget -q -O ssh-vpn.sh https://raw.githubusercontent.com/kanghory/schory/main/autoscript-ssh-slowdns-main/ssh-vpn.sh && chmod +x ssh-vpn.sh && ./ssh-vpn.sh
+wget -q -O ssh-vpn.sh https://raw.githubusercontent.com/kanghory/VPN/main/autoscript-ssh-slowdns-main/ssh-vpn.sh && chmod +x ssh-vpn.sh && ./ssh-vpn.sh
 sleep 2
 clear
-wget https://raw.githubusercontent.com/kanghory/schory/main/conf/nginx-ssl.sh && chmod +x nginx-ssl.sh && ./nginx-ssl.sh
+wget https://raw.githubusercontent.com/kanghory/VPN/main/nginx-ssl.sh && chmod +x nginx-ssl.sh && ./nginx-ssl.sh
 
 
 #install ssh ovpn
@@ -102,14 +131,14 @@ echo -e "$green      Install Websocket              $NC"
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 sleep 2
 clear
-wget -q -O fix.sh https://raw.githubusercontent.com/kanghory/schory/main/Insshws/fix.sh && chmod +x fix.sh && ./fix.sh
+wget -q -O fix.sh https://raw.githubusercontent.com/kanghory/VPN/main/Insshws/fix.sh && chmod +x fix.sh && ./fix.sh
 
 #exp
 cd /usr/bin
-wget -O xp "https://raw.githubusercontent.com/kanghory/schory/main/xp.sh"
+wget -O xp "https://raw.githubusercontent.com/kanghory/VPN/main/xp.sh"
 chmod +x xp
 sleep 1
-wget -q -O /usr/bin/notramcpu "https://raw.githubusercontent.com/kanghory/schory/main/notramcpu" && chmod +x /usr/bin/notramcpu
+wget -q -O /usr/bin/notramcpu "https://raw.githubusercontent.com/kanghory/VPN/main/Finaleuy/notramcpu" && chmod +x /usr/bin/notramcpu
 
 cd
 #remove log 
@@ -124,19 +153,94 @@ echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━�
 echo -e "$green      Install Xray              $NC"
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 sleep 2
-wget -q -O ins-xray.sh https://raw.githubusercontent.com/kanghory/schory/main/xray/ins-xray.sh && chmod +x ins-xray.sh && ./ins-xray.sh
+wget -q -O ins-xray.sh https://raw.githubusercontent.com/kanghory/VPN/main/ins-xray.sh && chmod +x ins-xray.sh && ./ins-xray.sh
 sleep 1
-wget -q -O senmenu.sh https://raw.githubusercontent.com/kanghory/schory/main/allmenu/senmenu.sh && chmod +x senmenu.sh && ./senmenu.sh
+wget -q -O senmenu.sh https://raw.githubusercontent.com/kanghory/VPN/main/senmenu.sh && chmod +x senmenu.sh && ./senmenu.sh
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo -e "$green      Install slowdns              $NC"
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 sleep 2
-wget -q -O slowdns.sh https://raw.githubusercontent.com/kanghory/schory/main/autoscript-ssh-slowdns-main/slowdns.sh && chmod +x slowdns.sh && ./slowdns.sh
+wget -q -O slowdns.sh https://raw.githubusercontent.com/kanghory/VPN/main/autoscript-ssh-slowdns-main/slowdns.sh && chmod +x slowdns.sh && ./slowdns.sh
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo -e "$green      Install openvpn              $NC"
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 sleep 2
-wget -q -O open-vpn.sh https://raw.githubusercontent.com/kanghory/schory/main/autoscript-ssh-slowdns-main/open-vpn.sh && chmod 777 open-vpn.sh && ./open-vpn.sh
+wget -q -O vpn.sh https://raw.githubusercontent.com/fisabiliyusri/Mantap/main/ssh/vpn.sh && chmod 777 vpn.sh && ./vpn.sh
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "$green      Install Limit IP              $NC"
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+
+# Mengatur limit-ip
+wget -q -O /usr/bin/limit-ip "https://raw.githubusercontent.com/Andyyuda/vip/main/limit/limit-ip"
+chmod +x /usr/bin/limit-ip
+cd /usr/bin
+sed -i 's/\r//' limit-ip
+cd
+# Konfigurasi dan memulai layanan vmip
+cat > /etc/systemd/system/vmip.service << EOF
+[Unit]
+Description=My
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/usr/bin/limit-ip vmip
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl restart vmip
+systemctl enable vmip
+
+# Konfigurasi dan memulai layanan vlip
+cat > /etc/systemd/system/vlip.service << EOF
+[Unit]
+Description=My
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/usr/bin/limit-ip vlip
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl restart vlip
+systemctl enable vlip
+
+# Konfigurasi dan memulai layanan trip
+cat > /etc/systemd/system/trip.service << EOF
+[Unit]
+Description=My
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/usr/bin/limit-ip trip
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl restart trip
+systemctl enable trip
+clear
+sleep2
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "$green      Install Limit Quota              $NC"
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+
+cd
+# Mengunduh dan mengatur limit.sh
+wget https://raw.githubusercontent.com/Andyyuda/vip/main/limit/limit.sh -O limit.sh
+chmod +x limit.sh
+./limit.sh
+
 #cronjob
 #echo "30 * * * * root removelog" >> /etc/crontab
 
@@ -182,7 +286,7 @@ rm -f setupku.sh
 rm -f xraymode.sh
 rm -f slowdns.sh
 
-echo "===============-[ KANG HORY VPN PREMIUM ]-================"
+echo "===============-[ Kang Hory VPN PREMIUM ]-================"
 echo ""
 echo "------------------------------------------------------------"
 echo ""
@@ -224,7 +328,7 @@ echo ""
 echo ""
 echo "------------------------------------------------------------"
 echo ""
-echo "===============-[ Script Credit By KANG HORY TUNNELING ]-==============="
+echo "===============-[ Script Credit By kanghoryVPN ]-==============="
 echo -e ""
 echo ""
 echo "" | tee -a log-install.txt
