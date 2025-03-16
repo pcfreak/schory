@@ -87,5 +87,5 @@ systemctl restart xray
 
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "${YELLOW}          Terimakasih sudah menggunakan         "
-echo -e "                    Script Premium horxy"
+echo -e "                    Script Premium KANGHORY"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
