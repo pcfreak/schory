@@ -1,6 +1,6 @@
 [Unit]
-Description=HTTP SSH Over Websocket Python bukhorimukhammad
-Documentation=bukhorimukhammad
+Description=HTTP SSH Over Websocket Python horykang
+Documentation=horykang
 After=network.target nss-lookup.target
 
 [Service]
