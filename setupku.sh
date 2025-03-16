@@ -73,26 +73,40 @@ wget -q https://raw.githubusercontent.com/kanghory/schory/main/tools.sh && chmod
 rm tools.sh
 clear
 # izin
-MYIP=$(wget -qO- ipinfo.io/ip);
-echo "memeriksa vps anda"
+
+# Mendapatkan IP VPS
+MYIP=$(wget -qO- ipv4.icanhazip.com)
+
+echo "Memeriksa VPS Anda..."
 sleep 0.5
-CEKEXPIRED () {
-        today=$(date -d +1day +%Y -%m -%d)
-        Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep $MYIP | awk '{print $3}')
-        if [[ $today < $Exp1 ]]; then
-        echo "status script aktif.."
-        else
-        echo "SCRIPT ANDA EXPIRED";
-        exit 0
-fi
+
+# Fungsi untuk mengecek status izin dan masa berlaku
+CEKEXPIRED() {
+    today=$(date +%Y-%m-%d) # Format tanggal yang benar
+    Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
+    
+    if [[ -z "$Exp1" ]]; then
+        echo "Gagal mendapatkan data izin. Pastikan koneksi internet tersedia."
+        exit 1
+    fi
+
+    if [[ "$today" < "$Exp1" ]]; then
+        echo "Status script: AKTIF"
+    else
+        echo "SCRIPT ANDA EXPIRED!"
+        exit 1
+    fi
 }
-IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | awk '{print $4}' | grep $MYIP)
-if [ $MYIP = $IZIN ]; then
-echo "IZIN DI TERIMA!!"
-CEKEXPIRED
+
+# Mengecek apakah IP diizinkan
+IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | awk '{print $1}' | grep -w "$MYIP")
+
+if [[ -n "$IZIN" ]]; then
+    echo "IZIN DITERIMA!"
+    CEKEXPIRED
 else
-echo "Akses di tolak!! Benget sia hurung!!";
-exit 0
+    echo "Akses ditolak! Benget sia hurung!!"
+    exit 1
 fi
 
 clear
