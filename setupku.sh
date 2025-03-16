@@ -93,7 +93,7 @@ echo "IZIN DI TERIMA!!"
 CEKEXPIRED
 else
 echo "Akses di tolak!! Benget sia hurung!!";
-exit 1
+exit 0
 fi
 
 clear
