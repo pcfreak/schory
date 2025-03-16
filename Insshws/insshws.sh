@@ -5,10 +5,10 @@ cd
 apt install python -y
 
 #Install Script Websocket-SSH Python
-wget -O /usr/local/bin/edu-proxy https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/openssh.py && chmod +x /usr/local/bin/edu-proxy
+wget -O /usr/local/bin/edu-proxy https://raw.githubusercontent.com/kanghory/schory/main/Insshws/openssh.py && chmod +x /usr/local/bin/edu-proxy
 
-wget -O /usr/local/bin/ws-dropbear https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/dropbear-ws.py.txt
-wget -O /usr/local/bin/ws-stunnel https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/ws-stunnel.txt
+wget -O /usr/local/bin/ws-dropbear https://raw.githubusercontent.com/kanghory/schory/main/Insshws/dropbear-ws.py.txt
+wget -O /usr/local/bin/ws-stunnel https://raw.githubusercontent.com/kanghory/schory/main/Insshws/ws-stunnel.txt
 #wget -O /usr/local/bin/edu-proxyovpn https://gitlab.com/hidessh/baru/-/raw/main/websocket-python/baru/ovpn.py && chmod +x /usr/local/bin/edu-proxyovpn
 
 #izin permision
@@ -20,16 +20,16 @@ chmod +x /usr/local/bin/edu-proxyovpn
 
 #System Direcly dropbear Websocket-SSH Python
 
-wget -O /etc/systemd/system/edu-proxy.service https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/http.service && chmod +x /etc/systemd/system/edu-proxy.service
+wget -O /etc/systemd/system/edu-proxy.service https://raw.githubusercontent.com/kanghory/schory/main/Insshws/http.service && chmod +x /etc/systemd/system/edu-proxy.service
 
 #System Dropbear Websocket-SSH Python
-wget -O /etc/systemd/system/ws-dropbear.service https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/service-wsdropbear.txt && chmod +x /etc/systemd/system/ws-dropbear.service
+wget -O /etc/systemd/system/ws-dropbear.service https://raw.githubusercontent.com/kanghory/schory/main/Insshws/service-wsdropbear.txt && chmod +x /etc/systemd/system/ws-dropbear.service
 
 #System SSL/TLS Websocket-SSH Python
-wget -O /etc/systemd/system/ws-stunnel.service https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/ws-stunnel.service.txt && chmod +x /etc/systemd/system/ws-stunnel.service
+wget -O /etc/systemd/system/ws-stunnel.service https://raw.githubusercontent.com/kanghory/schory/main/Insshws/ws-stunnel.service.txt && chmod +x /etc/systemd/system/ws-stunnel.service
 
 ##System Websocket-OpenVPN Python
-#wget -O /etc/systemd/system/edu-proxyovpn.service https://raw.githubusercontent.com/bukhorimukhammad/VPN/main/Insshws/ovpn.service && chmod +x /etc/systemd/system/edu-proxyovpn.service
+#wget -O /etc/systemd/system/edu-proxyovpn.service https://raw.githubusercontent.com/kanghory/schory/main/Insshws/ovpn.service && chmod +x /etc/systemd/system/edu-proxyovpn.service
 
 #restart service
 #
