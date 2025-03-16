@@ -1,0 +1,51 @@
+
+# tutor referensi jika mau buat ulang tokenya tonton
+# https://youtu.be/8_lsEAKJv8c?si=xRi4xfRuaNGqO_Mg
+# https://youtu.be/SU8yvbp7amM?si=_HqLc9Ya4onlxT6z
+#pahami juga ini
+#Opsi 1: Menggunakan Windows PowerShellBuka PowerShell:Tekan Win + X dan pilih "Windows PowerShell".Jalankan instalasi rclone menggunakan PowerShell:Anda dapat mengunduh file rclone untuk Windows secara langsung menggunakan perintah ini di PowerShell:iwr https://downloads.rclone.org/rclone-current-windows-amd64.zip -OutFile rclone.zipEkstrak file zip:Gunakan perintah ini untuk mengekstrak file zip yang telah diunduh:Expand-Archive rclone.zip -DestinationPath .\rclonePindahkan rclone.exe ke sistem PATH:Arahkan ke folder tempat rclone.exe diekstrak (dalam folder rclone).Pindahkan rclone.exe ke lokasi yang ada di PATH sistem Anda (misalnya, C:\Windows).Move-Item .\rclone\rclone.exe C:\Windows\Verifikasi instalasi:Setelah file executable ada di PATH, verifikasi instalasi dengan menjalankan:rclone versionOpsi 2: Menggunakan Windows Subsystem for Linux (WSL)Jika Anda lebih suka menggunakan perintah Linux seperti bash, sudo, dll., Anda dapat menginstal Windows Subsystem for Linux (WSL). Berikut caranya:Instal WSL:Buka PowerShell sebagai Administrator dan jalankan perintah berikut:wsl --installSetup distribusi Linux:Setelah WSL terinstal, Anda akan diminta untuk mengatur distribusi Linux (misalnya, Ubuntu).Instal rclone di WSL:Buka terminal WSL dan gunakan perintah berikut untuk menginstal rclone:sudo apt update lanjut sudo apt install rclone
+https://youtu.be/SU8yvbp7amM?si=_HqLc9Ya4onlxT6z
+
+#keterangan pemahaman
+Untuk membuat konfigurasi seperti contoh tersebut (misalnya untuk mengkonfigurasi remote Google Drive menggunakan rclone), langkah-langkahnya adalah sebagai berikut:
+
+Instalasi Rclone: Pastikan rclone sudah terinstal di sistem Anda. Jika belum, instal menggunakan perintah berikut di terminal:
+
+bash
+Salin kode
+curl https://rclone.org/install.sh | sudo bash
+Buat Remote Baru: Jalankan perintah berikut untuk membuat remote baru di rclone:
+
+bash
+Salin kode
+rclone config
+Ikuti langkah-langkah ini:
+
+Pilih opsi n untuk membuat remote baru.
+Beri nama remote, misalnya dr.
+Pilih drive sebagai tipe remote.
+Untuk scope, pilih drive.
+Rclone akan meminta izin untuk mengakses akun Google Drive Anda. Ikuti petunjuk untuk mendapatkan token akses.
+Masukkan Token Manual (Opsional): Jika sudah memiliki token, Anda bisa langsung mengedit file konfigurasi rclone. File ini biasanya terletak di ~/.config/rclone/rclone.conf.
+
+Anda bisa memasukkan blok konfigurasi seperti ini:
+
+ini
+Salin kode
+[dr]
+type = drive
+scope = drive
+token = {"access_token":"YOUR_ACCESS_TOKEN","token_type":"Bearer","refresh_token":"YOUR_REFRESH_TOKEN","expiry":"2023-07-13T19:41:30.819777528+07:00"}
+Keterangan:
+
+access_token: Token akses yang diperoleh dari API Google.
+refresh_token: Digunakan untuk memperbarui access_token secara otomatis.
+expiry: Waktu kedaluwarsa token akses.
+Verifikasi: Setelah konfigurasi selesai, Anda bisa memverifikasi dengan menjalankan perintah berikut untuk melihat isi drive Anda:
+
+bash
+Salin kode
+rclone lsd dr:
+Jika outputnya muncul dengan benar, berarti konfigurasi Google Drive Anda berhasil.
+
+Let me know if you need more help!
