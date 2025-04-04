@@ -29,7 +29,7 @@ cp group /etc/
 cp shadow /etc/
 cp gshadow /etc/
 cp crontab /etc/
-cp -r limit /etc/klmpk/
+cp -r klmpk /etc/klmpk/
 cp chap-secrets /etc/ppp/
 cp passwd1 /etc/ipsec.d/passwd
 cp -r crot /var/lib/
