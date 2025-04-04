@@ -59,7 +59,7 @@ cp /etc/group "$BACKUP_DIR/"
 cp /etc/shadow "$BACKUP_DIR/"
 cp /etc/gshadow "$BACKUP_DIR/"
 cp /etc/crontab "$BACKUP_DIR/"
-cp -r /etc/klmpk/limit /root/backup/
+cp -r /etc/klmpk/limit "$BACKUP_DIR/etc/klmpk/limit"
 cp -r /etc/xray "$BACKUP_DIR/xray"
 cp -r /root/nsdomain "$BACKUP_DIR/nsdomain"
 cp -r /etc/slowdns "$BACKUP_DIR/slowdns"
