@@ -59,7 +59,6 @@ cp /etc/group "$BACKUP_DIR/"
 cp /etc/shadow "$BACKUP_DIR/"
 cp /etc/gshadow "$BACKUP_DIR/"
 cp /etc/crontab "$BACKUP_DIR/"
-bash
 cp -rf /etc/klmpk "$BACKUP_DIR/"
 cp -r /etc/xray "$BACKUP_DIR/xray"
 cp -r /root/nsdomain "$BACKUP_DIR/nsdomain"
