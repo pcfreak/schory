@@ -1,48 +1,56 @@
 #!/bin/bash
-# SL
+# SL - Restore Data VPS
+
 # ==========================================
-# Color
+# Warna
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
-LIGHT='\033[0;37m'
+
 # ==========================================
-# Getting
+# Awal
 clear
 figlet "Restore" | lolcat
-echo "This Feature Can Only Be Used According To Vps Data With This Autoscript"
-echo "Please input link to your vps data backup file."
-echo "You can check it on your email if you run backup data vps before."
-read -rp "Link File: " -e url
+echo -e "${CYAN}Restore ini hanya berfungsi jika file backup berasal dari autoscript ini.${NC}"
+echo -e "${GREEN}Silakan masukkan link Google Drive backup ZIP Anda:${NC}"
+read -rp "Link File Backup: " url
+
+# ==========================================
+# Unduh dan Ekstrak
+cd /root || exit
 wget -O backup.zip "$url"
-unzip backup.zip
-rm -f backup.zip
-sleep 1
-echo Start Restore
-cd /root/backup
-if [ -d "backup" ]; then
-  cd backup
+
+if [[ ! -f backup.zip ]]; then
+    echo -e "${RED}Gagal mengunduh file backup.${NC}"
+    exit 1
 fi
-cp passwd /etc/
-cp group /etc/
-cp shadow /etc/
-cp gshadow /etc/
-cp crontab /etc/
-cp chap-secrets /etc/ppp/
-cp passwd1 /etc/ipsec.d/passwd
-rsync -a --delete klmpk/ /etc/klmpk/
-cp -r crot /var/lib/
-cp -r sstp /home/
-cp -r xray /etc/
-cp -r trojan-go /etc/
-cp -r shadowsocksr /usr/local/
-cp -r public_html /home/vps/
-cp crontab /etc/
-strt
-rm -rf /root/backup
+
+unzip -o backup.zip -d /root/restore-temp > /dev/null 2>&1
 rm -f backup.zip
-echo "Restore Berhasil!!!" | lolcat
+echo -e "${GREEN}Backup berhasil diekstrak.${NC}"
+
+# ==========================================
+# Mulai Restore
+RESTORE_DIR="/root/restore-temp"
+
+echo -e "${CYAN}Memulai proses restore...${NC}"
+
+# File penting sistem
+cp -f "$RESTORE_DIR/passwd" /etc/
+cp -f "$RESTORE_DIR/group" /etc/
+cp -f "$RESTORE_DIR/shadow" /etc/
+cp -f "$RESTORE_DIR/gshadow" /etc/
+cp -f "$RESTORE_DIR/crontab" /etc/
+
+# Direktori dan file konfigurasi
+rsync -a "$RESTORE_DIR/klmpk/" /etc/klmpk/
+rsync -a "$RESTORE_DIR/xray/" /etc/xray/
+rsync -a "$RESTORE_DIR/nsdomain/" /root/nsdomain/
+rsync -a "$RESTORE_DIR/slowdns/" /etc/slowdns/
+rsync -a "$RESTORE_DIR/public_html/" /home/vps/public_html/
+
+# Bersihkan
+rm -rf "$RESTORE_DIR"
+
+echo -e "${GREEN}Restore selesai! Silakan reboot jika diperlukan.${NC}"
