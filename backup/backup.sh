@@ -7,10 +7,11 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Nama Client (edit sesuai nama client Anda)
-CLIENT_NAME="NamaClientAnda"
+# --- Info Client ---
+Name="NamaClient"       # Ganti dengan nama client
+Exp="2025-12-31"        # Ganti dengan tanggal expired
 
-# Folder Config Telegram
+# --- Direktori Config Telegram ---
 CONFIG_DIR="/root/.backup_config"
 mkdir -p "$CONFIG_DIR"
 
@@ -46,7 +47,7 @@ clear
 figlet "Backup"
 echo -e "${GREEN}Mohon tunggu, proses backup sedang berlangsung...${NC}"
 
-# Persiapkan direktori backup
+# --- Proses Backup ---
 BACKUP_DIR="/backup"
 BACKUP_FILE="/$IP-$DATE.zip"
 
@@ -64,18 +65,18 @@ cp -rf /etc/xray "$BACKUP_DIR/xray"
 cp -rf /etc/slowdns "$BACKUP_DIR/slowdns"
 cp -rf /home/vps/public_html "$BACKUP_DIR/public_html"
 
-# Backup nsdomain (file)
+# Backup nsdomain jika file
 if [[ -f /root/nsdomain ]]; then
     cp -f /root/nsdomain "$BACKUP_DIR/nsdomain"
 fi
 
-# Buat ZIP
+# Buat file zip
 zip -r "$BACKUP_FILE" "$BACKUP_DIR" > /dev/null 2>&1
 
 # Upload ke Google Drive
 rclone copy "$BACKUP_FILE" dr:backup/
 
-# Ambil link
+# Ambil link file
 url=$(rclone link "dr:backup/$IP-$DATE.zip")
 if [[ -n "$url" ]]; then
     id=$(echo "$url" | awk -F'=' '{print $2}')
@@ -84,31 +85,39 @@ else
     link="Gagal mendapatkan link backup."
 fi
 
-# Notifikasi Telegram
+# --- Notifikasi Telegram ---
 message=$(cat <<EOF
 <b>🧰 Backup VPS Selesai</b>
 
-👤 <b>Client</b>   : <code>$CLIENT_NAME</code>
+<b>┌────────────────────────────────────┐</b>
+<b>│ 👤 Client    : <code>$Name</code></b>
+<b>│ ⏰ Expired   : <code>$Exp</code></b>
+<b>│ 🧑‍💻 Developer : KANGHORY TUNNELING</b>
+<b>│ ⚙️ Version   : SUPER LTS</b>
+<b>└────────────────────────────────────┘</b>
+
 🖥️ <b>IP VPS</b>  : <code>$IP</code>
 📅 <b>Tanggal</b> : <code>$DATE $TIME</code>
 📥 <b>Link</b>    : <a href="$link">Download</a>
 EOF
 )
 
+# Kirim ke Telegram
 curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
      --data-urlencode "chat_id=${admin_id}" \
      --data-urlencode "parse_mode=HTML" \
      --data-urlencode "text=${message}" > /dev/null
 
-# Bersihkan
+# Hapus backup lokal
 rm -rf "$BACKUP_DIR"
 rm -f "$BACKUP_FILE"
 
-# Tampilkan info
+# --- Info Selesai ---
 clear
 echo -e "${GREEN}Backup selesai! Link dikirim ke Telegram Anda.${NC}"
 echo "=================================="
-echo "Client      : $CLIENT_NAME"
+echo "Client      : $Name"
+echo "Expired     : $Exp"
 echo "IP VPS      : $IP"
 echo "Tanggal     : $DATE"
 echo "Download    : $link"
