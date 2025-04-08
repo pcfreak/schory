@@ -252,6 +252,14 @@ mkdir /root/akun/vless
 mkdir /root/akun/shadowsocks
 mkdir /root/akun/trojan
 
+# Tambahkan setelah bagian install tool dasar
+# Tambahkan ini untuk install pv dan dialog
+apt install git curl -y >/dev/null 2>&1
+apt install python -y >/dev/null 2>&1
+apt install pv dialog -y >/dev/null 2>&1
+echo -e "[ ${green}INFO${NC} ] Aight good ... installation file is ready"
+sleep 2
+
 
 #install remove log
 echo "0 5 * * * root reboot" >> /etc/crontab
