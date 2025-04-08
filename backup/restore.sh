@@ -24,6 +24,9 @@ rm -f backup.zip
 sleep 1
 echo Start Restore
 cd /root/backup
+if [ -d "backup" ]; then
+  cd backup
+fi
 cp passwd /etc/
 cp group /etc/
 cp shadow /etc/
