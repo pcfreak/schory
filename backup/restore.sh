@@ -1,5 +1,5 @@
 #!/bin/bash
-# SL - Restore Config & Telegram Notif (with loading)
+# SUPER LTS RESTORE by KANGHORY
 
 # Warna
 RED='\033[0;31m'
@@ -7,80 +7,77 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Fungsi animasi loading
-loading() {
-    local pid=$!
-    local spin='-\|/'
-    local i=0
-    tput civis
-    while kill -0 "$pid" 2>/dev/null; do
-        i=$(( (i+1) %4 ))
-        printf "\r${CYAN}Proses restore sedang berjalan ${spin:$i:1}${NC}"
-        sleep 0.1
-    done
-    tput cnorm
-    echo -e "\r${GREEN}Restore file selesai.${NC}"
-}
+# Pastikan pv & dialog terinstall
+if ! command -v pv &> /dev/null || ! command -v dialog &> /dev/null; then
+    echo -e "${RED}pv dan dialog belum terinstall. Menginstall dulu...${NC}"
+    apt update -y && apt install -y pv dialog
+fi
 
-# Input Link Backup
+# Input Link
 clear
 figlet "Restore" | lolcat
-echo -e "${CYAN}Silakan input link file backup dari Google Drive:${NC}"
+echo -e "${CYAN}Masukkan link file backup dari Google Drive:${NC}"
 read -rp "Link: " url
 
-# Download dan Ekstrak
+# Setup directory
 mkdir -p /root/restore-temp
 cd /root/restore-temp || exit
-wget -q --show-progress -O backup.zip "$url"
+
+# Download & unzip
+echo -e "${CYAN}Mengunduh file backup...${NC}"
+wget -qO backup.zip "$url"
 unzip -o backup.zip > /dev/null 2>&1
+
 RESTORE_DIR="/root/restore-temp/backup"
 
-# Mulai proses restore dengan loading
-{
-    cp -f "$RESTORE_DIR/passwd" /etc/
-    cp -f "$RESTORE_DIR/group" /etc/
-    cp -f "$RESTORE_DIR/shadow" /etc/
-    cp -f "$RESTORE_DIR/gshadow" /etc/
-    cp -f "$RESTORE_DIR/crontab" /etc/
+# Progress dialog loading
+(
+echo "10"; sleep 0.5
+echo "30"; sleep 1
+echo "50"; sleep 1
+echo "75"; sleep 1
+echo "100"; sleep 1
+) | dialog --title "Proses Restore" --gauge "Mengembalikan file konfigurasi..." 10 60 0
 
-    cp -rf "$RESTORE_DIR/klmpk" /etc/
-    cp -rf "$RESTORE_DIR/xray" /etc/
-    cp -rf "$RESTORE_DIR/slowdns" /etc/
-    cp -rf "$RESTORE_DIR/public_html" /home/vps/
+# Restore file dengan efek loading
+pv "$RESTORE_DIR/passwd" > /etc/passwd
+pv "$RESTORE_DIR/group" > /etc/group
+pv "$RESTORE_DIR/shadow" > /etc/shadow
+pv "$RESTORE_DIR/gshadow" > /etc/gshadow
+pv "$RESTORE_DIR/crontab" > /etc/crontab
 
-    [[ -f "$RESTORE_DIR/nsdomain" ]] && cp -f "$RESTORE_DIR/nsdomain" /root/
-} & loading
+cp -rf "$RESTORE_DIR/klmpk" /etc/
+cp -rf "$RESTORE_DIR/xray" /etc/
+cp -rf "$RESTORE_DIR/slowdns" /etc/
+cp -rf "$RESTORE_DIR/public_html" /home/vps/
+[[ -f "$RESTORE_DIR/nsdomain" ]] && cp -f "$RESTORE_DIR/nsdomain" /root/
 
-# Bersihkan folder sementara
+# Bersihkan temp
 rm -rf /root/restore-temp
 
-# Ambil IP dan Data Client
+# Ambil info IP & client
 MYIP=$(wget -qO- ipinfo.io/ip)
 Name=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $2}')
 Exp=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
 
-# Ambil atau Input Bot Token & Admin ID
+# Tampilkan info restore selesai
+dialog --title "Restore Selesai" --msgbox "Restore berhasil dilakukan!\n\nClient : $Name\nExpired : $Exp\nIP     : $MYIP" 10 50
+
+# Setup Telegram
 CONFIG_DIR="/root/.backup_config"
 mkdir -p "$CONFIG_DIR"
-
 BOT_TOKEN_FILE="$CONFIG_DIR/bot_token"
 ADMIN_ID_FILE="$CONFIG_DIR/admin_id"
 
 if [[ ! -f "$BOT_TOKEN_FILE" ]]; then
-    echo -e "${GREEN}Masukkan Bot Token Telegram Anda:${NC}"
-    read -rp "Bot Token: " bot_token
-    echo "$bot_token" > "$BOT_TOKEN_FILE"
-else
-    bot_token=$(cat "$BOT_TOKEN_FILE")
+    dialog --title "Bot Token" --inputbox "Masukkan Bot Token Telegram Anda:" 10 50 2> "$BOT_TOKEN_FILE"
+fi
+if [[ ! -f "$ADMIN_ID_FILE" ]]; then
+    dialog --title "Admin ID" --inputbox "Masukkan ID Admin Telegram Anda:" 10 50 2> "$ADMIN_ID_FILE"
 fi
 
-if [[ ! -f "$ADMIN_ID_FILE" ]]; then
-    echo -e "${GREEN}Masukkan ID Admin Telegram Anda:${NC}"
-    read -rp "Admin ID: " admin_id
-    echo "$admin_id" > "$ADMIN_ID_FILE"
-else
-    admin_id=$(cat "$ADMIN_ID_FILE")
-fi
+bot_token=$(cat "$BOT_TOKEN_FILE")
+admin_id=$(cat "$ADMIN_ID_FILE")
 
 # Notifikasi Telegram
 message=$(cat <<EOF
@@ -102,4 +99,4 @@ curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
      --data-urlencode "parse_mode=HTML" \
      --data-urlencode "text=${message}" > /dev/null
 
-echo -e "${GREEN}Notifikasi Telegram terkirim.${NC}"
+echo -e "\n${GREEN}Restore selesai dan notifikasi Telegram telah dikirim!${NC}"
