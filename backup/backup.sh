@@ -7,15 +7,6 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# IP, Tanggal, dan Jam
-MYIP=$(wget -qO- ipinfo.io/ip)
-DATE=$(date +"%Y-%m-%d")
-TIME=$(date +"%H:%M:%S")
-
-# Ambil Nama dan Exp dari izin online
-Name=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $2}')
-Exp=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
-
 # Konfigurasi Direktori
 CONFIG_DIR="/root/.backup_config"
 mkdir -p "$CONFIG_DIR"
@@ -80,6 +71,21 @@ if [[ -n "$url" ]]; then
     link="https://drive.google.com/u/4/uc?id=${id}&export=download"
 else
     link="Gagal mendapatkan link backup."
+fi
+
+# IP, Tanggal, dan Jam
+MYIP=$(wget -qO- ipinfo.io/ip)
+DATE=$(date +"%Y-%m-%d")
+TIME=$(date +"%H:%M:%S")
+
+# Ambil Nama dan Exp dari izin online
+Name=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $2}')
+Exp=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
+
+# Validasi jika kosong
+if [[ -z "$Name" || -z "$Exp" ]]; then
+    echo -e "${RED}Gagal mendapatkan data client dari izin!${NC}"
+    exit 1
 fi
 
 # Kirim Notifikasi Telegram
