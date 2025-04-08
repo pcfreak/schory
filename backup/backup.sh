@@ -16,12 +16,6 @@ TIME=$(date +"%H:%M:%S")
 Name=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $2}')
 Exp=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep "$MYIP" | awk '{print $3}')
 
-# Validasi jika kosong
-if [[ -z "$Name" || -z "$Exp" ]]; then
-    echo -e "${RED}Gagal mendapatkan data client dari izin!${NC}"
-    exit 1
-fi
-
 # Konfigurasi Direktori
 CONFIG_DIR="/root/.backup_config"
 mkdir -p "$CONFIG_DIR"
