@@ -34,7 +34,7 @@ cp gshadow /etc/
 cp crontab /etc/
 cp chap-secrets /etc/ppp/
 cp passwd1 /etc/ipsec.d/passwd
-cp -rf /root/backup/backup/klmpk /etc/
+rsync -a --delete klmpk/ /etc/klmpk/
 cp -r crot /var/lib/
 cp -r sstp /home/
 cp -r xray /etc/
