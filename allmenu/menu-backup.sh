@@ -5,26 +5,49 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
-blue='\033[0;34m'
 ungu='\033[0;35m'
-Green="\033[32m"
-Red="\033[31m"
-WhiteB="\033[5;37m"
-BlueCyan="\033[5;36m"
-Green_background="\033[42;37m"
-Red_background="\033[41;37m"
-Suffix="\033[0m"
+BlueCyan='\033[5;36m'
 
+# Fungsi cek token
+cek_token_rclone() {
+    local config_file="$HOME/.config/rclone/rclone.conf"
+    local remote=$(rclone listremotes 2>/dev/null | head -n1 | sed 's/://')
+
+    echo -e "${yellow}Token Rclone Saat Ini:${plain}"
+    if [[ -f "$config_file" && -n "$remote" ]]; then
+        echo -e "Remote aktif: ${green}$remote${plain}"
+        grep -A 1 "\[$remote\]" "$config_file" | grep token | sed 's/^/   /'
+    else
+        echo -e "${red}Remote atau file konfigurasi tidak ditemukan.${plain}"
+    fi
+}
+
+# Fungsi ganti token langsung
+gantitoken_manual() {
+    cek_token_rclone
+    echo ""
+    read -p "Masukkan token baru: " new_token
+    local config_file="$HOME/.config/rclone/rclone.conf"
+    local remote=$(rclone listremotes 2>/dev/null | head -n1 | sed 's/://')
+
+    if [[ -f "$config_file" && -n "$remote" ]]; then
+        local backup_file="$config_file.bak.$(date +%s)"
+        cp "$config_file" "$backup_file"
+        echo -e "${yellow}Config lama dibackup di:${plain} $backup_file"
+        sed -i "s|\(token = \).*|\1$new_token|" "$config_file"
+        echo -e "${green}Token berhasil diganti!${plain}"
+    else
+        echo -e "${red}Gagal mengganti token. Pastikan remote tersedia.${plain}"
+    fi
+}
+
+# Menu utama
 while true; do
   clear
-  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++"
-  echo
-  echo -e "${BlueCyan}              Menu Backup                   "
-  echo
-  echo -e "            ENAK KAN ADA AUTO BACKUPNYA"
-  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++"
-  echo
-  echo -e "${BlueCyan}Pilih Nomor: ${plain}"
+  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
+  echo -e "${BlueCyan}              Menu Backup VPS              ${plain}"
+  echo -e "           ENAK KAN ADA AUTO BACKUPNYA"
+  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
   echo
   echo "1). Backup"
   echo "2). Restore"
@@ -34,10 +57,7 @@ while true; do
   echo "6). Ganti Token Rclone"
   echo "0). Keluar"
   echo
-  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
-  echo
-  echo -ne "${BlueCyan}Pilih Nomor └╼>>> ${plain}"
-  read bro
+  echo -ne "${BlueCyan}Pilih Nomor └╼>>> ${plain}"; read bro
 
   case "$bro" in
     1)
@@ -68,42 +88,28 @@ while true; do
     6)
       figlet "Rclone" | lolcat
       echo -e "${yellow}GANTI TOKEN RCLONE${plain}"
+      echo "1). Jalankan rclone config manual"
+      echo "2). Edit token langsung (input manual)"
+      echo "3). Lihat token saat ini"
       echo
-      echo "1). Config Manual (via rclone config)"
-      echo "2). Input manual token ke remote"
-      echo
-      read -p "Pilih metode (1/2): " metode
-      if [ "$metode" = "1" ]; then
-        echo -e "${green}Menjalankan rclone config...${plain}"
-        sleep 1
-        rclone config
-      elif [ "$metode" = "2" ]; then
-        read -p "Masukkan nama remote (contoh: gdrive): " remote_name
-        config_file=~/.config/rclone/rclone.conf
-
-        echo -e "\n${yellow}Token saat ini:${plain}"
-        echo "-----------------------------------------"
-        grep -A 3 "^\[$remote_name\]" "$config_file" | grep "token ="
-        echo "-----------------------------------------"
-
-        echo -e "\n${blue}Masukkan token baru (format lengkap, misal: token = {\"access_token\":\"...\"})${plain}"
-        read -e -p "> " new_token_line
-
-        backup_file="$config_file.bak.$(date +%s)"
-        cp "$config_file" "$backup_file"
-        echo -e "${yellow}Backup config lama: $backup_file${plain}"
-
-        awk -v section="[$remote_name]" -v newtoken="$new_token_line" '
-          $0 == section {found=1; print; next}
-          /^\[.*\]/ {found=0}
-          found && /^token = / {$0 = newtoken; found=0}
-          {print}
-        ' "$backup_file" > "$config_file"
-
-        echo -e "${green}Token berhasil diganti di remote [$remote_name]!${plain}"
-      else
-        echo -e "${red}Pilihan tidak valid.${plain}"
-      fi
+      read -p "Pilih metode (1/2/3): " metode
+      case $metode in
+        1)
+          echo -e "${green}Menjalankan rclone config...${plain}"
+          sleep 1
+          rclone config
+          ;;
+        2)
+          gantitoken_manual
+          ;;
+        3)
+          cek_token_rclone
+          ;;
+        *)
+          echo -e "${red}Pilihan tidak valid.${plain}"
+          ;;
+      esac
+      read -n 1 -s -r -p "Tekan Enter untuk kembali ke menu..."
       ;;
 
     0)
@@ -114,12 +120,7 @@ while true; do
 
     *)
       echo -e "${red}Pilihan tidak valid!${plain}"
+      sleep 1
       ;;
   esac
-
-  echo
-  echo "--------------------------------------------------------"
-  echo "Tekan Enter untuk kembali ke menu..."
-  echo "--------------------------------------------------------"
-  read
 done
