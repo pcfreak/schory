@@ -70,7 +70,7 @@ while true; do
       echo -e "${yellow}GANTI TOKEN RCLONE${plain}"
       echo
       echo "1). Config Manual (via rclone config)"
-      echo "2). Replace otomatis token dari file rclone.conf"
+      echo "2). Input manual token ke remote"
       echo
       read -p "Pilih metode (1/2): " metode
       if [ "$metode" = "1" ]; then
@@ -78,24 +78,29 @@ while true; do
         sleep 1
         rclone config
       elif [ "$metode" = "2" ]; then
-        read -p "Masukkan path ke file rclone.conf baru: " tokenfile
-        if [ -f "$tokenfile" ]; then
-          new_token=$(grep '^token = ' "$tokenfile")
-          if [ -z "$new_token" ]; then
-            echo -e "${red}Token tidak ditemukan di file baru.${plain}"
-          else
-            mkdir -p ~/.config/rclone
-            backup_file=~/.config/rclone/rclone.conf.bak.$(date +%s)
-            if [ -f ~/.config/rclone/rclone.conf ]; then
-              cp ~/.config/rclone/rclone.conf "$backup_file"
-              echo -e "${yellow}Config lama dibackup di:$plain $backup_file"
-            fi
-            sed -i "s|^token = .*|$new_token|" ~/.config/rclone/rclone.conf
-            echo -e "${green}Token berhasil diganti di file rclone.conf lama!${plain}"
-          fi
-        else
-          echo -e "${red}File tidak ditemukan.${plain}"
-        fi
+        read -p "Masukkan nama remote (contoh: gdrive): " remote_name
+        config_file=~/.config/rclone/rclone.conf
+
+        echo -e "\n${yellow}Token saat ini:${plain}"
+        echo "-----------------------------------------"
+        grep -A 3 "^\[$remote_name\]" "$config_file" | grep "token ="
+        echo "-----------------------------------------"
+
+        echo -e "\n${blue}Masukkan token baru (format lengkap, misal: token = {\"access_token\":\"...\"})${plain}"
+        read -e -p "> " new_token_line
+
+        backup_file="$config_file.bak.$(date +%s)"
+        cp "$config_file" "$backup_file"
+        echo -e "${yellow}Backup config lama: $backup_file${plain}"
+
+        awk -v section="[$remote_name]" -v newtoken="$new_token_line" '
+          $0 == section {found=1; print; next}
+          /^\[.*\]/ {found=0}
+          found && /^token = / {$0 = newtoken; found=0}
+          {print}
+        ' "$backup_file" > "$config_file"
+
+        echo -e "${green}Token berhasil diganti di remote [$remote_name]!${plain}"
       else
         echo -e "${red}Pilihan tidak valid.${plain}"
       fi
