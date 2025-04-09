@@ -7,82 +7,76 @@ yellow='\033[0;33m'
 plain='\033[0m'
 blue='\033[0;34m'
 ungu='\033[0;35m'
-Green="\033[32m"
-Red="\033[31m"
-WhiteB="\033[5;37m"
 BlueCyan="\033[5;36m"
-Green_background="\033[42;37m"
-Red_background="\033[41;37m"
-Suffix="\033[0m"
 
-edit_rclone_token() {
-  config_file=~/.config/rclone/rclone.conf
-  if [ ! -f "$config_file" ]; then
-    echo -e "${red}File rclone.conf tidak ditemukan!${plain}"
-    return
-  fi
-
-  echo -e "${yellow}Membuka rclone.conf dengan nano...${plain}"
-  sleep 1
-  nano "$config_file"
-}
-
+# Menu utama
 while true; do
   clear
-  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++"
-  echo
-  echo -e "${BlueCyan}              Menu Backup                   "
-  echo
+  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
+  echo -e "${BlueCyan}              MENU BACKUP                   ${plain}"
   echo -e "            ENAK KAN ADA AUTO BACKUPNYA"
-  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++"
-  echo
-  echo -e "${BlueCyan}Pilih Nomor: ${plain}"
+  echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
   echo
   echo "1). Backup"
   echo "2). Restore"
-  echo "3). strt"
+  echo "3). Start Service (strt)"
   echo "4). Limit Speed"
   echo "5). Auto Backup"
-  echo "6). Rclone Change Token (Edit Manual)"
-  echo "0). Keluar"
+  echo "6). Edit Token Rclone (nano)"
+  echo "0). Kembali ke Menu Utama"
   echo
   echo -e "${ungu}++++++++++++++++++++++++++++++++++++++++++++${plain}"
   echo
-  echo -ne "${BlueCyan}Pilih Nomor └╼>>> ${plain}"
-  read bro
+  read -p "Pilih Nomor └╼>>> " bro
 
   case "$bro" in
     1)
       figlet "Backup" | lolcat
       backup
       ;;
+
     2)
       figlet "Restore" | lolcat
       restore
       ;;
+
     3)
-      figlet "strt" | lolcat
+      figlet "Start" | lolcat
       strt
       ;;
+
     4)
       figlet "Limit" | lolcat
       limitspeed
       ;;
+
     5)
       figlet "AutoBackup" | lolcat
       autobackup
       ;;
+
     6)
       figlet "Rclone" | lolcat
-      edit_rclone_token
+      config_file="$HOME/.config/rclone/rclone.conf"
+      if [ ! -f "$config_file" ]; then
+        echo -e "${red}File rclone.conf tidak ditemukan di $config_file${plain}"
+      else
+        echo -e "${yellow}Membuka token rclone dengan nano...${plain}"
+        sleep 1
+        nano "$config_file"
+        echo -e "${green}Selesai mengedit token.${plain}"
+      fi
       ;;
+
     0)
-      echo -e "${green}Terima kasih! Keluar dari menu...${plain}"
+      echo -e "${green}Kembali ke menu utama...${plain}"
       sleep 1
+      source /usr/bin/menu
       break
       ;;
+
     *)
-      echo -e "${red}Pilihan tidak valid!${plain}"
+      echo -e "${red}Pilihan tidak valid! Silakan coba lagi.${plain}"
       ;;
   esac
 
