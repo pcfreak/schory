@@ -50,21 +50,35 @@ fi
 export IP=$( curl -s https://ipinfo.io/ip/ )
 export NETWORK_IFACE="$(ip route show to default | awk '{print $5}')"
 clear
-function del(){
-clear
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[0;41;36m               DELETE USER                \E[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo ""
-read -p "Username SSH to Delete : " Pengguna
-if getent passwd $Pengguna > /dev/null 2>&1; then
-userdel $Pengguna > /dev/null 2>&1
-echo -e "User $Pengguna was removed."
-else
-echo -e "Failure: User $Pengguna Not Exist."
-fi
-read -n 1 -s -r -p "Press any key to back on menu"
-menu
+function del() {
+    clear
+    echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "\E[0;41;36m               DELETE USER                \E[0m"
+    echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo ""
+    read -p "Username SSH to Delete : " Pengguna
+
+    if [[ -z "$Pengguna" ]]; then
+        echo -e "\nFailure: Username cannot be empty."
+    elif getent passwd "$Pengguna" > /dev/null 2>&1; then
+        pkill -KILL -u "$Pengguna" 2>/dev/null
+        userdel "$Pengguna" > /dev/null 2>&1
+
+        # Hapus file limit IP jika ada
+        limit_file="/etc/klmpk/limit/ssh/ip/$Pengguna"
+        if [[ -f "$limit_file" ]]; then
+            rm -f "$limit_file"
+            echo -e "Limit IP for user \033[1;33m$Pengguna\033[0m removed."
+        fi
+
+        echo -e "User \033[1;33m$Pengguna\033[0m was removed."
+    else
+        echo -e "Failure: User \033[1;31m$Pengguna\033[0m does not exist."
+    fi
+
+    echo ""
+    read -n 1 -s -r -p "Press any key to return to menu"
+    menu
 }
 function autodel(){
 clear
