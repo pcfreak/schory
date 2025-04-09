@@ -70,7 +70,7 @@ while true; do
       echo -e "${yellow}GANTI TOKEN RCLONE${plain}"
       echo
       echo "1). Config Manual (via rclone config)"
-      echo "2). Replace otomatis dengan file rclone.conf"
+      echo "2). Replace otomatis token dari file rclone.conf"
       echo
       read -p "Pilih metode (1/2): " metode
       if [ "$metode" = "1" ]; then
@@ -80,14 +80,19 @@ while true; do
       elif [ "$metode" = "2" ]; then
         read -p "Masukkan path ke file rclone.conf baru: " tokenfile
         if [ -f "$tokenfile" ]; then
-          mkdir -p ~/.config/rclone
-          backup_file=~/.config/rclone/rclone.conf.bak.$(date +%s)
-          if [ -f ~/.config/rclone/rclone.conf ]; then
-            cp ~/.config/rclone/rclone.conf "$backup_file"
-            echo -e "${yellow}Config lama dibackup di:$plain $backup_file"
+          new_token=$(grep '^token = ' "$tokenfile")
+          if [ -z "$new_token" ]; then
+            echo -e "${red}Token tidak ditemukan di file baru.${plain}"
+          else
+            mkdir -p ~/.config/rclone
+            backup_file=~/.config/rclone/rclone.conf.bak.$(date +%s)
+            if [ -f ~/.config/rclone/rclone.conf ]; then
+              cp ~/.config/rclone/rclone.conf "$backup_file"
+              echo -e "${yellow}Config lama dibackup di:$plain $backup_file"
+            fi
+            sed -i "s|^token = .*|$new_token|" ~/.config/rclone/rclone.conf
+            echo -e "${green}Token berhasil diganti di file rclone.conf lama!${plain}"
           fi
-          cp "$tokenfile" ~/.config/rclone/rclone.conf
-          echo -e "${green}Token berhasil diganti!${plain}"
         else
           echo -e "${red}File tidak ditemukan.${plain}"
         fi
