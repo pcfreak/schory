@@ -40,7 +40,7 @@ fi
 # Load data sistem
 domain=$(cat /etc/xray/domain)
 sldomain=$(cat /root/nsdomain)
-cdndomain=$(cat /root/awscdndomain 2>/dev/null || echo "-")
+cdndomain=$(cat /root/awscdndomain 2>/dev/null || echo "auto pointing Cloudflare")
 slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 ws="$(grep -w "Websocket TLS" ~/log-install.txt | cut -d: -f2 | sed 's/ //g')"
