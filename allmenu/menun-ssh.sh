@@ -426,62 +426,70 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
-function install_ssh_udp_custom() {
+function menu_udp_custom() {
     clear
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "     Install UDP2RAW by KangHory"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-    # Download binary udp2raw dari GitHub kamu
-    echo -e "Mengunduh binary udp2raw..."
-    wget -q -O /usr/bin/udp2raw "https://raw.githubusercontent.com/kanghory/udp2raw_kanghory/main/udp2raw_amd64"
-    
-    if [[ ! -s /usr/bin/udp2raw ]]; then
-        echo -e "Gagal mengunduh binary udp2raw."
-        exit 1
-    fi
-
-    chmod +x /usr/bin/udp2raw
-
-    # Input port UDP
-    echo -e ""
-    read -p "Masukkan port UDP untuk UDP2RAW (Contoh: 4455): " udp_port
-    [[ -z "$udp_port" ]] && udp_port=4455
-
-    # Pastikan SSH listen juga di port 2222 (selain default port 22)
-    if ! grep -q "^Port 2222" /etc/ssh/sshd_config; then
-        echo -e "\nMenambahkan port 2222 ke sshd_config..."
-        echo "Port 2222" >> /etc/ssh/sshd_config
-        systemctl restart ssh
-    fi
-
-    # Buat file service systemd
-    cat > /etc/systemd/system/udp2raw.service <<EOF
-[Unit]
-Description=UDP2RAW by KangHory
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/udp2raw -s -l0.0.0.0:${udp_port} -r127.0.0.1:2222 -k vpnku --raw-mode faketcp -a
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Aktifkan service
-    systemctl daemon-reexec
-    systemctl daemon-reload
-    systemctl enable udp2raw
-    systemctl start udp2raw
-
-    sleep 2
-    status=$(systemctl is-active udp2raw)
-    if [[ "$status" == "active" ]]; then
-        echo -e "\nUDP2RAW berhasil berjalan di port UDP ${udp_port}"
-    else
-        echo -e "\nUDP2RAW gagal berjalan. Cek log: journalctl -u udp2raw -f"
-    fi
+    echo -e "\033[1;36m========== MENU UDP CUSTOM ==========\033[0m"
+    echo "1. Install UDP Custom"
+    echo "2. Restart UDP Custom"
+    echo "3. Hentikan UDP Custom"
+    echo "4. Uninstall UDP Custom"
+    echo "5. Edit Config UDP Custom"
+    echo "6. Lihat Log UDP Custom"
+    echo "7. Ubah Port UDP Custom"
+    echo "0. Kembali ke menu utama"
+    echo -e "\033[1;36m=====================================\033[0m"
+    read -p "Pilih opsi: " opt
+    case $opt in
+        1)
+            echo -e "\n\033[1;32m[•] Instalasi UDP Custom (by ePro Dev. Team)\033[0m"
+            read -p "Masukkan port yang ingin di-exclude dari UDP Custom (misal 443, kosongkan jika tidak ada): " EXCLUDE
+            bash <(wget -qO- https://raw.githubusercontent.com/kanghory/UDP-Custom/main/udp-custom.sh) "$EXCLUDE"
+            echo -e "\n\033[1;32m[✓] UDP Custom berhasil diinstal dan dijalankan!\033[0m"
+            ;;
+        2)
+            systemctl restart udp-custom && echo -e "\n\033[1;32m[✓] Service UDP Custom direstart.\033[0m"
+            ;;
+        3)
+            systemctl stop udp-custom && echo -e "\n\033[1;31m[✓] Service UDP Custom dihentikan.\033[0m"
+            ;;
+        4)
+            echo -e "\n\033[1;31m[!] Melakukan uninstall UDP Custom...\033[0m"
+            systemctl stop udp-custom
+            systemctl disable udp-custom
+            rm -f /etc/systemd/system/udp-custom.service
+            rm -rf /root/udp
+            systemctl daemon-reload
+            echo -e "\033[1;31m[✓] UDP Custom berhasil di-uninstall.\033[0m"
+            ;;
+        5)
+            nano /root/udp/config.json
+            echo -e "\n\033[1;33m[!] Jangan lupa restart UDP Custom setelah mengedit config.\033[0m"
+            ;;
+        6)
+            echo -e "\033[1;34mMenampilkan log realtime UDP Custom...\033[0m"
+            journalctl -u udp-custom -f
+            ;;
+        7)
+            CONFIG_FILE="/root/udp/config.json"
+            if [[ ! -f "$CONFIG_FILE" ]]; then
+                echo -e "\n\033[1;31m[!] Config tidak ditemukan!\033[0m"
+            else
+                current_port=$(grep '"listen"' $CONFIG_FILE | grep -oE '[0-9]+')
+                echo -e "\nPort saat ini: \033[1;36m$current_port\033[0m"
+                read -p "Masukkan port baru: " new_port
+                if [[ $new_port =~ ^[0-9]+$ ]]; then
+                    sed -i "s/\"listen\": \":$current_port\"/\"listen\": \":$new_port\"/" $CONFIG_FILE
+                    systemctl restart udp-custom
+                    echo -e "\033[1;32m[✓] Port berhasil diubah ke $new_port dan service telah direstart.\033[0m"
+                else
+                    echo -e "\033[1;31m[!] Port tidak valid.\033[0m"
+                fi
+            fi
+            ;;
+        0) return ;;
+        *) echo -e "\033[1;31m[!] Pilihan tidak valid.\033[0m" ;;
+    esac
+    read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu..." && menu_udp_custom
 }
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -517,7 +525,7 @@ case $opt in
 8) clear ; member ;;
 9) clear ; trialssh ;;
 10) clear ; ceklimit ;;
-11) clear ; install_ssh_udp_custom ;;
+11) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
 x) exit ;;
 *) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
