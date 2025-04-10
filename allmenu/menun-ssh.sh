@@ -427,69 +427,80 @@ read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
 function menu_udp_custom() {
-    clear
-    echo -e "\033[1;36m========== MENU UDP CUSTOM ==========\033[0m"
-    echo "1. Install UDP Custom"
-    echo "2. Restart UDP Custom"
-    echo "3. Hentikan UDP Custom"
-    echo "4. Uninstall UDP Custom"
-    echo "5. Edit Config UDP Custom"
-    echo "6. Lihat Log UDP Custom"
-    echo "7. Ubah Port UDP Custom"
-    echo "0. Kembali ke menu utama"
-    echo -e "\033[1;36m=====================================\033[0m"
-    read -p "Pilih opsi: " opt
-    case $opt in
-        1)
-            echo -e "\n\033[1;32m[•] Instalasi UDP Custom (by ePro Dev. Team)\033[0m"
-            read -p "Masukkan port yang ingin di-exclude dari UDP Custom (misal 443, kosongkan jika tidak ada): " EXCLUDE
-            bash <(wget -qO- https://raw.githubusercontent.com/kanghory/UDP-Custom/main/udp-custom.sh) "$EXCLUDE"
-            echo -e "\n\033[1;32m[✓] UDP Custom berhasil diinstal dan dijalankan!\033[0m"
-            ;;
-        2)
-            systemctl restart udp-custom && echo -e "\n\033[1;32m[✓] Service UDP Custom direstart.\033[0m"
-            ;;
-        3)
-            systemctl stop udp-custom && echo -e "\n\033[1;31m[✓] Service UDP Custom dihentikan.\033[0m"
-            ;;
-        4)
-            echo -e "\n\033[1;31m[!] Melakukan uninstall UDP Custom...\033[0m"
-            systemctl stop udp-custom
-            systemctl disable udp-custom
-            rm -f /etc/systemd/system/udp-custom.service
-            rm -rf /root/udp
-            systemctl daemon-reload
-            echo -e "\033[1;31m[✓] UDP Custom berhasil di-uninstall.\033[0m"
-            ;;
-        5)
-            nano /root/udp/config.json
-            echo -e "\n\033[1;33m[!] Jangan lupa restart UDP Custom setelah mengedit config.\033[0m"
-            ;;
-        6)
-            echo -e "\033[1;34mMenampilkan log realtime UDP Custom...\033[0m"
-            journalctl -u udp-custom -f
-            ;;
-        7)
-            CONFIG_FILE="/root/udp/config.json"
-            if [[ ! -f "$CONFIG_FILE" ]]; then
-                echo -e "\n\033[1;31m[!] Config tidak ditemukan!\033[0m"
-            else
-                current_port=$(grep '"listen"' $CONFIG_FILE | grep -oE '[0-9]+')
-                echo -e "\nPort saat ini: \033[1;36m$current_port\033[0m"
-                read -p "Masukkan port baru: " new_port
-                if [[ $new_port =~ ^[0-9]+$ ]]; then
-                    sed -i "s/\"listen\": \":$current_port\"/\"listen\": \":$new_port\"/" $CONFIG_FILE
-                    systemctl restart udp-custom
-                    echo -e "\033[1;32m[✓] Port berhasil diubah ke $new_port dan service telah direstart.\033[0m"
-                else
-                    echo -e "\033[1;31m[!] Port tidak valid.\033[0m"
-                fi
-            fi
-            ;;
-        0) return ;;
-        *) echo -e "\033[1;31m[!] Pilihan tidak valid.\033[0m" ;;
-    esac
-    read -n 1 -s -r -p "Tekan tombol apapun untuk kembali ke menu..." && menu_udp_custom
+clear
+echo -e "\033[1;36m========== MENU UDP CUSTOM ==========\033[0m"
+echo -e "1. Install UDP Custom"
+echo -e "2. Start UDP Custom"
+echo -e "3. Stop UDP Custom"
+echo -e "4. Restart UDP Custom"
+echo -e "5. Status UDP Custom"
+echo -e "6. Edit Config UDP Custom (manual)"
+echo -e "7. Ubah Port UDP Custom (otomatis)"
+echo -e "8. Optimize Config Otomatis (auto port & setting)"
+echo -e "9. Uninstall UDP Custom"
+echo -e "0. Kembali ke menu utama"
+echo -ne "\nPilih opsi: "; read opsi
+
+case $opsi in
+  1)
+    bash <(curl -sL https://raw.githubusercontent.com/kanghory/UDP-Custom/main/udp-custom.sh)
+    ;;
+  2) systemctl start udp-custom ;;
+  3) systemctl stop udp-custom ;;
+  4) systemctl restart udp-custom ;;
+  5) systemctl status udp-custom ;;
+  6) nano /root/udp/config.json ;;
+  7)
+    read -p "Masukkan port baru untuk UDP Custom: " new_port
+    sed -i "s/\"listen\": \".*\"/\"listen\": \":$new_port\"/" /root/udp/config.json
+    systemctl restart udp-custom
+    echo "Port berhasil diubah ke $new_port dan service di-restart."
+    ;;
+  8)
+    echo -e "\n\033[1;36m[•] Menjalankan mode Optimasi Config Otomatis...\033[0m"
+    ports=(7300 2080 44818 33434 65000 123 443 53)
+    for port in "${ports[@]}"; do
+        if ! ss -lun | grep -q ":$port "; then
+            selected_port="$port"
+            break
+        fi
+    done
+    if [[ -z "$selected_port" ]]; then
+        echo -e "\033[1;31m[!] Tidak ada port yang tersedia!\033[0m"
+        return
+    fi
+    read -p "Target redirect UDP (default 127.0.0.1:22): " tgt
+    tgt="${tgt:-127.0.0.1:22}"
+    read -p "Mode (fast2/normal/faketcp) [fast2]: " mode
+    mode="${mode:-fast2}"
+    cat <<EOF > /root/udp/config.json
+{
+  "listen": ":$selected_port",
+  "target": "$tgt",
+  "mode": "$mode",
+  "crypt": "none",
+  "mtu": 1350,
+  "compression": true,
+  "obfs": false,
+  "timeout": 60,
+  "connTimeout": 30
+}
+EOF
+    echo -e "\033[1;32m[✓] Config berhasil dibuat. Menggunakan port: $selected_port\033[0m"
+    systemctl restart udp-custom
+    echo -e "\033[1;33m[!] UDP Custom sudah di-restart dengan config baru.\033[0m"
+    ;;
+  9)
+    systemctl stop udp-custom
+    systemctl disable udp-custom
+    rm -f /etc/systemd/system/udp-custom.service
+    rm -rf /root/udp
+    systemctl daemon-reload
+    echo -e "\033[1;31m[✓] UDP Custom berhasil dihapus dari sistem.\033[0m"
+    ;;
+  0) menu ;;
+  *) echo -e "\033[1;31mOpsi tidak valid!\033[0m"; sleep 1; menu_udp_custom ;;
+esac
 }
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
