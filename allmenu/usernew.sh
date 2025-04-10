@@ -46,13 +46,13 @@ slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 
 # Deteksi port otomatis
-openssh_port=$(ss -tnlp | grep -w sshd | awk '{print $4}' | cut -d: -f2 | sort -n | paste -sd "," -)
-dropbear_port=$(ps -ef | grep dropbear | grep -v grep | awk '{for(i=1;i<=NF;i++) if ($i=="-p") print $(i+1)}' | sort -n | paste -sd "," -)
-stunnel_port=$(grep -i 'accept' /etc/stunnel/stunnel.conf 2>/dev/null | cut -d= -f2 | sed 's/ //g' | paste -sd "," -)
-ws_tls=$(grep -w "Websocket TLS" ~/log-install.txt | cut -d: -f2 | sed 's/ //g')
-ws_http=$(grep -w "Websocket None TLS" ~/log-install.txt | cut -d: -f2 | sed 's/ //g')
-udp_ports=$(pgrep -a badvpn-udpgw | grep -oP '127.0.0.1:\K[0-9]+' | sort -n | paste -sd "," -)
-sldns_ports=$(ps -ef | grep sldns | grep -v grep | grep -oP '\-udp\s+\K[^ ]+' | cut -d: -f2 | sort -u | paste -sd "," -)
+openssh_port=$(ss -tnlp | grep -w sshd | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
+dropbear_port=$(ss -tnlp | grep -w dropbear | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
+stunnel_port=$(ss -tnlp | grep -w stunnel | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
+slowdns_port=$(ps -ef | grep sldns | grep -v grep | grep -oE '[0-9]{2,5}' | sort -n | uniq | paste -sd "," -)
+ws_tls_port=$(cat ~/log-install.txt 2>/dev/null | grep -i "Websocket TLS" | awk -F: '{print $2}' | grep -oE '[0-9]+' | paste -sd "," -)
+ws_http_port=$(cat ~/log-install.txt 2>/dev/null | grep -i "Websocket None TLS" | awk -F: '{print $2}' | grep -oE '[0-9]+' | paste -sd "," -)
+badvpn_ports=$(ps -ef | grep udpgw | grep -v grep | awk '{for(i=1;i<=NF;i++) if($i ~ /--listen-addr/) print $i}' | cut -d: -f2 | sort -n | uniq | paste -sd "," -)
 
 # Default jika kosong
 openssh_port=${openssh_port:-22}
@@ -86,18 +86,18 @@ echo -e "Cloudflare     : $cdndomain"
 echo -e "PubKey         : $slkey"
 echo -e "Nameserver     : $sldomain"
 echo -e "${LIGHT}===============SERVICE PORT===================="
-echo -e "OpenSSH        : $openssh_port"
-echo -e "Dropbear       : $dropbear_port"
-echo -e "SSH UDP        : $udp_ports"
-echo -e "STunnel4       : $stunnel_port"
-echo -e "SlowDNS        : $sldns_ports"
-echo -e "WS TLS         : $ws_tls"
-echo -e "WS HTTP        : $ws_http"
-echo -e "WS Direct      : $ws_http"
+echo -e "OpenSSH        : ${openssh_port:-Tidak terdeteksi}"
+echo -e "Dropbear       : ${dropbear_port:-Tidak terdeteksi}"
+echo -e "SSH UDP        : ${badvpn_ports:-Tidak terdeteksi}"
+echo -e "STunnel4       : ${stunnel_port:-Tidak terdeteksi}"
+echo -e "SlowDNS        : ${slowdns_port:-Tidak terdeteksi}"
+echo -e "WS TLS         : ${ws_tls_port:-Tidak terdeteksi}"
+echo -e "WS HTTP        : ${ws_http_port:-Tidak terdeteksi}"
+echo -e "WS Direct      : 8080"
 echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
-echo -e "BadVPN UDPGW   : $udp_ports"
+echo -e "BadVPN UDPGW   : ${badvpn_ports:-Tidak terdeteksi}"
 echo -e "Squid Proxy    : [ON]"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "       Script by kanghoryVPN"
@@ -118,6 +118,15 @@ IP       : $IP
 Domain   : $domain
 PubKey   : $slkey
 NS       : $sldomain
+
+==== Ports ====
+OpenSSH        : ${openssh_ports:-Tidak terdeteksi}
+Dropbear       : ${dropbear_ports:-Tidak terdeteksi}
+SSH UDP        : ${udp_ports:-Tidak terdeteksi}
+STunnel4       : ${stunnel_ports:-Tidak terdeteksi}
+SlowDNS        : ${slowdns_ports:-Tidak terdeteksi}
+WS TLS         : ${ws_tls:-443}
+WS HTTP        : ${ws_http:-80}
 
 ==== OpenVPN ====
 TCP : http://$IP:81/tcp.ovpn
