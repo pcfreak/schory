@@ -427,6 +427,7 @@ read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
 function install_ssh_udp_custom() {
+    clear
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "\E[44;1;39m                 ⇱ INSTALL SSH UDP CUSTOM ⇲                  \E[0m"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
