@@ -432,65 +432,54 @@ function install_ssh_udp_custom() {
     echo -e "\E[44;1;39m                 ⇱ INSTALL SSH UDP CUSTOM ⇲                  \E[0m"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-    # Deteksi arsitektur
-    arch=$(uname -m)
-    case "$arch" in
-        x86_64) arch="amd64" ;;
-        aarch64) arch="arm64" ;;
-        *) echo -e "${RED}Arsitektur tidak didukung: $arch${NC}"; return ;;
-    esac
+    echo -e "${YELLOW}Masukkan port UDP Custom yang ingin digunakan.${NC}"
+    echo -e "${YELLOW}Port dapat berupa angka antara 1 hingga 65535.${NC}"
+    read -p "Masukkan port UDP Custom (default 7300): " PORT
+    PORT=${PORT:-7300}
 
-    # Cek dan unduh binary jika belum ada atau mau reinstall
-    if [[ -f /usr/bin/udp-custom ]]; then
-        echo -e "${YELLOW}Binary udp-custom sudah ada.${NC}"
-        read -p "Ingin reinstall binary? (y/n): " ans
-        [[ "$ans" != "y" ]] && echo -e "${GREEN}Melewati instalasi ulang binary...${NC}" && goto_skip_download=1
-    fi
-
-    if [[ "$goto_skip_download" != "1" ]]; then
-        echo -e "${YELLOW}Mengunduh binary udp-custom untuk $arch...${NC}"
-        wget -q -O /usr/bin/udp-custom "https://github.com/riyanfikri/udp-custom-bin/raw/main/$arch/udp-custom"
-        if [[ ! -f /usr/bin/udp-custom ]]; then
-            echo -e "${RED}Gagal mengunduh binary udp-custom.${NC}"
-            return
-        fi
-        chmod +x /usr/bin/udp-custom
-    fi
-
-    # Input port dari user
-    read -p "Masukkan port UDP Custom (1-65535, default 7300): " udp_port
-    udp_port=${udp_port:-7300}
-
-    # Validasi port
-    if ! [[ "$udp_port" =~ ^[0-9]+$ ]] || [ "$udp_port" -lt 1 ] || [ "$udp_port" -gt 65535 ]; then
-        echo -e "${RED}Port tidak valid. Harus angka 1-65535.${NC}"
+    if ! [[ "$PORT" =~ ^[0-9]+$ ]] || ((PORT < 1 || PORT > 65535)); then
+        echo -e "${RED}Port tidak valid. Gunakan angka antara 1 - 65535.${NC}"
         return
     fi
 
+    # Hentikan service lama
+    systemctl stop udp-custom >/dev/null 2>&1
+    pkill udp2raw_amd64 >/dev/null 2>&1
+
+    # Download binary udp2raw
+    echo -e "${YELLOW}Mengunduh binary udp2raw untuk amd64...${NC}"
+    wget -q -O /usr/bin/udp2raw_amd64 https://github.com/wangyu-/udp2raw/releases/latest/download/udp2raw_amd64
+    if [[ ! -s /usr/bin/udp2raw_amd64 ]]; then
+        echo -e "${RED}Gagal mengunduh binary udp2raw.${NC}"
+        return
+    fi
+    chmod +x /usr/bin/udp2raw_amd64
+
     # Buat systemd service
-    cat > /etc/systemd/system/udp-custom.service <<EOF
+    cat > /etc/systemd/system/udp-custom.service <<-EOF
 [Unit]
-Description=UDP Custom by KangHory
+Description=UDP Custom (udp2raw) by KangHory
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/udp-custom -b 0.0.0.0:$udp_port --max-clients 500
+ExecStart=/usr/bin/udp2raw_amd64 -s -l 0.0.0.0:$PORT -r 127.0.0.1:22 --raw-mode faketcp -k kanghory
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Reload dan jalankan
+    # Reload systemd dan mulai service
     systemctl daemon-reload
     systemctl enable udp-custom
-    systemctl restart udp-custom
+    systemctl start udp-custom
 
+    # Tampilkan status
     sleep 1
     if systemctl is-active --quiet udp-custom; then
-        echo -e "${GREEN}UDP Custom berhasil dijalankan di port $udp_port.${NC}"
+        echo -e "${GREEN}UDP2RAW berhasil dijalankan di port $PORT.${NC}"
     else
-        echo -e "${RED}UDP Custom gagal berjalan. Cek log: journalctl -u udp-custom -f${NC}"
+        echo -e "${RED}UDP2RAW gagal berjalan. Cek log dengan: journalctl -u udp-custom -f${NC}"
     fi
 }
 clear
