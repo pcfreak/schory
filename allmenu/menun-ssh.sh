@@ -426,6 +426,77 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function install_ssh_udp_custom() {
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "\E[44;1;39m                 ⇱ INSTALL SSH UDP CUSTOM ⇲                  \E[0m"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    # Cek apakah sudah terinstall
+    if [[ -f /usr/bin/udp-custom ]]; then
+        echo -e "${GREEN}UDP Custom sudah terinstall di sistem.${NC}"
+        read -p "Ingin reinstall? (y/n): " jawab
+        [[ $jawab != "y" ]] && return
+    fi
+
+    # Hentikan proses jika sedang berjalan
+    pkill udp-custom >/dev/null 2>&1
+
+    # Input port
+    read -p "Masukkan port UDP Custom (default 7300): " port
+    [[ -z "$port" ]] && port=7300
+
+    # Download binary udp-custom sesuai arsitektur
+    echo -e "${YELLOW}Mengunduh binary udp-custom...${NC}"
+    arch=$(uname -m)
+    case $arch in
+        x86_64)
+            link="https://github.com/riyanfikri/udp-custom-bin/raw/main/amd64/udp-custom"
+            ;;
+        aarch64)
+            link="https://github.com/riyanfikri/udp-custom-bin/raw/main/arm64/udp-custom"
+            ;;
+        *)
+            echo -e "${RED}Arsitektur tidak didukung: $arch${NC}"
+            return
+            ;;
+    esac
+
+    wget -q -O /usr/bin/udp-custom "$link"
+    if [[ ! -f /usr/bin/udp-custom ]]; then
+        echo -e "${RED}Gagal mengunduh binary udp-custom.${NC}"
+        return
+    fi
+
+    chmod +x /usr/bin/udp-custom
+
+    # Buat systemd service
+    cat > /etc/systemd/system/udp-custom.service << EOF
+[Unit]
+Description=UDP Custom by KangHory
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/udp-custom -b 0.0.0.0:$port --max-clients 500
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Reload systemd dan mulai service
+    systemctl daemon-reexec
+    systemctl daemon-reload
+    systemctl enable udp-custom
+    systemctl start udp-custom
+
+    # Cek status
+    sleep 1
+    if systemctl is-active --quiet udp-custom; then
+        echo -e "${GREEN}UDP Custom berhasil diinstall dan berjalan di port $port.${NC}"
+    else
+        echo -e "${RED}UDP Custom gagal berjalan. Cek log: journalctl -u udp-custom -f${NC}"
+    fi
+}
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                         ⇱ SSH MENU  ⇲                         \E[0m"
@@ -441,6 +512,7 @@ echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
 echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
 echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
 echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Cek ssh usr limit"
+echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Install SSH UDP Custom"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -459,6 +531,7 @@ case $opt in
 8) clear ; member ;;
 9) clear ; trialssh ;;
 10) clear ; ceklimit ;;
+11) clear ; install-ssh-udp ;;
 0) clear ; menu ;;
 x) exit ;;
 *) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
