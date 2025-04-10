@@ -34,9 +34,9 @@ if id "$Login" &>/dev/null; then
     exit 1
 fi
 
-# Limit IP
+# Simpan Limit IP
 mkdir -p /etc/klmpk/limit/ssh/ip/
-echo -e "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
+echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
@@ -46,25 +46,17 @@ slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 
 # Deteksi port otomatis
-openssh_port=$(ss -tnlp | grep -w sshd | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
-dropbear_port=$(ss -tnlp | grep -w dropbear | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
-stunnel_port=$(ss -tnlp | grep -w stunnel | awk '{print $4}' | grep -oE '[0-9]+' | sort -n | uniq | paste -sd "," -)
-slowdns_port=$(ps -ef | grep sldns | grep -v grep | grep -oE '[0-9]{2,5}' | sort -n | uniq | paste -sd "," -)
-ws_tls_port=$(cat ~/log-install.txt 2>/dev/null | grep -i "Websocket TLS" | awk -F: '{print $2}' | grep -oE '[0-9]+' | paste -sd "," -)
-ws_http_port=$(cat ~/log-install.txt 2>/dev/null | grep -i "Websocket None TLS" | awk -F: '{print $2}' | grep -oE '[0-9]+' | paste -sd "," -)
-badvpn_ports=$(ps -ef | grep udpgw | grep -v grep | awk '{for(i=1;i<=NF;i++) if($i ~ /--listen-addr/) print $i}' | cut -d: -f2 | sort -n | uniq | paste -sd "," -)
-
-# Default jika kosong
-openssh_port=${openssh_port:-22}
-dropbear_port=${dropbear_port:-Tidak terdeteksi}
-stunnel_port=${stunnel_port:-Tidak terdeteksi}
-udp_ports=${udp_ports:-Tidak terdeteksi}
-sldns_ports=${sldns_ports:-Tidak terdeteksi}
-ws_tls=${ws_tls:-443}
-ws_http=${ws_http:-80,8080}
+openssh=$(netstat -tulpn | grep -w ssh | awk '{print $4}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
+dropbear=$(netstat -tulpn | grep dropbear | awk '{print $4}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
+udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
+stunnel=$(netstat -tulpn | grep stunnel | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
+slowdns=$(ps -ef | grep sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
+ws_tls=$(netstat -tulpn | grep -w 443 | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
+ws_http=$(netstat -tulpn | grep -w 80 | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
+ws_direct=8080
 
 # Proses pembuatan user
-useradd -e $(date -d "$masaaktif days" +"%Y-%m-%d") -s /bin/false -M $Login
+useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
 expi=$(date -d "$masaaktif days" +"%Y-%m-%d")
@@ -86,24 +78,24 @@ echo -e "Cloudflare     : $cdndomain"
 echo -e "PubKey         : $slkey"
 echo -e "Nameserver     : $sldomain"
 echo -e "${LIGHT}===============SERVICE PORT===================="
-echo -e "OpenSSH        : ${openssh_port:-Tidak terdeteksi}"
-echo -e "Dropbear       : ${dropbear_port:-Tidak terdeteksi}"
-echo -e "SSH UDP        : ${badvpn_ports:-Tidak terdeteksi}"
-echo -e "STunnel4       : ${stunnel_port:-Tidak terdeteksi}"
-echo -e "SlowDNS        : ${slowdns_port:-Tidak terdeteksi}"
-echo -e "WS TLS         : ${ws_tls_port:-Tidak terdeteksi}"
-echo -e "WS HTTP        : ${ws_http_port:-Tidak terdeteksi}"
-echo -e "WS Direct      : 8080"
+echo -e "OpenSSH        : ${openssh:-Tidak terdeteksi}"
+echo -e "Dropbear       : ${dropbear:-Tidak terdeteksi}"
+echo -e "SSH UDP        : ${udpgw_ports:-Tidak terdeteksi}"
+echo -e "STunnel4       : ${stunnel:-Tidak terdeteksi}"
+echo -e "SlowDNS        : ${slowdns:-Tidak terdeteksi}"
+echo -e "WS TLS         : ${ws_tls:-Tidak terdeteksi}"
+echo -e "WS HTTP        : ${ws_http:-Tidak terdeteksi}"
+echo -e "WS Direct      : ${ws_direct:-Tidak terdeteksi}"
 echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
-echo -e "BadVPN UDPGW   : ${badvpn_ports:-Tidak terdeteksi}"
+echo -e "BadVPN UDPGW   : ${udpgw_ports:-Tidak terdeteksi}"
 echo -e "Squid Proxy    : [ON]"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
 
-# Simpan ke log akun
+# Simpan log akun
 mkdir -p /etc/klmpk/log-ssh
 cat <<EOF > /etc/klmpk/log-ssh/$Login.txt
 ==== SSH Account ====
@@ -118,15 +110,6 @@ IP       : $IP
 Domain   : $domain
 PubKey   : $slkey
 NS       : $sldomain
-
-==== Ports ====
-OpenSSH        : ${openssh_ports:-Tidak terdeteksi}
-Dropbear       : ${dropbear_ports:-Tidak terdeteksi}
-SSH UDP        : ${udp_ports:-Tidak terdeteksi}
-STunnel4       : ${stunnel_ports:-Tidak terdeteksi}
-SlowDNS        : ${slowdns_ports:-Tidak terdeteksi}
-WS TLS         : ${ws_tls:-443}
-WS HTTP        : ${ws_http:-80}
 
 ==== OpenVPN ====
 TCP : http://$IP:81/tcp.ovpn
