@@ -531,7 +531,7 @@ case $opt in
 8) clear ; member ;;
 9) clear ; trialssh ;;
 10) clear ; ceklimit ;;
-11) clear ; install-ssh-udp ;;
+11) clear ; install_ssh_udp_custom ;;
 0) clear ; menu ;;
 x) exit ;;
 *) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
