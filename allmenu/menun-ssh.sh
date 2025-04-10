@@ -431,69 +431,64 @@ function install_ssh_udp_custom() {
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "\E[44;1;39m                 ⇱ INSTALL SSH UDP CUSTOM ⇲                  \E[0m"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    
-    # Cek apakah sudah terinstall
-    if [[ -f /usr/bin/udp-custom ]]; then
-        echo -e "${GREEN}UDP Custom sudah terinstall di sistem.${NC}"
-        read -p "Ingin reinstall? (y/n): " jawab
-        [[ $jawab != "y" ]] && return
-    fi
 
-    # Hentikan proses jika sedang berjalan
-    pkill udp-custom >/dev/null 2>&1
-
-    # Input port
-    read -p "Masukkan port UDP Custom (default 7300): " port
-    [[ -z "$port" ]] && port=7300
-
-    # Download binary udp-custom sesuai arsitektur
-    echo -e "${YELLOW}Mengunduh binary udp-custom...${NC}"
+    # Deteksi arsitektur
     arch=$(uname -m)
-    case $arch in
-        x86_64)
-            link="https://github.com/riyanfikri/udp-custom-bin/raw/main/amd64/udp-custom"
-            ;;
-        aarch64)
-            link="https://github.com/riyanfikri/udp-custom-bin/raw/main/arm64/udp-custom"
-            ;;
-        *)
-            echo -e "${RED}Arsitektur tidak didukung: $arch${NC}"
-            return
-            ;;
+    case "$arch" in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        *) echo -e "${RED}Arsitektur tidak didukung: $arch${NC}"; return ;;
     esac
 
-    wget -q -O /usr/bin/udp-custom "$link"
-    if [[ ! -f /usr/bin/udp-custom ]]; then
-        echo -e "${RED}Gagal mengunduh binary udp-custom.${NC}"
+    # Cek dan unduh binary jika belum ada atau mau reinstall
+    if [[ -f /usr/bin/udp-custom ]]; then
+        echo -e "${YELLOW}Binary udp-custom sudah ada.${NC}"
+        read -p "Ingin reinstall binary? (y/n): " ans
+        [[ "$ans" != "y" ]] && echo -e "${GREEN}Melewati instalasi ulang binary...${NC}" && goto_skip_download=1
+    fi
+
+    if [[ "$goto_skip_download" != "1" ]]; then
+        echo -e "${YELLOW}Mengunduh binary udp-custom untuk $arch...${NC}"
+        wget -q -O /usr/bin/udp-custom "https://github.com/riyanfikri/udp-custom-bin/raw/main/$arch/udp-custom"
+        if [[ ! -f /usr/bin/udp-custom ]]; then
+            echo -e "${RED}Gagal mengunduh binary udp-custom.${NC}"
+            return
+        fi
+        chmod +x /usr/bin/udp-custom
+    fi
+
+    # Input port dari user
+    read -p "Masukkan port UDP Custom (1-65535, default 7300): " udp_port
+    udp_port=${udp_port:-7300}
+
+    # Validasi port
+    if ! [[ "$udp_port" =~ ^[0-9]+$ ]] || [ "$udp_port" -lt 1 ] || [ "$udp_port" -gt 65535 ]; then
+        echo -e "${RED}Port tidak valid. Harus angka 1-65535.${NC}"
         return
     fi
 
-    chmod +x /usr/bin/udp-custom
-
     # Buat systemd service
-    cat > /etc/systemd/system/udp-custom.service << EOF
+    cat > /etc/systemd/system/udp-custom.service <<EOF
 [Unit]
 Description=UDP Custom by KangHory
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/udp-custom -b 0.0.0.0:$port --max-clients 500
+ExecStart=/usr/bin/udp-custom -b 0.0.0.0:$udp_port --max-clients 500
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Reload systemd dan mulai service
-    systemctl daemon-reexec
+    # Reload dan jalankan
     systemctl daemon-reload
     systemctl enable udp-custom
-    systemctl start udp-custom
+    systemctl restart udp-custom
 
-    # Cek status
     sleep 1
     if systemctl is-active --quiet udp-custom; then
-        echo -e "${GREEN}UDP Custom berhasil diinstall dan berjalan di port $port.${NC}"
+        echo -e "${GREEN}UDP Custom berhasil dijalankan di port $udp_port.${NC}"
     else
         echo -e "${RED}UDP Custom gagal berjalan. Cek log: journalctl -u udp-custom -f${NC}"
     fi
