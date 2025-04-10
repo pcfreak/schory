@@ -38,7 +38,7 @@ fi
 mkdir -p /etc/klmpk/limit/ssh/ip/
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
 
-# Load data sistem
+# Load info sistem
 domain=$(cat /etc/xray/domain)
 sldomain=$(cat /root/nsdomain)
 cdndomain=$(cat /root/awscdndomain 2>/dev/null || echo "auto pointing Cloudflare")
@@ -46,22 +46,22 @@ slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 
 # Deteksi port otomatis
-openssh=$(netstat -tulpn | grep -w ssh | awk '{print $4}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
-dropbear=$(netstat -tulpn | grep dropbear | awk '{print $4}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
-udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
-stunnel=$(netstat -tulpn | grep stunnel | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
-slowdns=$(ps -ef | grep sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
-ws_tls=$(netstat -tulpn | grep -w 443 | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
-ws_http=$(netstat -tulpn | grep -w 80 | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
+openssh=$(ss -tnlp | grep -w 'sshd' | awk '{print $4}' | cut -d: -f2 | sort -u | paste -sd, -)
+dropbear=$(ps -ef | grep dropbear | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="dropbear"){print $(i+1)}}}' | cut -d: -f2 | sort -u | paste -sd, -)
+udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | grep -oP '127\.0\.0\.1:\K[0-9]+' | paste -sd, -)
+stunnel=$(ss -tnlp | grep stunnel | awk '{print $4}' | cut -d: -f2 | sort -u | paste -sd, -)
+slowdns=$(ps -ef | grep sldns | grep -v grep | grep -oP '-udp \K[0-9]+' | paste -sd, -)
+ws_tls=$(ss -tnlp | grep ':443' | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
+ws_http=$(ss -tnlp | grep ':80' | awk '{print $4}' | cut -d: -f2 | paste -sd, -)
 ws_direct=8080
 
-# Proses pembuatan user
+# Proses user
 useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
 expi=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# Output informasi akun
+# Output akun
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "\E[44;1;39m            ⇱ INFORMASI AKUN SSH ⇲             \E[0m"
