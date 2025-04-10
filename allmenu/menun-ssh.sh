@@ -428,40 +428,42 @@ menu
 }
 function install_ssh_udp_custom() {
     clear
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "\E[44;1;39m                 ⇱ INSTALL UDP2RAW CUSTOM ⇲                  \E[0m"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "     Install UDP2RAW by KangHory"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    # Input port
-    read -p "Masukkan port UDP Custom (1-65535) [default 7300]: " PORT
-    PORT=${PORT:-7300}
-    if ! [[ "$PORT" =~ ^[0-9]+$ ]] || ((PORT < 1 || PORT > 65535)); then
-        echo -e "${RED}Port tidak valid. Harus antara 1 - 65535.${NC}"
-        return
-    fi
-
-    # Hentikan service jika ada
-    systemctl stop udp2raw >/dev/null 2>&1
-    pkill udp2raw >/dev/null 2>&1
-
-    # Unduh binary dari repo Anda
-    echo -e "${YELLOW}Mengunduh binary udp2raw dari GitHub Anda...${NC}"
-    wget -q -O /usr/bin/udp2raw https://raw.githubusercontent.com/kanghory/udp2raw_kanghory/main/udp2raw_amd64
+    # Download binary udp2raw dari GitHub kamu
+    echo -e "Mengunduh binary udp2raw..."
+    wget -q -O /usr/bin/udp2raw "https://raw.githubusercontent.com/kanghory/udp2raw_kanghory/main/udp2raw_amd64"
+    
     if [[ ! -s /usr/bin/udp2raw ]]; then
-        echo -e "${RED}Gagal mengunduh binary udp2raw.${NC}"
-        return
+        echo -e "Gagal mengunduh binary udp2raw."
+        exit 1
     fi
+
     chmod +x /usr/bin/udp2raw
 
-    # Buat systemd service
+    # Input port UDP
+    echo -e ""
+    read -p "Masukkan port UDP untuk UDP2RAW (Contoh: 4455): " udp_port
+    [[ -z "$udp_port" ]] && udp_port=4455
+
+    # Pastikan SSH listen juga di port 2222 (selain default port 22)
+    if ! grep -q "^Port 2222" /etc/ssh/sshd_config; then
+        echo -e "\nMenambahkan port 2222 ke sshd_config..."
+        echo "Port 2222" >> /etc/ssh/sshd_config
+        systemctl restart ssh
+    fi
+
+    # Buat file service systemd
     cat > /etc/systemd/system/udp2raw.service <<EOF
 [Unit]
 Description=UDP2RAW by KangHory
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/udp2raw -s -l0.0.0.0:${PORT} -r127.0.0.1:22 -k "vpnku" --raw-mode faketcp -a
-Restart=always
+ExecStart=/usr/bin/udp2raw -s -l0.0.0.0:${udp_port} -r127.0.0.1:2222 -k vpnku --raw-mode faketcp -a
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
@@ -471,14 +473,14 @@ EOF
     systemctl daemon-reexec
     systemctl daemon-reload
     systemctl enable udp2raw
-    systemctl restart udp2raw
+    systemctl start udp2raw
 
-    # Cek status
-    sleep 1
-    if systemctl is-active --quiet udp2raw; then
-        echo -e "${GREEN}UDP2RAW berhasil dijalankan di port ${PORT}.${NC}"
+    sleep 2
+    status=$(systemctl is-active udp2raw)
+    if [[ "$status" == "active" ]]; then
+        echo -e "\nUDP2RAW berhasil berjalan di port UDP ${udp_port}"
     else
-        echo -e "${RED}UDP2RAW gagal berjalan. Cek log: journalctl -u udp2raw -f${NC}"
+        echo -e "\nUDP2RAW gagal berjalan. Cek log: journalctl -u udp2raw -f"
     fi
 }
 clear
