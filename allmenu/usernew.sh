@@ -46,6 +46,9 @@ IP=$(wget -qO- ipinfo.io/ip)
 ws="$(grep -w "Websocket TLS" ~/log-install.txt | cut -d: -f2 | sed 's/ //g')"
 ws2="$(grep -w "Websocket None TLS" ~/log-install.txt | cut -d: -f2 | sed 's/ //g')"
 
+# Deteksi port badvpn-udpgw
+udpgw_ports=$(netstat -tunlp 2>/dev/null | grep badvpn-udpgw | awk '{print $4}' | cut -d: -f2 | paste -sd "," -)
+
 # Proses pembuatan user
 useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
@@ -71,7 +74,7 @@ echo -e "Nameserver     : $sldomain"
 echo -e "${LIGHT}===============SERVICE PORT===================="
 echo -e "OpenSSH        : 22"
 echo -e "Dropbear       : 44, 69, 143"
-echo -e "SSH UDP        : 1-2288"
+echo -e "SSH UDP        : ${udpgw_ports:-Tidak terdeteksi}"
 echo -e "STunnel4       : 442, 222, 2096"
 echo -e "SlowDNS        : 53, 5300, 8080"
 echo -e "WS TLS         : 443"
@@ -80,7 +83,7 @@ echo -e "WS Direct      : 8080"
 echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
-echo -e "BadVPN UDPGW   : 7100, 7200, 7300"
+echo -e "BadVPN UDPGW   : ${udpgw_ports:-Tidak terdeteksi}"
 echo -e "Squid Proxy    : [ON]"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "       Script by kanghoryVPN"
@@ -101,6 +104,9 @@ IP       : $IP
 Domain   : $domain
 PubKey   : $slkey
 NS       : $sldomain
+
+==== SSH UDP ====
+Port     : ${udpgw_ports:-Tidak terdeteksi}
 
 ==== OpenVPN ====
 TCP : http://$IP:81/tcp.ovpn
