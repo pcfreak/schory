@@ -518,10 +518,22 @@ case $opsi in
   1)
     bash <(curl -sL https://raw.githubusercontent.com/kanghory/UDP-Custom/main/udp-custom.sh)
     ;;
-  2) systemctl start udp-custom ;;
-  3) systemctl stop udp-custom ;;
-  4) systemctl restart udp-custom ;;
-  5) systemctl status udp-custom ;;
+  2)
+    systemctl start udp-custom
+    echo -e "\nUDP-Custom telah berhasil *dijalankan*."
+    ;;
+  3)
+    systemctl stop udp-custom
+    echo -e "\nUDP-Custom telah berhasil *dihentikan*."
+    ;;
+  4)
+    systemctl restart udp-custom
+    echo -e "\nUDP-Custom telah berhasil *dimuat ulang* (restart)."
+    ;;
+  5)
+    echo -e "\nStatus UDP-Custom:"
+    systemctl status udp-custom --no-pager
+    ;;
   6) nano /root/udp/config.json ;;
   7)
     read -p "Masukkan port baru untuk UDP Custom: " new_port
