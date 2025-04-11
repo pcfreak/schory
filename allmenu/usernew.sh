@@ -10,7 +10,7 @@ RED='\033[1;91m'
 # Header
 clear
 echo -e "${YELLOW}---------------------------------------------------${NC}"
-echo -e "                SSH Ovpn Account"
+echo -e "                SSH Ovpn Account kanghory VPN"
 echo -e "${YELLOW}---------------------------------------------------${NC}"
 
 # Input data
@@ -116,6 +116,18 @@ echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
 echo -e "Squid Proxy    : [ON]"
+echo -e "${LIGHT}=============Payload HTTP Custom=============="
+echo -e "Payload WS TLS (Cloudflare) :"
+echo -e "GET / HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
+echo -e ""
+echo -e "Payload WS HTTP (Direct)    :"
+echo -e "GET / HTTP/1.1[crlf]Host: $domain[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]"
+echo -e ""
+echo -e "Payload SNI TLS (SSL/TLS)   :"
+echo -e "GET wss://$domain/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
+echo -e ""
+echo -e "Payload CDN (Fake Host)     :"
+echo -e "GET / HTTP/1.1[crlf]Host: www.bing.com[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
@@ -151,6 +163,19 @@ BadVPN UDPGW : $(log_color "$udpgw_ports")
 TCP : http://$IP:81/tcp.ovpn
 UDP : http://$IP:81/udp.ovpn
 SSL : http://$IP:81/ssl.ovpn
+
+==== Payload HTTP Custom ====
+Payload WS TLS (Cloudflare) :
+GET / HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]
+
+Payload WS HTTP (Direct) :
+GET / HTTP/1.1[crlf]Host: $domain[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]
+
+Payload SNI TLS (SSL/TLS) :
+GET wss://$domain/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]
+
+Payload CDN (Fake Host) :
+GET / HTTP/1.1[crlf]Host: www.bing.com[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]
 EOF
 
 read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
