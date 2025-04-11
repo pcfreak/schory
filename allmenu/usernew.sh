@@ -57,15 +57,21 @@ dropbear=$(detect_ports dropbear)
 stunnel=$(detect_ports stunnel)
 ws_tls=$(detect_ports 443)
 ws_http=$(detect_ports 80)
-slowdns=$(ps -ef | grep -w sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
-[[ -z "$slowdns" ]] && slowdns="Tidak terdeteksi"
-ssh_udp=$(ps -ef | grep udp-custom | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-l"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
-[[ -z "$ssh_udp" ]] && ssh_udp="Tidak terdeteksi"
-udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
-[[ -z "$udpgw_ports" ]] && udpgw_ports="Tidak terdeteksi"
 ws_direct=8080
 
-# Fungsi warna port
+# Deteksi SlowDNS
+slowdns=$(ps -ef | grep -w sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
+[[ -z "$slowdns" ]] && slowdns="Tidak terdeteksi"
+
+# Deteksi SSH UDP (udp-custom)
+ssh_udp=$(ps -ef | grep udp-custom | grep -oE -- '-l[[:space:]]?[0-9.:]+' | grep -oE '[0-9]+$' | paste -sd, -)
+[[ -z "$ssh_udp" ]] && ssh_udp="Tidak terdeteksi"
+
+# Deteksi BadVPN UDPGW
+udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
+[[ -z "$udpgw_ports" ]] && udpgw_ports="Tidak terdeteksi"
+
+# Fungsi pewarnaan port
 color_port() {
     local port=$1
     [[ "$port" == "Tidak terdeteksi" ]] && echo -e "${RED}$port${NC}" || echo -e "$port"
@@ -76,12 +82,12 @@ log_color() {
 }
 
 # Proses pembuatan user
-useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
+useradd -e $(date -d "$masaaktif days" +"%Y-%m-%d") -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
 expi=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# Output informasi akun
+# Output terminal
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "\E[44;1;39m            ⇱ INFORMASI AKUN SSH ⇲             \E[0m"
@@ -115,7 +121,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
 
-# Simpan log akun berwarna
+# Simpan log akun
 mkdir -p /etc/klmpk/log-ssh
 cat <<EOF > /etc/klmpk/log-ssh/$Login.txt
 ==== SSH Account ====
