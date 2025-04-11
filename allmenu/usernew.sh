@@ -152,3 +152,6 @@ TCP : http://$IP:81/tcp.ovpn
 UDP : http://$IP:81/udp.ovpn
 SSL : http://$IP:81/ssl.ovpn
 EOF
+
+read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
+/usr/bin/menu
