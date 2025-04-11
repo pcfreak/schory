@@ -521,18 +521,26 @@ case $opsi in
   2)
     systemctl start udp-custom
     echo -e "\nUDP-Custom telah berhasil *dijalankan*."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   3)
     systemctl stop udp-custom
     echo -e "\nUDP-Custom telah berhasil *dihentikan*."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   4)
     systemctl restart udp-custom
     echo -e "\nUDP-Custom telah berhasil *dimuat ulang* (restart)."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   5)
     echo -e "\nStatus UDP-Custom:"
     systemctl status udp-custom --no-pager
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   6) nano /root/udp/config.json ;;
   7)
@@ -540,6 +548,8 @@ case $opsi in
     sed -i "s/\"listen\": \".*\"/\"listen\": \":$new_port\"/" /root/udp/config.json
     systemctl restart udp-custom
     echo "Port berhasil diubah ke $new_port dan service di-restart."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   8)
     echo -e "\n\033[1;36m[•] Menjalankan mode Optimasi Config Otomatis...\033[0m"
@@ -574,6 +584,8 @@ EOF
     echo -e "\033[1;32m[✓] Config berhasil dibuat. Menggunakan port: $selected_port\033[0m"
     systemctl restart udp-custom
     echo -e "\033[1;33m[!] UDP Custom sudah di-restart dengan config baru.\033[0m"
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   9)
     systemctl stop udp-custom
@@ -582,6 +594,8 @@ EOF
     rm -rf /root/udp
     systemctl daemon-reload
     echo -e "\033[1;31m[✓] UDP Custom berhasil dihapus dari sistem.\033[0m"
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    menu_udp_custom
     ;;
   0) menu ;;
   *) echo -e "\033[1;31mOpsi tidak valid!\033[0m"; sleep 1; menu_udp_custom ;;
