@@ -45,8 +45,8 @@ cdndomain=$(cat /root/awscdndomain 2>/dev/null || echo "auto pointing Cloudflare
 slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 
-# Deteksi port otomatis (hindari port kosong)
-function detect_ports() {
+# Deteksi port otomatis
+detect_ports() {
     local pattern="$1"
     local ports=$(netstat -tulpn 2>/dev/null | grep -i "$pattern" | awk '{print $4}' | grep -oE '[0-9]+$' | sort -n | uniq | paste -sd, -)
     [[ -z "$ports" ]] && echo "Tidak terdeteksi" || echo "$ports"
@@ -59,9 +59,21 @@ ws_tls=$(detect_ports 443)
 ws_http=$(detect_ports 80)
 slowdns=$(ps -ef | grep -w sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
 [[ -z "$slowdns" ]] && slowdns="Tidak terdeteksi"
+ssh_udp=$(ps -ef | grep udp-custom | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-l"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
+[[ -z "$ssh_udp" ]] && ssh_udp="Tidak terdeteksi"
 udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
 [[ -z "$udpgw_ports" ]] && udpgw_ports="Tidak terdeteksi"
 ws_direct=8080
+
+# Fungsi warna port
+color_port() {
+    local port=$1
+    [[ "$port" == "Tidak terdeteksi" ]] && echo -e "${RED}$port${NC}" || echo -e "$port"
+}
+log_color() {
+    local port=$1
+    [[ "$port" == "Tidak terdeteksi" ]] && echo -e "\033[1;91m$port\033[0m" || echo "$port"
+}
 
 # Proses pembuatan user
 useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
@@ -86,24 +98,24 @@ echo -e "Cloudflare     : $cdndomain"
 echo -e "PubKey         : $slkey"
 echo -e "Nameserver     : $sldomain"
 echo -e "${LIGHT}===============SERVICE PORT===================="
-echo -e "OpenSSH        : $openssh"
-echo -e "Dropbear       : $dropbear"
-echo -e "SSH UDP        : $udpgw_ports"
-echo -e "STunnel4       : $stunnel"
-echo -e "SlowDNS        : $slowdns"
-echo -e "WS TLS         : $ws_tls"
-echo -e "WS HTTP        : $ws_http"
-echo -e "WS Direct      : $ws_direct"
+echo -e "OpenSSH        : $(color_port "$openssh")"
+echo -e "Dropbear       : $(color_port "$dropbear")"
+echo -e "SSH UDP        : $(color_port "$ssh_udp")"
+echo -e "STunnel4       : $(color_port "$stunnel")"
+echo -e "SlowDNS        : $(color_port "$slowdns")"
+echo -e "WS TLS         : $(color_port "$ws_tls")"
+echo -e "WS HTTP        : $(color_port "$ws_http")"
+echo -e "WS Direct      : $(color_port "$ws_direct")"
+echo -e "BadVPN UDPGW   : $(color_port "$udpgw_ports")"
 echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
-echo -e "BadVPN UDPGW   : $udpgw_ports"
 echo -e "Squid Proxy    : [ON]"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
 
-# Simpan log akun
+# Simpan log akun berwarna
 mkdir -p /etc/klmpk/log-ssh
 cat <<EOF > /etc/klmpk/log-ssh/$Login.txt
 ==== SSH Account ====
@@ -118,6 +130,17 @@ IP       : $IP
 Domain   : $domain
 PubKey   : $slkey
 NS       : $sldomain
+
+==== Service Ports ====
+OpenSSH      : $(log_color "$openssh")
+Dropbear     : $(log_color "$dropbear")
+SSH UDP      : $(log_color "$ssh_udp")
+STunnel4     : $(log_color "$stunnel")
+SlowDNS      : $(log_color "$slowdns")
+WS TLS       : $(log_color "$ws_tls")
+WS HTTP      : $(log_color "$ws_http")
+WS Direct    : $(log_color "$ws_direct")
+BadVPN UDPGW : $(log_color "$udpgw_ports")
 
 ==== OpenVPN ====
 TCP : http://$IP:81/tcp.ovpn
