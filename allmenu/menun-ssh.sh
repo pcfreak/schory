@@ -426,6 +426,85 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function lock_unlock_ssh() {
+    clear
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "          MENU LOCK / UNLOCK AKUN SSH"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " 1) Lock Akun SSH"
+    echo -e " 2) Unlock Akun SSH"
+    echo -e " 3) Cek Status Akun SSH"
+    echo -e " 0) Kembali"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    read -p "Pilih opsi: " opt
+    case $opt in
+        1)
+            clear
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "                LOCK AKUN SSH"
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            read -p "Masukkan Username : " user
+            if id "$user" &>/dev/null; then
+                status=$(passwd -S "$user" | awk '{print $2}')
+                if [[ $status == "L" ]]; then
+                    echo -e "${RED}[INFO]${NC} Akun '$user' sudah terkunci."
+                else
+                    usermod -L "$user"
+                    echo -e "${GREEN}[INFO]${NC} Akun '$user' berhasil di-${RED}LOCK${NC}."
+                fi
+            else
+                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
+            fi
+            ;;
+        2)
+            clear
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "               UNLOCK AKUN SSH"
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            read -p "Masukkan Username : " user
+            if id "$user" &>/dev/null; then
+                status=$(passwd -S "$user" | awk '{print $2}')
+                if [[ $status == "P" ]]; then
+                    echo -e "${GREEN}[INFO]${NC} Akun '$user' sudah aktif."
+                else
+                    usermod -U "$user"
+                    echo -e "${GREEN}[INFO]${NC} Akun '$user' berhasil di-${GREEN}UNLOCK${NC}."
+                fi
+            else
+                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
+            fi
+            ;;
+        3)
+            clear
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "              CEK STATUS AKUN SSH"
+            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            read -p "Masukkan Username : " user
+            if id "$user" &>/dev/null; then
+                status=$(passwd -S "$user" | awk '{print $2}')
+                if [[ $status == "L" ]]; then
+                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${RED}TERKUNCI${NC}"
+                elif [[ $status == "P" ]]; then
+                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${GREEN}AKTIF${NC}"
+                else
+                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${YELLOW}UNKNOWN ($status)${NC}"
+                fi
+            else
+                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
+            fi
+            ;;
+        0)
+            menu-ssh
+            return
+            ;;
+        *)
+            echo -e "${RED}Pilihan tidak valid!${NC}"
+            ;;
+    esac
+    echo ""
+    read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
+    lock_unlock_ssh
+}
 function menu_udp_custom() {
 clear
 echo -e "\033[1;36m========== MENU UDP CUSTOM ==========\033[0m"
@@ -517,7 +596,8 @@ echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
 echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
 echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
 echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Cek ssh usr limit"
-echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Install SSH UDP Custom"
+echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Lock / Unlock Akun SSH"
+echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Install SSH UDP Custom"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -536,7 +616,8 @@ case $opt in
 8) clear ; member ;;
 9) clear ; trialssh ;;
 10) clear ; ceklimit ;;
-11) clear ; menu_udp_custom ;;
+11) clear ; lock_unlock_ssh ;;
+12) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
 x) exit ;;
 *) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
