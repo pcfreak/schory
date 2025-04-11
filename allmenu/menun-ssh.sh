@@ -488,7 +488,7 @@ function lock_unlock_ssh() {
             done < /etc/passwd
             ;;
         x)
-            menu-ssh
+            menun-ssh
             ;;
         *)
             echo -e "${RED}Opsi tidak valid!${NC}"
