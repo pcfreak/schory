@@ -539,8 +539,6 @@ case $opsi in
   5)
     echo -e "\nStatus UDP-Custom:"
     systemctl status udp-custom --no-pager
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
-    menu_udp_custom
     ;;
   6) nano /root/udp/config.json ;;
   7)
