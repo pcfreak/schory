@@ -57,21 +57,20 @@ dropbear=$(detect_ports dropbear)
 stunnel=$(detect_ports stunnel)
 ws_tls=$(detect_ports 443)
 ws_http=$(detect_ports 80)
-ws_direct=8080
 
-# Deteksi SlowDNS
 slowdns=$(ps -ef | grep -w sldns | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="-udp"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
 [[ -z "$slowdns" ]] && slowdns="Tidak terdeteksi"
 
-# Deteksi SSH UDP (udp-custom)
-ssh_udp=$(ps -ef | grep udp-custom | grep -oE -- '-l[[:space:]]?[0-9.:]+' | grep -oE '[0-9]+$' | paste -sd, -)
+ssh_udp=$(ss -ulnpt | grep udp-custom | awk '{print $5}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
+[[ -z "$ssh_udp" ]] && ssh_udp=$(lsof -nP -iUDP | grep udp-custom | awk '{print $9}' | cut -d: -f2 | sort -n | uniq | paste -sd, -)
 [[ -z "$ssh_udp" ]] && ssh_udp="Tidak terdeteksi"
 
-# Deteksi BadVPN UDPGW
 udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if($i=="--listen-addr"){print $(i+1)}}}' | cut -d: -f2 | paste -sd, -)
 [[ -z "$udpgw_ports" ]] && udpgw_ports="Tidak terdeteksi"
 
-# Fungsi pewarnaan port
+ws_direct=8080
+
+# Fungsi warna port
 color_port() {
     local port=$1
     [[ "$port" == "Tidak terdeteksi" ]] && echo -e "${RED}$port${NC}" || echo -e "$port"
@@ -82,12 +81,12 @@ log_color() {
 }
 
 # Proses pembuatan user
-useradd -e $(date -d "$masaaktif days" +"%Y-%m-%d") -s /bin/false -M $Login
+useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
 expi=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# Output terminal
+# Output informasi akun
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "\E[44;1;39m            ⇱ INFORMASI AKUN SSH ⇲             \E[0m"
@@ -121,7 +120,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
 
-# Simpan log akun
+# Simpan log akun berwarna
 mkdir -p /etc/klmpk/log-ssh
 cat <<EOF > /etc/klmpk/log-ssh/$Login.txt
 ==== SSH Account ====
