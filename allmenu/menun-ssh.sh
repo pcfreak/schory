@@ -595,7 +595,7 @@ echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Install / Unistall SSH UDP Custom
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
-echo -e "     ${BIYellow}Press x or [ Ctrl+C ] • To-${BIWhite}Exit${NC}"
+echo -e "     ${BIYellow}tekan enter / 0 • To-${BIWhite}Exit${NC}"
 echo ""
 read -p " Select menu : " opt
 echo -e ""
@@ -613,6 +613,5 @@ case $opt in
 11) clear ; lock_unlock_ssh ;;
 12) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
-x) exit ;;
-*) echo -e "" ; echo "Press any key to back on menu" ; sleep 1 ; menu ;;
+*) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
 esac
