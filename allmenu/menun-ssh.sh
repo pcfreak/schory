@@ -428,15 +428,15 @@ menu
 }
 function lock_unlock_ssh() {
     clear
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "\E[44;1;39m        ⇱ LOCK & UNLOCK AKUN SSH ⇲             \E[0m"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "\E[44;1;39m                    ⇱ LOCK & UNLOCK SSH ⇲                     \E[0m"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e " [1] Kunci akun SSH"
     echo -e " [2] Buka kunci akun SSH"
-    echo -e " [3] List akun terkunci"
-    echo -e " [4] List akun tidak terkunci"
+    echo -e " [3] List akun terkunci ${RED}(Status: LOCKED)${NC}"
+    echo -e " [4] List akun tidak terkunci ${GREEN}(Status: UNLOCKED)${NC}"
     echo -e " [x] Kembali"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     read -p " Pilih opsi : " lockopt
     echo ""
 
@@ -460,26 +460,30 @@ function lock_unlock_ssh() {
             fi
             ;;
         3)
-            echo -e "${CYAN}Daftar akun terkunci:${NC}"
-            echo -e "${LIGHT}Username       Expired${NC}"
-            echo -e "${LIGHT}-----------------------------${NC}"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "                  ${LIGHT}DAFTAR AKUN TERKUNCI (LOCKED)${NC}"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            printf "%-20s %-25s %-20s\n" "Username" "Expired Date" "Status"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
             while IFS=: read -r user _ uid _ _ _ shell; do
                 [[ $uid -ge 1000 && $shell == "/bin/false" ]] || continue
                 if passwd -S "$user" | grep -q "L"; then
-                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2)
-                    echo -e "$user      $exp"
+                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2- | xargs)
+                    printf "%-20s %-25s ${RED}%-20s${NC}\n" "$user" "$exp" "LOCKED"
                 fi
             done < /etc/passwd
             ;;
         4)
-            echo -e "${CYAN}Daftar akun tidak terkunci:${NC}"
-            echo -e "${LIGHT}Username       Expired${NC}"
-            echo -e "${LIGHT}-----------------------------${NC}"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "               ${LIGHT}DAFTAR AKUN TIDAK TERKUNCI (UNLOCKED)${NC}"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            printf "%-20s %-25s %-20s\n" "Username" "Expired Date" "Status"
+            echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
             while IFS=: read -r user _ uid _ _ _ shell; do
                 [[ $uid -ge 1000 && $shell == "/bin/false" ]] || continue
                 if passwd -S "$user" | grep -q "P"; then
-                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2)
-                    echo -e "$user      $exp"
+                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2- | xargs)
+                    printf "%-20s %-25s ${GREEN}%-20s${NC}\n" "$user" "$exp" "UNLOCKED"
                 fi
             done < /etc/passwd
             ;;
