@@ -503,14 +503,15 @@ function menu_udp_custom() {
 clear
 echo -e "\033[1;36m========== MENU UDP CUSTOM ==========\033[0m"
 echo -e "1. Install UDP Custom"
-echo -e "2. Start UDP Custom"
-echo -e "3. Stop UDP Custom"
-echo -e "4. Restart UDP Custom"
-echo -e "5. Status UDP Custom"
-echo -e "6. Edit Config UDP Custom (manual)"
-echo -e "7. Ubah Port UDP Custom (otomatis)"
-echo -e "8. Optimize Config Otomatis (auto port & setting)"
-echo -e "9. Uninstall UDP Custom"
+echo -e "2. Start UDP-Custom"
+echo -e "3. Stop UDP-Custom"
+echo -e "4. Restart UDP-Custom"
+echo -e "5. Status & Log Terakhir"
+echo -e "6. Log Realtime (tekan CTRL+C untuk keluar)"
+echo -e "7. Edit Config UDP Custom (manual)"
+echo -e "8. Ubah Port UDP Custom (otomatis)"
+echo -e "9. Optimize Config Otomatis (auto port & setting)"
+echo -e "10. Uninstall UDP Custom"
 echo -e "0. Kembali ke menu utama"
 echo -ne "\nPilih opsi: "; read opsi
 
@@ -520,36 +521,54 @@ case $opsi in
     ;;
   2)
     systemctl start udp-custom
-    echo -e "\nUDP-Custom telah berhasil *dijalankan*."
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    echo -e "\n\e[32mUDP-Custom berhasil dijalankan\e[0m."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
   3)
     systemctl stop udp-custom
-    echo -e "\nUDP-Custom telah berhasil *dihentikan*."
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    echo -e "\n\e[31mUDP-Custom berhasil dihentikan\e[0m."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
   4)
     systemctl restart udp-custom
-    echo -e "\nUDP-Custom telah berhasil *dimuat ulang* (restart)."
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    echo -e "\n\e[33mUDP-Custom berhasil direstart\e[0m."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
   5)
-    echo -e "\nStatus UDP-Custom:"
-    systemctl status udp-custom --no-pager
+    echo -e "\nStatus Layanan:\n"
+    systemctl status udp-custom | head -n 10
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
+    menu_udp_custom
     ;;
-  6) nano /root/udp/config.json ;;
-  7)
+  6)
+    echo -e "\nLog Realtime:\n"
+    journalctl -u udp-custom -f --output=short-iso | awk '
+    {
+      if ($0 ~ /INFO|started|running|connected/) {
+        print "\033[32m" $0 "\033[0m"
+      } else if ($0 ~ /WARN|WARNING/) {
+        print "\033[33m" $0 "\033[0m"
+      } else if ($0 ~ /ERROR|FAIL/) {
+        print "\033[31m" $0 "\033[0m"
+      } else {
+        print $0
+      }
+    }'
+    menu_udp_custom
+    ;;
+  7) nano /root/udp/config.json ;;
+  8)
     read -p "Masukkan port baru untuk UDP Custom: " new_port
     sed -i "s/\"listen\": \".*\"/\"listen\": \":$new_port\"/" /root/udp/config.json
     systemctl restart udp-custom
     echo "Port berhasil diubah ke $new_port dan service di-restart."
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
-  8)
+  9)
     echo -e "\n\033[1;36m[•] Menjalankan mode Optimasi Config Otomatis...\033[0m"
     ports=(7300 2080 44818 33434 65000 123 443 53)
     for port in "${ports[@]}"; do
@@ -582,17 +601,17 @@ EOF
     echo -e "\033[1;32m[✓] Config berhasil dibuat. Menggunakan port: $selected_port\033[0m"
     systemctl restart udp-custom
     echo -e "\033[1;33m[!] UDP Custom sudah di-restart dengan config baru.\033[0m"
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
-  9)
+  10)
     systemctl stop udp-custom
     systemctl disable udp-custom
     rm -f /etc/systemd/system/udp-custom.service
     rm -rf /root/udp
     systemctl daemon-reload
     echo -e "\033[1;31m[✓] UDP Custom berhasil dihapus dari sistem.\033[0m"
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp custom..."
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu udp..."
     menu_udp_custom
     ;;
   0) menu ;;
