@@ -428,79 +428,69 @@ menu
 }
 function lock_unlock_ssh() {
     clear
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "          MENU LOCK / UNLOCK AKUN SSH"
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e " 1) Lock Akun SSH"
-    echo -e " 2) Unlock Akun SSH"
-    echo -e " 3) Cek Status Akun SSH"
-    echo -e " 0) Kembali"
-    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    read -p "Pilih opsi: " opt
-    case $opt in
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "\E[44;1;39m        ⇱ LOCK & UNLOCK AKUN SSH ⇲             \E[0m"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " [1] Kunci akun SSH"
+    echo -e " [2] Buka kunci akun SSH"
+    echo -e " [3] List akun terkunci"
+    echo -e " [4] List akun tidak terkunci"
+    echo -e " [x] Kembali"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    read -p " Pilih opsi : " lockopt
+    echo ""
+
+    case $lockopt in
         1)
-            clear
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "                LOCK AKUN SSH"
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            read -p "Masukkan Username : " user
-            if id "$user" &>/dev/null; then
-                status=$(passwd -S "$user" | awk '{print $2}')
-                if [[ $status == "L" ]]; then
-                    echo -e "${RED}[INFO]${NC} Akun '$user' sudah terkunci."
-                else
-                    usermod -L "$user"
-                    echo -e "${GREEN}[INFO]${NC} Akun '$user' berhasil di-${RED}LOCK${NC}."
-                fi
+            read -p "Masukkan username yang ingin dikunci: " userlock
+            if id "$userlock" &>/dev/null; then
+                passwd -l "$userlock"
+                echo -e "${YELLOW}Akun '$userlock' berhasil dikunci.${NC}"
             else
-                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
+                echo -e "${RED}Username '$userlock' tidak ditemukan!${NC}"
             fi
             ;;
         2)
-            clear
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "               UNLOCK AKUN SSH"
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            read -p "Masukkan Username : " user
-            if id "$user" &>/dev/null; then
-                status=$(passwd -S "$user" | awk '{print $2}')
-                if [[ $status == "P" ]]; then
-                    echo -e "${GREEN}[INFO]${NC} Akun '$user' sudah aktif."
-                else
-                    usermod -U "$user"
-                    echo -e "${GREEN}[INFO]${NC} Akun '$user' berhasil di-${GREEN}UNLOCK${NC}."
-                fi
+            read -p "Masukkan username yang ingin dibuka kuncinya: " userunlock
+            if id "$userunlock" &>/dev/null; then
+                passwd -u "$userunlock"
+                echo -e "${YELLOW}Akun '$userunlock' berhasil dibuka kuncinya.${NC}"
             else
-                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
+                echo -e "${RED}Username '$userunlock' tidak ditemukan!${NC}"
             fi
             ;;
         3)
-            clear
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            echo -e "              CEK STATUS AKUN SSH"
-            echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-            read -p "Masukkan Username : " user
-            if id "$user" &>/dev/null; then
-                status=$(passwd -S "$user" | awk '{print $2}')
-                if [[ $status == "L" ]]; then
-                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${RED}TERKUNCI${NC}"
-                elif [[ $status == "P" ]]; then
-                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${GREEN}AKTIF${NC}"
-                else
-                    echo -e "${CYAN}[INFO]${NC} Status akun '$user': ${YELLOW}UNKNOWN ($status)${NC}"
+            echo -e "${CYAN}Daftar akun terkunci:${NC}"
+            echo -e "${LIGHT}Username       Expired${NC}"
+            echo -e "${LIGHT}-----------------------------${NC}"
+            while IFS=: read -r user _ uid _ _ _ shell; do
+                [[ $uid -ge 1000 && $shell == "/bin/false" ]] || continue
+                if passwd -S "$user" | grep -q "L"; then
+                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2)
+                    echo -e "$user      $exp"
                 fi
-            else
-                echo -e "${RED}[ERROR]${NC} Username '$user' tidak ditemukan."
-            fi
+            done < /etc/passwd
             ;;
-        0)
+        4)
+            echo -e "${CYAN}Daftar akun tidak terkunci:${NC}"
+            echo -e "${LIGHT}Username       Expired${NC}"
+            echo -e "${LIGHT}-----------------------------${NC}"
+            while IFS=: read -r user _ uid _ _ _ shell; do
+                [[ $uid -ge 1000 && $shell == "/bin/false" ]] || continue
+                if passwd -S "$user" | grep -q "P"; then
+                    exp=$(chage -l "$user" | grep "Account expires" | cut -d: -f2)
+                    echo -e "$user      $exp"
+                fi
+            done < /etc/passwd
+            ;;
+        x)
             menu-ssh
-            return
             ;;
         *)
-            echo -e "${RED}Pilihan tidak valid!${NC}"
+            echo -e "${RED}Opsi tidak valid!${NC}"
             ;;
     esac
+
     echo ""
     read -n 1 -s -r -p "Tekan ENTER untuk kembali..."
     lock_unlock_ssh
