@@ -24,8 +24,8 @@ read -p " Expired (Days)  : " masaaktif
 if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" || -z "$kuotagb" ]]; then
     echo -e "${RED}[ERROR]${NC} Semua input harus diisi!"
     exit 1
-elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotagb" =~ ^[0-9]+$ ]]; then
-    echo -e "${RED}[ERROR]${NC} Limit IP, Kuota, dan Expired harus berupa angka!"
+elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotagb" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    echo -e "${RED}[ERROR]${NC} Limit IP dan Masa Aktif harus berupa angka bulat, Kuota boleh desimal (misal: 0.01 untuk 10MB)"
     exit 1
 fi
 
