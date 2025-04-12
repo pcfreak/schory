@@ -35,13 +35,25 @@ if id "$Login" &>/dev/null; then
     exit 1
 fi
 
+# =======================
 # Simpan Limit IP & Kuota
-mkdir -p /etc/klmpk/limit/ssh/ip
-mkdir -p /etc/klmpk/limit/ssh/kuota
+# =======================
+
+# Buat direktori penyimpanan limit IP jika belum ada
+mkdir -p /etc/klmpk/limit/ssh/ip/
+# Simpan limit jumlah IP login untuk user ini
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
+
+# Buat direktori penyimpanan kuota jika belum ada
+mkdir -p /etc/klmpk/limit/ssh/kuota/
+# Simpan limit kuota dalam satuan GB (untuk ditampilkan ke user)
 echo "$kuotagb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
+
+# Konversi kuota dari GB ke Byte (1 GB = 1024 x 1024 x 1024 byte)
 kuotabyte=$((kuotagb * 1024 * 1024 * 1024))
+# Simpan limit kuota dalam satuan byte (digunakan oleh monitor-kuota.sh)
 echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit-byte
+
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
