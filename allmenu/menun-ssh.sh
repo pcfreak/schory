@@ -518,16 +518,6 @@ echo -ne "\nPilih opsi: "; read opsi
 case $opsi in
   1)
     bash <(curl -sL https://raw.githubusercontent.com/kanghory/UDP-Custom/main/udp-custom.sh)
-    clear
-    read -p "Reboot now? [y/n]: " yn
-    if [[ "$yn" == "y" || "$yn" == "Y" ]]; then
-        reboot
-    else
-        echo ""
-        read -p "Tekan Enter untuk kembali ke menu utama..." enter
-        clear
-        bash /usr/bin/menu.sh
-    fi
     ;;
   2)
     systemctl start udp-custom
