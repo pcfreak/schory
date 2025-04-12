@@ -49,11 +49,11 @@ mkdir -p /etc/klmpk/limit/ssh/kuota/
 # Simpan limit kuota dalam satuan GB (untuk ditampilkan ke user)
 echo "$kuotagb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
-# Konversi kuota dari GB ke Byte (1 GB = 1024 x 1024 x 1024 byte)
-kuotabyte=$((kuotagb * 1024 * 1024 * 1024))
+# Konversi kuota dari GB ke Byte, mendukung input desimal (misal: 0.01 GB = 10 MB)
+# Menggunakan bc untuk perhitungan desimal dan awk untuk membulatkan ke byte
+kuotabyte=$(echo "$kuotagb * 1024 * 1024 * 1024" | bc | awk '{printf "%.0f", $1}')
 # Simpan limit kuota dalam satuan byte (digunakan oleh monitor-kuota.sh)
-echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit-byte
-
+echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
