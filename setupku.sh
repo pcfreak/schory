@@ -283,7 +283,7 @@ systemctl start vnstat
 # Download script monitor-kuota.sh
 echo "Mengunduh script monitor-kuota..."
 wget -O /usr/local/bin/monitor-kuota.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-kuota.sh
-chmod +x /usr/local/bin/monitor-kuota
+chmod +x /usr/local/bin/monitor-kuota.sh
 
 # Mengunduh file monitor-kuota.service dan monitor-kuota.timer dari GitHub
 echo "Mengunduh file monitor-kuota.service dan monitor-kuota.timer..."
@@ -298,6 +298,10 @@ systemctl daemon-reload
 echo "Mengaktifkan dan memulai monitor-kuota.timer..."
 systemctl enable monitor-kuota.timer
 systemctl start monitor-kuota.timer
+
+#restart monitor-kuota
+systemctl daemon-reload
+systemctl restart monitor-kuota.service
 
 # Proses setup selesai
 echo "Setup Limit Kuota SSH selesai."
