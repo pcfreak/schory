@@ -17,14 +17,15 @@ echo -e "${YELLOW}---------------------------------------------------${NC}"
 read -p " Username        : " Login
 read -p " Password        : " Pass
 read -p " Limit IP        : " iplimit
+read -p " Limit Kuota (GB): " kuotagb
 read -p " Expired (Days)  : " masaaktif
 
 # Validasi input
-if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" ]]; then
+if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" || -z "$kuotagb" ]]; then
     echo -e "${RED}[ERROR]${NC} Semua input harus diisi!"
     exit 1
-elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ ]]; then
-    echo -e "${RED}[ERROR]${NC} Limit IP dan Expired harus berupa angka!"
+elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotagb" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}[ERROR]${NC} Limit IP, Kuota, dan Expired harus berupa angka!"
     exit 1
 fi
 
@@ -34,9 +35,13 @@ if id "$Login" &>/dev/null; then
     exit 1
 fi
 
-# Simpan Limit IP
-mkdir -p /etc/klmpk/limit/ssh/ip/
+# Simpan Limit IP & Kuota
+mkdir -p /etc/klmpk/limit/ssh/ip
+mkdir -p /etc/klmpk/limit/ssh/kuota
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
+echo "$kuotagb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
+kuotabyte=$((kuotagb * 1024 * 1024 * 1024))
+echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit-byte
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
@@ -70,7 +75,6 @@ udpgw_ports=$(ps -ef | grep badvpn | grep -v grep | awk '{for(i=1;i<=NF;i++){if(
 
 ws_direct=8080
 
-# Fungsi warna port
 color_port() {
     local port=$1
     [[ "$port" == "Tidak terdeteksi" ]] && echo -e "${RED}$port${NC}" || echo -e "$port"
@@ -80,7 +84,7 @@ log_color() {
     [[ "$port" == "Tidak terdeteksi" ]] && echo -e "\033[1;91m$port\033[0m" || echo "$port"
 }
 
-# Proses pembuatan user
+# Tambah user
 useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
@@ -96,6 +100,7 @@ echo -e "Password       : $Pass"
 echo -e "Created        : $hariini"
 echo -e "Expired        : $expi"
 echo -e "Limit IP       : $iplimit"
+echo -e "Limit Kuota    : $kuotagb GB"
 echo -e "${LIGHT}=================HOST-SSH======================"
 echo -e "IP/Host        : $IP"
 echo -e "Domain SSH     : $domain"
@@ -132,7 +137,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "       Script by kanghoryVPN"
 echo -e "${LIGHT}================================================${NC}"
 
-# Simpan log akun berwarna
+# Simpan log akun
 mkdir -p /etc/klmpk/log-ssh
 cat <<EOF > /etc/klmpk/log-ssh/$Login.txt
 ==== SSH Account ====
@@ -141,6 +146,7 @@ Password : $Pass
 Created  : $hariini
 Expired  : $expi
 Limit IP : $iplimit
+Limit Kuota : $kuotagb GB
 
 ==== Host ====
 IP       : $IP
@@ -149,15 +155,15 @@ PubKey   : $slkey
 NS       : $sldomain
 
 ==== Service Ports ====
-OpenSSH      : $(log_color "$openssh")
-Dropbear     : $(log_color "$dropbear")
-SSH UDP      : $(log_color "$ssh_udp")
-STunnel4     : $(log_color "$stunnel")
-SlowDNS      : $(log_color "$slowdns")
-WS TLS       : $(log_color "$ws_tls")
-WS HTTP      : $(log_color "$ws_http")
-WS Direct    : $(log_color "$ws_direct")
-BadVPN UDPGW : $(log_color "$udpgw_ports")
+OpenSSH      : $openssh
+Dropbear     : $dropbear
+SSH UDP      : $ssh_udp
+STunnel4     : $stunnel
+SlowDNS      : $slowdns
+WS TLS       : $ws_tls
+WS HTTP      : $ws_http
+WS Direct    : $ws_direct
+BadVPN UDPGW : $udpgw_ports
 
 ==== OpenVPN ====
 TCP : http://$IP:81/tcp.ovpn
@@ -177,6 +183,10 @@ GET wss://$domain/ HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crl
 Payload CDN (Fake Host) :
 GET / HTTP/1.1[crlf]Host: www.bing.com[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]
 EOF
+
+# Restart monitor-kuota service
+echo -e "${YELLOW}[INFO]${NC} Restarting monitor-kuota.service untuk memantau kuota user baru..."
+systemctl restart monitor-kuota.service
 
 read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
 /usr/bin/menu
