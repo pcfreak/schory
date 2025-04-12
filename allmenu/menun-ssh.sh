@@ -525,7 +525,7 @@ case $opsi in
         echo ""
         read -p "Tekan Enter untuk kembali ke menu utama..." enter
         clear
-        bash /usr/bin/menun-ssh.sh
+        bash /usr/bin/menu.sh
     fi
     ;;
   2)
