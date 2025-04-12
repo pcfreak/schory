@@ -282,7 +282,7 @@ systemctl start vnstat
 
 # Download script monitor-kuota.sh
 echo "Mengunduh script monitor-kuota..."
-wget -O /usr/local/bin/monitor-kuota https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-kuota.sh
+wget -O /usr/local/bin/monitor-kuota.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-kuota.sh
 chmod +x /usr/local/bin/monitor-kuota
 
 # Mengunduh file monitor-kuota.service dan monitor-kuota.timer dari GitHub
