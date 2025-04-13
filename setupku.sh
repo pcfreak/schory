@@ -303,6 +303,12 @@ systemctl start monitor-kuota.timer
 systemctl daemon-reload
 systemctl restart monitor-kuota.service
 
+# Mengaktifkan , restart memulai timer untuk monitoring kuota
+systemctl daemon-reload
+systemctl restart monitor-kuota.timer
+systemctl enable monitor-kuota.timer
+
+
 # Proses setup selesai
 echo "Setup Limit Kuota SSH selesai."
 
