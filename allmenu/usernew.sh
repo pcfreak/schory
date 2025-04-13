@@ -17,15 +17,15 @@ echo -e "${YELLOW}---------------------------------------------------${NC}"
 read -p " Username        : " Login
 read -p " Password        : " Pass
 read -p " Limit IP        : " iplimit
-read -p " Limit Kuota (GB): " kuotagb
+read -p " Limit Kuota (MB): " kuotamb
 read -p " Expired (Days)  : " masaaktif
 
 # Validasi input
-if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" || -z "$kuotagb" ]]; then
+if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" || -z "$kuotamb" ]]; then
     echo -e "${RED}[ERROR]${NC} Semua input harus diisi!"
     exit 1
-elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotagb" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-    echo -e "${RED}[ERROR]${NC} Limit IP dan Masa Aktif harus berupa angka bulat, Kuota boleh desimal (misal: 0.01 untuk 10MB)"
+elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotamb" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}[ERROR]${NC} Limit IP, Kuota, dan Expired harus berupa angka!"
     exit 1
 fi
 
@@ -39,20 +39,14 @@ fi
 # Simpan Limit IP & Kuota
 # =======================
 
-# Buat direktori penyimpanan limit IP jika belum ada
 mkdir -p /etc/klmpk/limit/ssh/ip/
-# Simpan limit jumlah IP login untuk user ini
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
 
-# Buat direktori penyimpanan kuota jika belum ada
 mkdir -p /etc/klmpk/limit/ssh/kuota/
-# Simpan limit kuota dalam satuan GB (untuk ditampilkan ke user)
-echo "$kuotagb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
+echo "$kuotamb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
-# Konversi kuota dari GB ke Byte, mendukung input desimal (misal: 0.01 GB = 10 MB)
-# Menggunakan bc untuk perhitungan desimal dan awk untuk membulatkan ke byte
-kuotabyte=$(echo "$kuotagb * 1024 * 1024 * 1024" | bc | awk '{printf "%.0f", $1}')
-# Simpan limit kuota dalam satuan byte (digunakan oleh monitor-kuota.sh)
+# Konversi MB ke byte
+kuotabyte=$(echo "$kuotamb * 1024 * 1024" | bc | awk '{printf "%.0f", $1}')
 echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
 # Load data sistem
@@ -62,7 +56,6 @@ cdndomain=$(cat /root/awscdndomain 2>/dev/null || echo "auto pointing Cloudflare
 slkey=$(cat /etc/slowdns/server.pub)
 IP=$(wget -qO- ipinfo.io/ip)
 
-# Deteksi port otomatis
 detect_ports() {
     local pattern="$1"
     local ports=$(netstat -tulpn 2>/dev/null | grep -i "$pattern" | awk '{print $4}' | grep -oE '[0-9]+$' | sort -n | uniq | paste -sd, -)
@@ -91,10 +84,6 @@ color_port() {
     local port=$1
     [[ "$port" == "Tidak terdeteksi" ]] && echo -e "${RED}$port${NC}" || echo -e "$port"
 }
-log_color() {
-    local port=$1
-    [[ "$port" == "Tidak terdeteksi" ]] && echo -e "\033[1;91m$port\033[0m" || echo "$port"
-}
 
 # Tambah user
 useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
@@ -102,7 +91,7 @@ echo -e "$Pass\n$Pass\n" | passwd $Login &> /dev/null
 hariini=$(date +%Y-%m-%d)
 expi=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# Output informasi akun
+# Output
 clear
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "\E[44;1;39m            ⇱ INFORMASI AKUN SSH ⇲             \E[0m"
@@ -112,7 +101,7 @@ echo -e "Password       : $Pass"
 echo -e "Created        : $hariini"
 echo -e "Expired        : $expi"
 echo -e "Limit IP       : $iplimit"
-echo -e "Limit Kuota    : $kuotagb GB"
+echo -e "Limit Kuota    : $kuotamb MB"
 echo -e "${LIGHT}=================HOST-SSH======================"
 echo -e "IP/Host        : $IP"
 echo -e "Domain SSH     : $domain"
@@ -132,7 +121,6 @@ echo -e "BadVPN UDPGW   : $(color_port "$udpgw_ports")"
 echo -e "OpenVPN TCP    : http://$IP:81/tcp.ovpn"
 echo -e "OpenVPN UDP    : http://$IP:81/udp.ovpn"
 echo -e "OpenVPN SSL    : http://$IP:81/ssl.ovpn"
-echo -e "Squid Proxy    : [ON]"
 echo -e "${LIGHT}=============Payload HTTP Custom=============="
 echo -e "Payload WS TLS (Cloudflare) :"
 echo -e "GET / HTTP/1.1[crlf]Host: $domain[crlf]Upgrade: websocket[crlf][crlf]"
@@ -158,7 +146,7 @@ Password : $Pass
 Created  : $hariini
 Expired  : $expi
 Limit IP : $iplimit
-Limit Kuota : $kuotagb GB
+Limit Kuota : $kuotamb MB
 
 ==== Host ====
 IP       : $IP
