@@ -7,7 +7,10 @@ LOG_FILE="/var/log/limit-kuota.log"
 # Pastikan direktori kuota ada
 [[ ! -d "$KUOTA_DIR" ]] && exit 1
 
-# Fungsi untuk dapatkan total data RX+TX user dari /proc/$pid/net/dev
+# Logging waktu eksekusi
+echo "$(date '+%F %T') - monitor-kuota.sh dijalankan" >> "$LOG_FILE"
+
+# Fungsi untuk dapatkan total data RX+TX user dari /proc
 get_usage_bytes() {
     user="$1"
     total=0
@@ -18,13 +21,13 @@ get_usage_bytes() {
                 rx=$(echo "$line" | awk -F: '{print $2}' | awk '{print $1}')
                 tx=$(echo "$line" | awk -F: '{print $2}' | awk '{print $9}')
                 total=$((total + rx + tx))
-            done < /proc/$pid/net/dev 2>/dev/null
+            done < "/proc/$pid/net/dev" 2>/dev/null
         fi
     done
     echo "$total"
 }
 
-# Proses semua user yang punya file limit
+# Loop pengecekan
 for file in "$KUOTA_DIR"/*-limit; do
     user=$(basename "$file" | cut -d'-' -f1)
     [[ -z "$user" ]] && continue
@@ -44,6 +47,6 @@ for file in "$KUOTA_DIR"/*-limit; do
     if [[ "$total_usage" -ge "$limit" ]]; then
         pkill -KILL -u "$user"
         usermod -L "$user"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - User '$user' melebihi kuota ($total_usage / $limit bytes) - akun dikunci" >> "$LOG_FILE"
+        echo "$(date '+%F %T') - User '$user' melebihi kuota ($total_usage / $limit bytes) - akun dikunci" >> "$LOG_FILE"
     fi
 done
