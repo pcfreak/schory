@@ -282,8 +282,16 @@ if [[ -z "$ip_limit" || ! "$ip_limit" =~ ^[0-9]+$ ]]; then
   return
 fi
 
+# Cek jika direktori untuk user sudah ada, jika belum buat
+if [ ! -d "/etc/klmpk/limit/vmess/ip/$user" ]; then
+  mkdir -p "/etc/klmpk/limit/vmess/ip/$user"
+fi
+
 # Save limit IP
-echo "$ip_limit" > "/etc/klmpk/limit/ssh/ip/$user"
+echo "$ip_limit" > "/etc/klmpk/limit/vmess/ip/$user/limit.txt"
+
+# Feedback
+echo -e "$COLOR1│${NC} [Info] IP limit for user $user has been set to $ip_limit"
 
 # Add VMess to config
 sed -i '/#vmess$/a\### '"$user $exp"'\
