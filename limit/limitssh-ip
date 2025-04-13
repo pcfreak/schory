@@ -1,5 +1,21 @@
 #!/bin/bash
 export TERM=xterm
+config_path="/etc/klmpk/limit/ssh"
+enabled_file="$config_path/enabled"
+duration_file="$config_path/lock_duration"
+
+# Cek apakah limit IP aktif
+if [[ ! -f "$enabled_file" ]]; then
+    exit 0
+fi
+
+# Baca durasi penguncian (default 15 menit jika tidak ada)
+if [[ -f "$duration_file" ]]; then
+    lock_duration=$(cat "$duration_file")
+else
+    lock_duration=15
+fi
+
 function send_log() {
     CHATID=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 3)
     KEY=$(grep -E "^#bot# " "/etc/bot/.bot.db" | cut -d ' ' -f 2)
@@ -12,35 +28,26 @@ function send_log() {
 <code>Username          : </code><code>$user</code>
 <code>Limit IP            : </code><code>${iplimit}</code>
 <code>User Login         : </code><code>${cekcek}</code>
-<code>Akun Locked       : </code><code>15 Menit</code>
+<code>Akun Locked       : </code><code>${lock_duration} Menit</code>
 <code>────────────────────</code>
 "
     curl -s --max-time $TIME -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
 }
 
 clear
-
 mulog=$(cekssh)
-date=$(date)
-data=( `ls /etc/klmpk/limit/ssh/ip`)
+data=( `ls $config_path/ip` )
 
 for user in "${data[@]}"
 do
-    iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user)
-    cekcek=$(echo -e "$mulog" | grep $user | wc -l)
+    iplimit=$(cat "$config_path/ip/$user")
+    cekcek=$(echo -e "$mulog" | grep -w "$user" | wc -l)
 
     if [[ $cekcek -gt $iplimit ]]; then
-        nais=3
         passwd -l "$user" > /dev/null
         send_log
-
-        # Jadwalkan untuk membuka kembali akun setelah 15 menit
-        echo "passwd -u $user" | at now + 15 minutes > /dev/null
-    else
-        echo > /dev/null
+        echo "passwd -u $user" | at now + $lock_duration minutes > /dev/null
     fi
 
     sleep 0.1
 done
-
-echo > /dev/null
