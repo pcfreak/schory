@@ -451,12 +451,16 @@ menu
 }
 function limit_ip_menu() {
     clear
+    # Path konfigurasi manajemen
     config_path="/etc/klmpk/limit/ssh/management-limit-ip"
-    mkdir -p "$config_path/ip"
-    lock_file="$config_path/lock_duration"
+    mkdir -p "$config_path"
 
-    # Set default lock duration if not exists
-    [[ ! -f $lock_file ]] && echo 15 > $lock_file
+    # Path penyimpanan file limit IP per user
+    user_limit_path="/etc/klmpk/limit/ssh/ip"
+    mkdir -p "$user_limit_path"
+
+    lock_file="$config_path/lock_duration"
+    [[ ! -f $lock_file ]] && echo 15 > "$lock_file"
 
     while true; do
         clear
@@ -470,14 +474,14 @@ function limit_ip_menu() {
         echo -e "│ 3. Aktifkan Limit IP                       │"
         echo -e "│ 4. Nonaktifkan Limit IP                    │"
         echo -e "│ 5. Lihat Status Limit IP                   │"
-        echo -e "│ 6. Ubah Limit IP per User                  │"
+        echo -e "│ 6. Ubah Limit IP per User (via Nano)       │"
         echo -e "│ 0. Kembali                                 │"
         echo -e "└────────────────────────────────────────────┘"
         echo -ne "Pilih menu: "; read pilih
 
         case $pilih in
             1)
-                if [[ -f $config_path/enabled ]]; then
+                if [[ -f "$config_path/enabled" ]]; then
                     bash /usr/local/sbin/limitssh-ip
                 else
                     echo -e "\nFitur limit IP belum diaktifkan!"
@@ -505,7 +509,7 @@ function limit_ip_menu() {
                 sleep 2
                 ;;
             5)
-                if [[ -f $config_path/enabled ]]; then
+                if [[ -f "$config_path/enabled" ]]; then
                     echo "Status: LIMIT IP SSH AKTIF"
                 else
                     echo "Status: LIMIT IP SSH NONAKTIF"
@@ -515,17 +519,11 @@ function limit_ip_menu() {
             6)
                 read -p "Masukkan username: " uname
                 if id "$uname" &>/dev/null; then
-                    read -p "Masukkan limit IP baru: " newlimit
-                    if [[ $newlimit =~ ^[0-9]+$ ]]; then
-                        echo "$newlimit" > "$config_path/ip/$uname"
-                        echo "Limit IP untuk user $uname diubah menjadi $newlimit IP."
-                    else
-                        echo "Input tidak valid. Harus angka."
-                    fi
+                    nano "$user_limit_path/$uname"
                 else
                     echo "User $uname tidak ditemukan."
+                    sleep 2
                 fi
-                sleep 2
                 ;;
             0)
                 break
