@@ -449,6 +449,63 @@ esac
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function limit_ip_menu() {
+    clear
+    config_path="/etc/klmpk/limit/ssh"
+    mkdir -p "$config_path/ip"
+
+    while true; do
+        clear
+        echo -e "┌────────────────────────────────────┐"
+        echo -e "│       MENU LIMIT IP SSH USER       │"
+        echo -e "└────────────────────────────────────┘"
+        echo -e "1. Lihat User SSH yang Melebihi Limit"
+        echo -e "2. Ubah Durasi Penguncian (sekarang: $(cat $config_path/lock_duration 2>/dev/null || echo 15) menit)"
+        echo -e "3. Aktifkan Limit IP"
+        echo -e "4. Nonaktifkan Limit IP"
+        echo -e "5. Lihat Status Limit IP"
+        echo -e "0. Kembali"
+        echo -ne "\nPilih menu: "; read pilih
+
+        case $pilih in
+            1)
+                bash /usr/local/sbin/limitssh-ip
+                read -n 1 -s -r -p "Tekan enter untuk kembali..."
+                ;;
+            2)
+                read -p "Masukkan durasi penguncian (menit): " durasi
+                echo "$durasi" > $config_path/lock_duration
+                echo "Durasi penguncian diubah menjadi $durasi menit."
+                sleep 1
+                ;;
+            3)
+                touch $config_path/enabled
+                echo "Limit IP SSH telah diaktifkan."
+                sleep 1
+                ;;
+            4)
+                rm -f $config_path/enabled
+                echo "Limit IP SSH telah dinonaktifkan."
+                sleep 1
+                ;;
+            5)
+                if [[ -f $config_path/enabled ]]; then
+                    echo "Limit IP SSH: AKTIF"
+                else
+                    echo "Limit IP SSH: NONAKTIF"
+                fi
+                sleep 2
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo "Pilihan tidak valid."
+                sleep 1
+                ;;
+        esac
+    done
+}
 function lock_unlock_ssh() {
     clear
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -656,8 +713,9 @@ echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
 echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
 echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
 echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Cek ssh usr limit"
-echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Lock / Unlock Akun SSH"
-echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Install / Unistall SSH UDP Custom"
+echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Pengaturan Limit IP SSH"
+echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Lock / Unlock Akun SSH"
+echo -e "     ${BICyan}[${BIWhite}13${BICyan}] Install / Unistall SSH UDP Custom"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -676,8 +734,9 @@ case $opt in
 8) clear ; member ;;
 9) clear ; trialssh ;;
 10) clear ; ceklimit ;;
-11) clear ; lock_unlock_ssh ;;
-12) clear ; menu_udp_custom ;;
+11) clear ; limit_ip_menu ;;
+12) clear ; lock_unlock_ssh ;;
+13) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
 *) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
 esac
