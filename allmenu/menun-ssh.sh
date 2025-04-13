@@ -71,6 +71,16 @@ function del() {
             echo -e "Limit IP for user \033[1;33m$Pengguna\033[0m removed."
         fi
 
+        # Hapus file limit kuota jika ada
+        kuota_dir="/etc/klmpk/limit/ssh/kuota"
+        limit_kuota_file="${kuota_dir}/${Pengguna}-limit"
+        used_kuota_file="${kuota_dir}/${Pengguna}-used"
+
+        if [[ -f "$limit_kuota_file" || -f "$used_kuota_file" ]]; then
+            rm -f "$limit_kuota_file" "$used_kuota_file"
+            echo -e "Limit kuota for user \033[1;33m$Pengguna\033[0m removed."
+        fi
+
         echo -e "User \033[1;33m$Pengguna\033[0m was removed."
     else
         echo -e "Failure: User \033[1;31m$Pengguna\033[0m does not exist."
