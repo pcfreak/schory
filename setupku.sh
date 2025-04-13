@@ -312,6 +312,24 @@ systemctl enable monitor-kuota.timer
 # Proses setup selesai
 echo "Setup Limit Kuota SSH selesai."
 
+# Instalasi Limit IP SSH TIAP USER
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "$green      Install Limit IP SSH KANG HORY            $NC"
+echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+
+#menyimpan limit IP per user
+mkdir -p /etc/klmpk/limit/ssh/ip
+
+# Download script limitssh-ip.sh
+echo "Mengunduh script limitssh-ip..."
+wget -O /usr/local/sbin/limitssh-ip https://raw.githubusercontent.com/kanghory/schory/main/limit/limitssh-ip
+chmod +x /usr/local/sbin/limitssh-ip
+
+# Download script cekssh.sh (digunakan untuk cek login pengguna SSH secara manual, dan ini juga mencakup pengecekan pengguna yang login melalui Dropbear dan OpenSSH serta beberapa VPN (OpenVPN TCP dan UDP).)
+echo "Mengunduh script cekssh..."
+wget -O /usr/local/sbin/cekssh https://raw.githubusercontent.com/kanghory/schory/main/limit/cekssh
+chmod +x /usr/local/sbin/cekssh
+
 #install remove log
 echo "0 5 * * * root reboot" >> /etc/crontab
 echo "* * * * * root clog" >> /etc/crontab
