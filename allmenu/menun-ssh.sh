@@ -451,48 +451,79 @@ menu
 }
 function limit_ip_menu() {
     clear
-    config_path="/etc/klmpk/limit/ssh"
+    config_path="/etc/klmpk/limit/ssh/management-limit-ip"
     mkdir -p "$config_path/ip"
+    lock_file="$config_path/lock_duration"
+
+    # Set default lock duration if not exists
+    [[ ! -f $lock_file ]] && echo 15 > $lock_file
 
     while true; do
         clear
-        echo -e "┌────────────────────────────────────┐"
-        echo -e "│       MENU LIMIT IP SSH USER       │"
-        echo -e "└────────────────────────────────────┘"
-        echo -e "1. Lihat User SSH yang Melebihi Limit"
-        echo -e "2. Ubah Durasi Penguncian (sekarang: $(cat $config_path/lock_duration 2>/dev/null || echo 15) menit)"
-        echo -e "3. Aktifkan Limit IP"
-        echo -e "4. Nonaktifkan Limit IP"
-        echo -e "5. Lihat Status Limit IP"
-        echo -e "0. Kembali"
-        echo -ne "\nPilih menu: "; read pilih
+        lock_duration=$(cat "$lock_file")
+        echo -e ""
+        echo -e "┌────────────────────────────────────────────┐"
+        echo -e "│         MENU LIMIT IP SSH USER             │"
+        echo -e "├────────────────────────────────────────────┤"
+        echo -e "│ 1. Lihat User SSH yang Melebihi Limit      │"
+        echo -e "│ 2. Ubah Durasi Penguncian (sekarang: $lock_duration menit)"
+        echo -e "│ 3. Aktifkan Limit IP                       │"
+        echo -e "│ 4. Nonaktifkan Limit IP                    │"
+        echo -e "│ 5. Lihat Status Limit IP                   │"
+        echo -e "│ 6. Ubah Limit IP per User                  │"
+        echo -e "│ 0. Kembali                                 │"
+        echo -e "└────────────────────────────────────────────┘"
+        echo -ne "Pilih menu: "; read pilih
 
         case $pilih in
             1)
-                bash /usr/local/sbin/limitssh-ip
+                if [[ -f $config_path/enabled ]]; then
+                    bash /usr/local/sbin/limitssh-ip
+                else
+                    echo -e "\nFitur limit IP belum diaktifkan!"
+                fi
                 read -n 1 -s -r -p "Tekan enter untuk kembali..."
                 ;;
             2)
                 read -p "Masukkan durasi penguncian (menit): " durasi
-                echo "$durasi" > $config_path/lock_duration
-                echo "Durasi penguncian diubah menjadi $durasi menit."
-                sleep 1
+                if [[ $durasi =~ ^[0-9]+$ ]]; then
+                    echo "$durasi" > "$lock_file"
+                    echo "Durasi penguncian diubah menjadi $durasi menit."
+                else
+                    echo "Input tidak valid. Harus angka."
+                fi
+                sleep 2
                 ;;
             3)
-                touch $config_path/enabled
+                touch "$config_path/enabled"
                 echo "Limit IP SSH telah diaktifkan."
-                sleep 1
+                sleep 2
                 ;;
             4)
-                rm -f $config_path/enabled
+                rm -f "$config_path/enabled"
                 echo "Limit IP SSH telah dinonaktifkan."
-                sleep 1
+                sleep 2
                 ;;
             5)
                 if [[ -f $config_path/enabled ]]; then
-                    echo "Limit IP SSH: AKTIF"
+                    echo "Status: LIMIT IP SSH AKTIF"
                 else
-                    echo "Limit IP SSH: NONAKTIF"
+                    echo "Status: LIMIT IP SSH NONAKTIF"
+                fi
+                sleep 2
+                ;;
+            6)
+                read -p "Masukkan username: " uname
+                if id "$uname" &>/dev/null; then
+                    read -p "Masukkan limit IP baru: " newlimit
+                    if [[ $newlimit =~ ^[0-9]+$ ]]; then
+                        echo "$newlimit" > "$config_path/ip/$uname"
+                        echo "Limit IP untuk user $uname diubah menjadi $newlimit IP."
+                    else
+                        echo "Input tidak valid. Harus angka."
+                    fi
+                else
+                    echo "User $uname tidak ditemukan."
                 fi
                 sleep 2
                 ;;
