@@ -7,7 +7,7 @@ INTERFACE="eth0"  # Ganti dengan interface jaringan yang digunakan
 # Cek semua user yang memiliki limit
 for file in $LIMIT_DIR/*-limit; do
     user=$(basename "$file" | cut -d'-' -f1)
-    limit=$(cat "$file")  # Limit dalam GB
+    limit=$(cat "$file")  # Limit dalam MB
     used_file="$LIMIT_DIR/${user}-used"
 
     # Jika belum ada file used, inisialisasi 0
@@ -21,8 +21,8 @@ for file in $LIMIT_DIR/*-limit; do
         total=0
     fi
 
-    # Hitung penggunaan dalam GB
-    new_usage=$(echo "$total / 1024 / 1024" | bc)  # Convert bytes to GB
+    # Hitung penggunaan dalam MB (bukan GB)
+    new_usage=$(echo "$total / 1024 / 1024" | bc)  # Convert bytes to MB
 
     # Tambahkan usage baru ke existing usage
     current=$(cat "$used_file")
@@ -30,10 +30,10 @@ for file in $LIMIT_DIR/*-limit; do
 
     echo "$updated" > "$used_file"
 
-    # Bandingkan dengan limit
+    # Bandingkan dengan limit (dalam MB)
     if (( $(echo "$updated >= $limit" | bc -l) )); then
         usermod -L $user 2>/dev/null
         pkill -u $user 2>/dev/null
-        echo "$(date '+%F %T') - User $user melebihi kuota: ${updated}GB/${limit}GB - account locked" >> "$LOG_FILE"
+        echo "$(date '+%F %T') - User $user melebihi kuota: ${updated}MB/${limit}MB - account locked" >> "$LOG_FILE"
     fi
 done
