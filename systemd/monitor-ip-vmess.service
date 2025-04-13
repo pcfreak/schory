@@ -1,0 +1,11 @@
+[Unit]
+Description=Monitor Limit IP VMess
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/monitor-ip-vmess.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
