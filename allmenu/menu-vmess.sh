@@ -293,6 +293,15 @@ echo "$ip_limit" > "/etc/klmpk/limit/vmess/ip/$user/limit.txt"
 # Feedback
 echo -e "$COLOR1│${NC} [Info] IP limit for user $user has been set to $ip_limit"
 
+# Tampilkan informasi limit IP
+if [ -f "/etc/klmpk/limit/vmess/ip/$user/limit.txt" ]; then
+  limit_ip=$(cat "/etc/klmpk/limit/vmess/ip/$user/limit.txt")
+  echo -e "$COLOR1 ${NC} IP Limit      : $limit_ip"
+else
+  echo -e "$COLOR1 ${NC} IP Limit      : Not Set"
+fi
+
+
 # Add VMess to config
 sed -i '/#vmess$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
