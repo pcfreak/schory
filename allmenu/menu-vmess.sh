@@ -231,138 +231,145 @@ function addvmess(){
 clear
 source /var/lib/ssnvpn-pro/ipvps.conf
 domain=$(cat /etc/xray/domain)
-mkdir -p /etc/klmpk/limit/xray/ip
-
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-tls=$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2 | sed 's/ //g')
-none=$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2 | sed 's/ //g')
-
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
+none="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
-    read -rp "   Input Username : " -e user
-    if [[ -z $user ]]; then
-        echo -e "$COLOR1│${NC} [Error] Username cannot be empty!"
-        read -n 1 -s -r -p "   Press any key to back on menu"
-        menu
-    fi
 
-    CLIENT_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
-    if [[ ${CLIENT_EXISTS} == '1' ]]; then
-        echo -e "$COLOR1│${NC} [Error] Username already exists!"
-        read -n 1 -s -r -p "   Press any key to back on menu"
-        menu
-    fi
-done
+read -rp "   Input Username : " -e user
+      
+if [ -z $user ]; then
+echo -e "$COLOR1│${NC} [Error] Username cannot be empty "
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo ""
+read -n 1 -s -r -p "   Press any key to back on menu"
+menu
+fi
+		CLIENT_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
+
+		if [[ ${CLIENT_EXISTS} == '1' ]]; then
+clear
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} Please choose another name."
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+			read -n 1 -s -r -p "   Press any key to back on menu"
+menu
+		fi
+	done
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
-read -p "   Expired (days) : " masaaktif
-read -p "   Limit IP       : " limit_ip
-if [[ ! $limit_ip =~ ^[0-9]+$ ]]; then
-    echo -e "$COLOR1│${NC} [Error] Limit IP must be a number!"
-    read -n 1 -s -r -p "   Press any key to back on menu"
-    menu
-fi
-
-# Save IP limit
-echo "$limit_ip" > /etc/klmpk/limit/xray/ip/${user}
-
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
-
-# Insert user config to Xray JSON
+read -p "   Expired (days): " masaaktif
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
 sed -i '/#vmess$/a\### '"$user $exp"'\
-},{"id": "'"$uuid"'","alterId": 0,"email": "'"$user"'"' /etc/xray/config.json
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
 sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
-},{"id": "'"$uuid"'","alterId": 0,"email": "'"$user"'"' /etc/xray/config.json
-
-# Build VMess JSON link
-asu=$(cat <<EOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "443",
-  "id": "${uuid}",
-  "aid": "0",
-  "net": "ws",
-  "path": "/vmess",
-  "type": "none",
-  "host": "${domain}",
-  "tls": "tls"
+},{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
+asu=`cat<<EOF
+      {
+      "v": "2",
+      "ps": "${user}",
+      "add": "${domain}",
+      "port": "443",
+      "id": "${uuid}",
+      "aid": "0",
+      "net": "ws",
+      "path": "/vmess",
+      "type": "none",
+      "host": "${domain}",
+      "tls": "tls"
 }
-EOF
-)
-
-ask=$(cat <<EOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "80",
-  "id": "${uuid}",
-  "aid": "0",
-  "net": "ws",
-  "path": "/vmess",
-  "type": "none",
-  "host": "${domain}",
-  "tls": "none"
+EOF`
+ask=`cat<<EOF
+      {
+      "v": "2",
+      "ps": "${user}",
+      "add": "${domain}",
+      "port": "80",
+      "id": "${uuid}",
+      "aid": "0",
+      "net": "ws",
+      "path": "/vmess",
+      "type": "none",
+      "host": "${domain}",
+      "tls": "none"
 }
-EOF
-)
-
-grpc=$(cat <<EOF
-{
-  "v": "2",
-  "ps": "${user}",
-  "add": "${domain}",
-  "port": "443",
-  "id": "${uuid}",
-  "aid": "0",
-  "net": "grpc",
-  "path": "vmess-grpc",
-  "type": "none",
-  "host": "${domain}",
-  "tls": "tls"
+EOF`
+grpc=`cat<<EOF
+      {
+      "v": "2",
+      "ps": "${user}",
+      "add": "${domain}",
+      "port": "443",
+      "id": "${uuid}",
+      "aid": "0",
+      "net": "grpc",
+      "path": "vmess-grpc",
+      "type": "none",
+      "host": "${domain}",
+      "tls": "tls"
 }
-EOF
-)
-
+EOF`
+vmess_base641=$( base64 -w 0 <<< $vmess_json1)
+vmess_base642=$( base64 -w 0 <<< $vmess_json2)
+vmess_base643=$( base64 -w 0 <<< $vmess_json3)
 vmesslink1="vmess://$(echo $asu | base64 -w 0)"
 vmesslink2="vmess://$(echo $ask | base64 -w 0)"
 vmesslink3="vmess://$(echo $grpc | base64 -w 0)"
-
 systemctl restart xray > /dev/null 2>&1
 service cron restart > /dev/null 2>&1
-
 clear
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1}            • VMESS ACCOUNT INFO •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-echo -e "$COLOR1 ${NC} Username      : ${user}"
-echo -e "$COLOR1 ${NC} Domain        : ${domain}"
-echo -e "$COLOR1 ${NC} UUID          : ${uuid}"
-echo -e "$COLOR1 ${NC} Limit IP      : ${limit_ip} IP"
-echo -e "$COLOR1 ${NC} Expired On    : ${exp}"
-echo -e "$COLOR1 ${NC} TLS Port      : ${tls}"
-echo -e "$COLOR1 ${NC} None TLS Port : ${none}"
-echo -e "$COLOR1 ${NC} GRPC Port     : ${tls}"
-echo -e "$COLOR1 ${NC} Path TLS      : /vmess"
-echo -e "$COLOR1 ${NC} Path NTLS     : /vmess"
-echo -e "$COLOR1 ${NC} GRPC Service  : vmess-grpc"
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1 ${NC} Link TLS      : ${vmesslink1}"
-echo -e "$COLOR1 ${NC} Link None TLS : ${vmesslink2}"
-echo -e "$COLOR1 ${NC} Link GRPC     : ${vmesslink3}"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1 ${NC} Remarks       : ${user}"
+echo -e "$COLOR1 ${NC} Expired On    : $exp" 
+echo -e "$COLOR1 ${NC} Domain        : ${domain}" 
+echo -e "$COLOR1 ${NC} Port TLS      : ${tls}" 
+echo -e "$COLOR1 ${NC} Port none TLS : ${none}" 
+echo -e "$COLOR1 ${NC} Port  GRPC    : ${tls}" 
+echo -e "$COLOR1 ${NC} id            : ${uuid}" 
+echo -e "$COLOR1 ${NC} alterId       : 0" 
+echo -e "$COLOR1 ${NC} Security      : auto" 
+echo -e "$COLOR1 ${NC} Network       : ws" 
+echo -e "$COLOR1 ${NC} Path          : /vmess" 
+echo -e "$COLOR1 ${NC} Path WSS      : wss://bug.com/vmess" 
+echo -e "$COLOR1 ${NC} ServiceName   : vmess-grpc" 
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1 ${NC} Link TLS : "
+echo -e "$COLOR1 ${NC} ${vmesslink1}" 
+echo -e "$COLOR1 ${NC} "
+echo -e "$COLOR1 ${NC} Link none TLS : "
+echo -e "$COLOR1 ${NC} ${vmesslink2}" 
+echo -e "$COLOR1 ${NC} "
+echo -e "$COLOR1 ${NC} Link GRPC : "
+echo -e "$COLOR1 ${NC} ${vmesslink3}"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
 echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
 echo ""
 
 read -n 1 -s -r -p "   Press any key to back on menu"
 menu-vmess
 }
 
+
+clear
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}             • VMESS PANEL MENU •              ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
