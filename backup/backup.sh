@@ -53,6 +53,7 @@ clear
 figlet "Backup" | lolcat
 echo -e "${CYAN}Backup sedang diproses untuk client: ${NC}$Name ($MYIP)"
 
+# Hapus direktori backup sebelumnya jika ada
 rm -rf "$BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
 
@@ -106,7 +107,7 @@ curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
     --data-urlencode "parse_mode=HTML" \
     --data-urlencode "text=${message}" > /dev/null
 
-# Bersihkan file lokal
+# Bersihkan file lokal untuk menghindari beban disk
 rm -rf "$BACKUP_DIR"
 rm -f "$BACKUP_FILE"
 
