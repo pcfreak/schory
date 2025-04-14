@@ -88,17 +88,15 @@ fi
 # Kirim notifikasi Telegram
 message=$(cat <<EOF
 <b>🧰 Backup VPS Selesai</b>
-
 <b>┌─────────────────────┐</b>
 <b>│ 👤 Client    : <code>$Name</code></b>
 <b>│ ⏰ Expired   : <code>$Exp</code></b>
 <b>│ 🧑‍💻 Developer : KANGHORY TUNNELING</b>
 <b>│ ⚙️ Version   : SUPER LTS</b>
-<b>└─────────────────────┘</b>
-
 🖥️ <b>IP VPS</b>  : <code>$MYIP</code>
 📅 <b>Tanggal</b> : <code>$DATE $TIME</code>
 📥 <b>Link</b>    : <a href="$link">Download</a>
+<b>└─────────────────────┘</b>
 EOF
 )
 
