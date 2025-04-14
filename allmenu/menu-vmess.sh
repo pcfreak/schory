@@ -237,79 +237,46 @@ echo -e "$COLOR1└────────────────────�
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 tls="$(cat ~/log-install.txt | grep -w "Vmess TLS" | cut -d: -f2|sed 's/ //g')"
 none="$(cat ~/log-install.txt | grep -w "Vmess None TLS" | cut -d: -f2|sed 's/ //g')"
-
-# Input Username
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
-  read -rp "   Input Username : " -e user
-      
-  if [ -z $user ]; then
-    echo -e "$COLOR1│${NC} [Error] Username cannot be empty "
-    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-    echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-    echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-    echo ""
-    read -n 1 -s -r -p "   Press any key to back on menu"
-    menu
-  fi
-  CLIENT_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
 
-  if [[ ${CLIENT_EXISTS} == '1' ]]; then
-    clear
-    echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-    echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
-    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-    echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-    echo -e "$COLOR1│${NC} Please choose another name."
-    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-    echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-    echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-    read -n 1 -s -r -p "   Press any key to back on menu"
-    menu
-  fi
-done
+read -rp "   Input Username : " -e user
+      
+if [ -z $user ]; then
+echo -e "$COLOR1│${NC} [Error] Username cannot be empty "
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo ""
+read -n 1 -s -r -p "   Press any key to back on menu"
+menu
+fi
+		CLIENT_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
+
+		if [[ ${CLIENT_EXISTS} == '1' ]]; then
+clear
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} Please choose another name."
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+			read -n 1 -s -r -p "   Press any key to back on menu"
+menu
+		fi
+	done
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
 read -p "   Expired (days): " masaaktif
 exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
-
-# Input Limit IP
-read -p "   Input IP Limit: " ip_limit
-if [[ -z "$ip_limit" || ! "$ip_limit" =~ ^[0-9]+$ ]]; then
-  echo -e "$COLOR1│${NC} [Error] Invalid IP limit"
-  echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-  return
-fi
-
-# Cek jika direktori untuk user sudah ada, jika belum buat
-if [ ! -d "/etc/klmpk/limit/vmess/ip/$user" ]; then
-  mkdir -p "/etc/klmpk/limit/vmess/ip/$user"
-fi
-
-# Save limit IP
-echo "$ip_limit" > "/etc/klmpk/limit/vmess/ip/$user/limit.txt"
-
-# Feedback
-echo -e "$COLOR1│${NC} [Info] IP limit for user $user has been set to $ip_limit"
-
-# Tampilkan informasi limit IP
-if [ -f "/etc/klmpk/limit/vmess/ip/$user/limit.txt" ]; then
-  limit_ip=$(cat "/etc/klmpk/limit/vmess/ip/$user/limit.txt")
-  echo -e "$COLOR1 ${NC} IP Limit      : $limit_ip"
-else
-  echo -e "$COLOR1 ${NC} IP Limit      : Not Set"
-fi
-
-
-# Add VMess to config
 sed -i '/#vmess$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
 exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
 sed -i '/#vmessgrpc$/a\### '"$user $exp"'\
 },{"id": "'""$uuid""'","alterId": '"0"',"email": "'""$user""'"' /etc/xray/config.json
-
-# Create VMess links
 asu=`cat<<EOF
       {
       "v": "2",
@@ -355,14 +322,14 @@ grpc=`cat<<EOF
       "tls": "tls"
 }
 EOF`
-
+vmess_base641=$( base64 -w 0 <<< $vmess_json1)
+vmess_base642=$( base64 -w 0 <<< $vmess_json2)
+vmess_base643=$( base64 -w 0 <<< $vmess_json3)
 vmesslink1="vmess://$(echo $asu | base64 -w 0)"
 vmesslink2="vmess://$(echo $ask | base64 -w 0)"
 vmesslink3="vmess://$(echo $grpc | base64 -w 0)"
-
 systemctl restart xray > /dev/null 2>&1
 service cron restart > /dev/null 2>&1
-
 clear
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}            • CREATE VMESS USER •              ${NC} $COLOR1│$NC"
@@ -381,7 +348,6 @@ echo -e "$COLOR1 ${NC} Network       : ws"
 echo -e "$COLOR1 ${NC} Path          : /vmess" 
 echo -e "$COLOR1 ${NC} Path WSS      : wss://bug.com/vmess" 
 echo -e "$COLOR1 ${NC} ServiceName   : vmess-grpc" 
-echo -e "$COLOR1 ${NC} Limit IP      : $ip_limit"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1 ${NC} Link TLS : "
