@@ -259,9 +259,7 @@ apt install git curl -y >/dev/null 2>&1
 apt install python -y >/dev/null 2>&1
 apt install pv dialog -y >/dev/null 2>&1
 echo -e "[ ${green}INFO${NC} ] Aight good ... installation file is ready"
-sleep 2
 
-clear
 # Instalasi Limit Kuota SSH
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo -e "$green      Install Limit Quota SSH KANG HORY            $NC"
@@ -352,6 +350,10 @@ wget -O /etc/systemd/system/monitor-ip-vmess.timer https://raw.githubusercontent
 systemctl daemon-reload
 systemctl enable monitor-ip-vmess.timer
 systemctl start monitor-ip-vmess.timer
+echo "limit ip vmess di jalanakan..."
+sleep 2
+
+clear
 
 #install remove log
 echo "0 5 * * * root reboot" >> /etc/crontab
