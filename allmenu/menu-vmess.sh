@@ -228,40 +228,39 @@ menu-vmess
 }
 
 function addvmess(){
-clear
-#!/bin/bash
+  clear
 
-# Baca domain dari file
-domain=$(cat /etc/xray/domain)
+  # Baca domain dari file
+  domain=$(cat /etc/xray/domain)
 
-# Konfigurasi direktori penyimpanan limit IP
-mkdir -p /etc/klmpk/limit/xray/ip
+  # Konfigurasi direktori penyimpanan limit IP
+  mkdir -p /etc/klmpk/limit/xray/ip
 
-# Input username
-until [[ $user =~ ^[a-zA-Z0-9_]+$ && ! -e /etc/xray/vmess-$user.json ]]; do
-    read -rp "Username: " -e user
-done
+  # Input username
+  until [[ $user =~ ^[a-zA-Z0-9_]+$ && ! -e /etc/xray/vmess-$user.json ]]; do
+      read -rp "Username: " -e user
+  done
 
-# Input masa aktif akun
-read -p "Expired (days): " masaaktif
+  # Input masa aktif akun
+  read -p "Expired (days): " masaaktif
 
-# Input limit IP
-read -p "Limit IP: " limit_ip
-if [[ ! $limit_ip =~ ^[0-9]+$ ]]; then
-    echo "Input limit IP harus berupa angka. Gagal membuat akun."
-    exit 1
-fi
+  # Input limit IP
+  read -p "Limit IP: " limit_ip
+  if [[ ! $limit_ip =~ ^[0-9]+$ ]]; then
+      echo "Input limit IP harus berupa angka. Gagal membuat akun."
+      exit 1
+  fi
 
-# Simpan limit IP ke file
-echo "$limit_ip" > /etc/klmpk/limit/xray/ip/${user}
+  # Simpan limit IP ke file
+  echo "$limit_ip" > /etc/klmpk/limit/xray/ip/${user}
 
-# Generate UUID dan tanggal
-uuid=$(uuidgen)
-hariini=$(date -d "0 days" +"%Y-%m-%d")
-exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+  # Generate UUID dan tanggal
+  uuid=$(uuidgen)
+  hariini=$(date -d "0 days" +"%Y-%m-%d")
+  exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
 
-# Simpan konfigurasi user VMess
-cat > /etc/xray/vmess-$user.json << EOF
+  # Simpan konfigurasi user VMess
+  cat > /etc/xray/vmess-$user.json << EOF
 {
   "v": "2",
   "ps": "${user}",
@@ -277,36 +276,34 @@ cat > /etc/xray/vmess-$user.json << EOF
 }
 EOF
 
-# Tambahkan konfigurasi ke Xray config (client inbound)
-sed -i "/#vmess$/a\### ${user} ${exp}\n},{"id": "${uuid}", "alterId": 0, "email": "${user}"}" /etc/xray/config.json
+  # Tambahkan konfigurasi ke Xray config (client inbound)
+  sed -i "/#vmess$/a\### ${user} ${exp}\n},{"id": "${uuid}", "alterId": 0, "email": "${user}"}" /etc/xray/config.json
 
-# Restart Xray
-systemctl restart xray
+  # Restart Xray
+  systemctl restart xray
 
-# Buat link VMess
-vmesslink1="vmess://$(base64 -w 0 /etc/xray/vmess-$user.json)"
+  # Buat link VMess
+  vmesslink1="vmess://$(base64 -w 0 /etc/xray/vmess-$user.json)"
 
-# Output akun
-clear
-echo -e "===========[ VMESS ACCOUNT ]============"
-echo -e "Remarks      : ${user}"
-echo -e "Domain       : ${domain}"
-echo -e "Port TLS     : 443"
-echo -e "Port none TLS: 80"
-echo -e "ID           : ${uuid}"
-echo -e "Alter ID     : 0"
-echo -e "Network      : ws"
-echo -e "Path         : /vmess"
-echo -e "TLS          : tls"
-echo -e "Limit IP     : ${limit_ip}"
-echo -e "Created On   : ${hariini}"
-echo -e "Expired On   : ${exp}"
-echo -e "========================================"
-echo -e "Link TLS     : ${vmesslink1}"
-echo -e "========================================"
-
-
-clear
+  # Output akun
+  clear
+  echo -e "===========[ VMESS ACCOUNT ]============"
+  echo -e "Remarks      : ${user}"
+  echo -e "Domain       : ${domain}"
+  echo -e "Port TLS     : 443"
+  echo -e "Port none TLS: 80"
+  echo -e "ID           : ${uuid}"
+  echo -e "Alter ID     : 0"
+  echo -e "Network      : ws"
+  echo -e "Path         : /vmess"
+  echo -e "TLS          : tls"
+  echo -e "Limit IP     : ${limit_ip}"
+  echo -e "Created On   : ${hariini}"
+  echo -e "Expired On   : ${exp}"
+  echo -e "========================================"
+  echo -e "Link TLS     : ${vmesslink1}"
+  echo -e "========================================"
+}
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}             • VMESS PANEL MENU •              ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
