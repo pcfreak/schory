@@ -39,15 +39,6 @@ else
     echo -e "${GREEN}rclone ditemukan, melanjutkan proses...${NC}"
 fi
 
-# Cek koneksi rclone ke Google Drive (pastikan remote rclone bernama 'dr')
-rclone check dr:backup /tmp/test-backup > /dev/null 2>&1
-if [[ $? -ne 0 ]]; then
-    echo -e "${RED}Gagal terhubung ke remote Google Drive!${NC}"
-    exit 1
-else
-    echo -e "${GREEN}Koneksi ke Google Drive berhasil!${NC}"
-fi
-
 # Cek koneksi Telegram
 if ! curl -s --head "https://api.telegram.org/bot${bot_token}/getMe" | grep "200 OK" > /dev/null; then
     echo -e "${RED}Koneksi Telegram gagal!${NC}"
