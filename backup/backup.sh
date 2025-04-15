@@ -39,14 +39,6 @@ else
     echo -e "${GREEN}rclone ditemukan, melanjutkan proses...${NC}"
 fi
 
-# Cek koneksi Telegram
-if ! curl -s --head "https://api.telegram.org/bot${bot_token}/getMe" | grep "200 OK" > /dev/null; then
-    echo -e "${RED}Koneksi Telegram gagal!${NC}"
-    exit 1
-else
-    echo -e "${GREEN}Koneksi Telegram berhasil!${NC}"
-fi
-
 # Ambil IP, Tanggal, dan Jam
 MYIP=$(wget -qO- ipinfo.io/ip)
 HOST=$(hostname)
