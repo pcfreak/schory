@@ -71,7 +71,7 @@ cp -rf /home/vps/public_html "$BACKUP_DIR/public_html"
 [[ -f /root/nsdomain ]] && cp -f /root/nsdomain "$BACKUP_DIR/nsdomain"
 
 # Buat file zip
-zip -r "$BACKUP_FILE" "$BACKUP_DIR" > /dev/null 2>&1
+cd /root && zip -r "$BACKUP_FILE" "$(basename "$BACKUP_DIR")" > /dev/null 2>&1
 
 # Upload ke Google Drive (pastikan remote rclone bernama 'dr')
 rclone copy "$BACKUP_FILE" dr:backup/
