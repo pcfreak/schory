@@ -31,12 +31,38 @@ else
     admin_id=$(cat "$ADMIN_ID_FILE")
 fi
 
+# Cek apakah rclone sudah terpasang
+if ! command -v rclone &> /dev/null; then
+    echo -e "${RED}rclone tidak terpasang!${NC}"
+    exit 1
+else
+    echo -e "${GREEN}rclone ditemukan, melanjutkan proses...${NC}"
+fi
+
+# Cek koneksi rclone ke Google Drive (pastikan remote rclone bernama 'dr')
+rclone check dr:backup /tmp/test-backup > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}Gagal terhubung ke remote Google Drive!${NC}"
+    exit 1
+else
+    echo -e "${GREEN}Koneksi ke Google Drive berhasil!${NC}"
+fi
+
+# Cek koneksi Telegram
+if ! curl -s --head "https://api.telegram.org/bot${bot_token}/getMe" | grep "200 OK" > /dev/null; then
+    echo -e "${RED}Koneksi Telegram gagal!${NC}"
+    exit 1
+else
+    echo -e "${GREEN}Koneksi Telegram berhasil!${NC}"
+fi
+
 # Ambil IP, Tanggal, dan Jam
 MYIP=$(wget -qO- ipinfo.io/ip)
+HOST=$(hostname)
 DATE=$(date +"%Y-%m-%d")
 TIME=$(date +"%H:%M:%S")
 STAMP=$(date +"%Y-%m-%d-%H%M%S")
-BACKUP_FILE="/root/${MYIP}-${STAMP}.zip"
+BACKUP_FILE="/root/${HOST}-${MYIP}-${STAMP}.zip"
 BACKUP_DIR="/root/backup"
 
 # Ambil nama dan Exp dari izin
