@@ -44,7 +44,7 @@ MYIP=$(wget -qO- ipinfo.io/ip)
 HOST=$(hostname)
 DATE=$(date +"%Y-%m-%d")
 TIME=$(date +"%H:%M:%S")
-STAMP=$(date +"%Y-%m-%d-%H%M%S")
+STAMP=$(date +"%Y-%m-%d")  # hanya tanggal, tanpa jam
 BACKUP_FILE="/root/${HOST}-${MYIP}-${STAMP}.zip"
 BACKUP_DIR="/root/backup"
 
@@ -65,6 +65,9 @@ echo -e "${CYAN}Backup sedang diproses untuk client: ${NC}$Name ($MYIP)"
 # Hapus direktori backup sebelumnya jika ada
 rm -rf "$BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
+
+# Hapus file backup lama dari hari ini (jika ada)
+rm -f "$BACKUP_FILE"
 
 # Backup file penting
 cp /etc/passwd "$BACKUP_DIR/"
