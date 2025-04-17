@@ -41,7 +41,7 @@ fi
 
 # Ambil IP, Tanggal, dan Jam
 MYIP=$(wget -qO- ipinfo.io/ip)
-HOST=$(hostname)
+HOST=$(hostname | tr -cd '[:alnum:]._-')
 DATE=$(date +"%Y-%m-%d")
 TIME=$(date +"%H:%M:%S")
 STAMP=$(date +"%Y-%m-%d")  # hanya tanggal, tanpa jam
