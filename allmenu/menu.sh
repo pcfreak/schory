@@ -226,9 +226,8 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "\E[39;1;92m                     ⇱ MENU SERVICE VPS ⇲                         \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e " ${BICyan}[${BIWhite}23${BICyan}]${RED} •${NC} ${YELLOW}GANTI ${GREEN}PASS VPS & HOSTNAME $NC  ${BICyan}[${BIWhite}24${BICyan}]${RED} • ${NC}${YELLOW}UPDATE SCRIPT $NC"
-echo -e " ${RED}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
-
+echo -e " ${RED}"
 echo -e "${BICyan}┌──────────────────────────────────────────────────┐${NC}"
 echo -e "${BICyan}│ ${BOLD}${BLUE}Client    = $Name                           ${NC}"
 echo -e "${BICyan}│ ${BOLD}${BLUE}Expired   = $Exp                            ${NC}"
