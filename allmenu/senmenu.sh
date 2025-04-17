@@ -28,10 +28,10 @@ wget -q -O /usr/bin/menu-trojan "https://raw.githubusercontent.com/kanghory/scho
 wget -q -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
 #wget -q -O /usr/bin/menu-bckp "https://raw.githubusercontent.com/Agunxzzz/XrayCol/main/minacantik/menu-bckp-telegram.sh"
 wget -q -O /usr/bin/menu-backup "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-backup.sh"
-wget -q -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh
 wget -q -O /usr/bin/slowdns "https://raw.githubusercontent.com/bukhorimukhammad/autoscript-ssh-slowdns/main/slowdns.sh"
 wget -q -O /usr/bin/usernew "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
 wget -q -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
+wget -q -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
 wget -q -O /usr/bin/wbm "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/webmin.sh"
 wget -q -O /usr/bin/changer "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/changer.sh"
 wget -q -O /usr/bin/xp "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/xp.sh"
