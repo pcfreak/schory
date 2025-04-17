@@ -11,7 +11,7 @@ NC='\033[0m'  # Reset warna
 clear
 # Menampilkan header menu
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${WHITE}               ⇱ GANTI PASSWORD & HOSTNAME ⇲                 ${NC}"
+echo -e "${WHITE}               ⇱ GANTI PASSWORD LOGIN & HOSTNAME VPS ⇲                 ${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 # Pilihan menu
 echo -e " ${CYAN}[${NC}1${CYAN}]${NC} •${YELLOW} Ubah Password Login VPS (root)${NC}"
