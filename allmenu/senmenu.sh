@@ -28,6 +28,7 @@ wget -q -O /usr/bin/menu-trojan "https://raw.githubusercontent.com/kanghory/scho
 wget -q -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
 #wget -q -O /usr/bin/menu-bckp "https://raw.githubusercontent.com/Agunxzzz/XrayCol/main/minacantik/menu-bckp-telegram.sh"
 wget -q -O /usr/bin/menu-backup "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-backup.sh"
+wget -q -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh
 wget -q -O /usr/bin/slowdns "https://raw.githubusercontent.com/bukhorimukhammad/autoscript-ssh-slowdns/main/slowdns.sh"
 wget -q -O /usr/bin/usernew "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
 wget -q -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
@@ -50,6 +51,7 @@ wget -q -O /usr/bin/dell "https://raw.githubusercontent.com/kanghory/schory/main
 wget https://raw.githubusercontent.com/kanghory/schory/main/backup/set-br.sh
 bash set-br.sh
 chmod +x /usr/bin/menu-backup
+chmod +x /usr/bin/menu_pw_host
 #chmod +x /usr/bin/menu
 chmod +x /usr/bin/add-ws-xray
 chmod +x /usr/bin/add-ssws
