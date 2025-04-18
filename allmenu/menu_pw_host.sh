@@ -70,7 +70,7 @@ case $pilih in
   x)
     # Kembali ke menu utama
     clear
-    menu.sh
+    /usr/bin/menu
     ;;
   *)
     # Jika pilihan tidak valid
