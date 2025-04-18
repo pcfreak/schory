@@ -314,6 +314,30 @@ fi
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
+function ubahpass_ssh() {
+  clear
+  echo -e "\e[0;36m┌────────────────────────────────────────────┐\e[0m"
+  echo -e "\e[0;36m│         UBAH PASSWORD AKUN SSH             │\e[0m"
+  echo -e "\e[0;36m└────────────────────────────────────────────┘\e[0m"
+  read -p "Masukkan username SSH : " user
+
+  if id "$user" &>/dev/null; then
+    read -s -p "Masukkan password baru : " newpass
+    echo
+    read -s -p "Ulangi password baru   : " repass
+    echo
+
+    if [[ "$newpass" != "$repass" ]]; then
+      echo -e "\n\e[31mGagal: Password tidak cocok.\e[0m"
+      return
+    fi
+
+    echo -e "$user:$newpass" | chpasswd
+    echo -e "\n\e[32mBerhasil: Password untuk user '$user' telah diubah.\e[0m"
+  else
+    echo -e "\n\e[31mGagal: User '$user' tidak ditemukan.\e[0m"
+  fi
+}
 function ceklimit() {
     clear
     touch /root/.system
@@ -735,16 +759,17 @@ echo -e ""
 echo -e "     ${BICyan}[${BIWhite}1${BICyan}] Add Account SSH      "
 echo -e "     ${BICyan}[${BIWhite}2${BICyan}] Delete Account SSH      "
 echo -e "     ${BICyan}[${BIWhite}3${BICyan}] Renew Account SSH      "
-echo -e "     ${BICyan}[${BIWhite}4${BICyan}] Cek User SSH     "
-echo -e "     ${BICyan}[${BIWhite}5${BICyan}] Mullog SSH     "
-echo -e "     ${BICyan}[${BIWhite}6${BICyan}] Auto Del user Exp     "
-echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Kill user SSH    "
-echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Cek Member SSH"
-echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Trial SSH"
-echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Cek ssh usr limit"
-echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Pengaturan Limit IP SSH"
-echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Lock / Unlock Akun SSH"
-echo -e "     ${BICyan}[${BIWhite}13${BICyan}] Install / Unistall SSH UDP Custom"
+echo -e "     ${BICyan}[${BIWhite}4${BICyan}] Ubah Password Akun SSH      "
+echo -e "     ${BICyan}[${BIWhite}5${BICyan}] Cek User SSH     "
+echo -e "     ${BICyan}[${BIWhite}6${BICyan}] Mullog SSH     "
+echo -e "     ${BICyan}[${BIWhite}7${BICyan}] Auto Del user Exp     "
+echo -e "     ${BICyan}[${BIWhite}8${BICyan}] Auto Kill user SSH    "
+echo -e "     ${BICyan}[${BIWhite}9${BICyan}] Cek Member SSH"
+echo -e "     ${BICyan}[${BIWhite}10${BICyan}] Trial SSH"
+echo -e "     ${BICyan}[${BIWhite}11${BICyan}] Cek ssh usr limit"
+echo -e "     ${BICyan}[${BIWhite}12${BICyan}] Pengaturan Limit IP SSH"
+echo -e "     ${BICyan}[${BIWhite}13${BICyan}] Lock / Unlock Akun SSH"
+echo -e "     ${BICyan}[${BIWhite}14${BICyan}] Install / Unistall SSH UDP Custom"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
 echo -e "\E[44;1;39m                     ⇱ KANGHORY TUNNELING ⇲                   \E[0m"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
@@ -756,16 +781,17 @@ case $opt in
 1) clear ; usernew ;;
 2) clear ; del ;;
 3) clear ; renew;;
-4) clear ; cek ;;
-5) clear ; ceklim ;;
-6) clear ; autodel ;;
-7) clear ; autokill ;;
-8) clear ; member ;;
-9) clear ; trialssh ;;
-10) clear ; ceklimit ;;
-11) clear ; limit_ip_menu ;;
-12) clear ; lock_unlock_ssh ;;
-13) clear ; menu_udp_custom ;;
+4) ubahpass_ssh ;;
+5) clear ; cek ;;
+6) clear ; ceklim ;;
+7) clear ; autodel ;;
+8) clear ; autokill ;;
+9) clear ; member ;;
+10) clear ; trialssh ;;
+11) clear ; ceklimit ;;
+12) clear ; limit_ip_menu ;;
+13) clear ; lock_unlock_ssh ;;
+14) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
 *) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
 esac
