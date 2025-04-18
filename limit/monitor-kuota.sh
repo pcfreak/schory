@@ -13,8 +13,8 @@ fi
 # Logging waktu eksekusi
 echo "$(date '+%F %T') - monitor-kuota.sh dijalankan" >> "$LOG_FILE"
 
-# Fungsi untuk dapatkan total data RX+TX user dari /proc
-get_usage_bytes() {
+# Fungsi untuk dapatkan total data RX+TX user dalam MB
+get_usage_mb() {
     local user="$1"
     local total=0
     for pid in $(pgrep -u "$user"); do
@@ -28,7 +28,7 @@ get_usage_bytes() {
             done < "/proc/$pid/net/dev" 2>/dev/null
         fi
     done
-    echo "$total"
+    echo $((total / 1024 / 1024))  # Konversi ke MB
 }
 
 # Loop pengecekan per user
@@ -36,19 +36,18 @@ for file in "$KUOTA_DIR"/*-limit; do
     user=$(basename "$file" | cut -d'-' -f1)
     [[ -z "$user" ]] && continue
 
-    # Skip jika user tidak ada di sistem
+    # Skip jika user tidak ada
     id "$user" &>/dev/null || continue
 
     limit_mb=$(cat "$file" 2>/dev/null)
     [[ ! "$limit_mb" =~ ^[0-9]+$ ]] && continue
-    limit=$((limit_mb * 1024 * 1024))  # Ubah MB ke bytes
 
     used_file="$KUOTA_DIR/${user}-used"
     last_file="$KUOTA_DIR/${user}-last"
 
     [[ ! -f "$used_file" ]] && echo 0 > "$used_file"
 
-    usage_now=$(get_usage_bytes "$user")
+    usage_now=$(get_usage_mb "$user")
     [[ ! -f "$last_file" ]] && echo "$usage_now" > "$last_file"
 
     last_usage=$(cat "$last_file")
@@ -61,12 +60,10 @@ for file in "$KUOTA_DIR"/*-limit; do
     echo "$usage_now" > "$last_file"
     echo "$total_usage" > "$used_file"
 
-    usage_disp=$(awk "BEGIN {printf \"%.2f\", $total_usage / 1024 / 1024}")
-
-    if [[ "$total_usage" -ge "$limit" ]]; then
+    if [[ "$total_usage" -ge "$limit_mb" ]]; then
         pkill -KILL -u "$user"
         usermod -L "$user"
         chmod 000 /home/"$user" &>/dev/null
-        echo "$(date '+%F %T') - User '$user' melebihi kuota (${usage_disp}/${limit_mb} MB) - akun dikunci" >> "$LOG_FILE"
+        echo "$(date '+%F %T') - User '$user' melebihi kuota (${total_usage}/${limit_mb} MB) - akun dikunci" >> "$LOG_FILE"
     fi
 done
