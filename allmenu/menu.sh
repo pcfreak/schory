@@ -263,7 +263,7 @@ case $opt in
 #99) clear ; update ;;
 22) clear ; fix ;;
 23) clear ; menu_pw_host ;;
-#23) clear ; slow ;;
+24) clear ; update-script ;;
 
 0) clear ; menu ;;
 x) exit ;;
