@@ -35,19 +35,12 @@ if id "$Login" &>/dev/null; then
     exit 1
 fi
 
-# =======================
 # Simpan Limit IP & Kuota
-# =======================
-
 mkdir -p /etc/klmpk/limit/ssh/ip/
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
 
 mkdir -p /etc/klmpk/limit/ssh/kuota/
 echo "$kuotamb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
-
-# Konversi MB ke byte
-kuotabyte=$(echo "$kuotamb * 1024 * 1024" | bc | awk '{printf "%.0f", $1}')
-echo "$kuotabyte" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
