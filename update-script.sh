@@ -6,10 +6,10 @@ red='\e[31m'
 blue='\e[34m'
 NC='\e[0m'
 
-# URL base repo GitHub
+# Base URL GitHub
 REPO_URL="https://raw.githubusercontent.com/kanghory/schory/main/allmenu"
 
-# Direktori lokal tempat script akan disimpan
+# Direktori penyimpanan script
 SCRIPT_DIR="/usr/bin"
 
 # Daftar script yang akan diupdate
@@ -27,26 +27,23 @@ SCRIPT_LIST=(
 echo -e "${blue}--- Memulai proses update script ---${NC}"
 
 for script in "${SCRIPT_LIST[@]}"; do
-    # Hapus file lama sebelum mengunduh yang baru
-    echo -e "${green}Menghapus file lama: $script...${NC}"
-    rm -f "${SCRIPT_DIR}/${script}"
-
-    # Update file
-    echo -e "${green}Mengupdate: $script...${NC}"
-    wget -q -O "${SCRIPT_DIR}/${script}" "${REPO_URL}/${script}"
-    chmod +x "${SCRIPT_DIR}/${script}"
-    if [[ -f "${SCRIPT_DIR}/${script}" ]]; then
+    echo -e "${green}Mengupdate: $script${NC}"
+    
+    # Tambahkan parameter waktu untuk bypass cache GitHub
+    URL="${REPO_URL}/${script}?nocache=$(date +%s)"
+    
+    # Unduh dan timpa script lama
+    if wget -q --show-progress -O "${SCRIPT_DIR}/${script}" "${URL}"; then
+        chmod +x "${SCRIPT_DIR}/${script}"
         echo -e "${green}Sukses update ${script}${NC}"
     else
         echo -e "${red}Gagal update ${script}${NC}"
     fi
 done
 
-echo -e "${blue}--- Proses update selesai ---${NC}"
-
-# Tunggu user tekan Enter untuk kembali ke menu
+echo -e "${blue}--- Semua script selesai diupdate ---${NC}"
 echo -e "${green}Tekan Enter untuk kembali ke menu...${NC}"
 read -r
 
-# Jalankan menu.sh setelah Enter
+# Jalankan menu utama
 menu.sh
