@@ -29,7 +29,7 @@ case $pilih in
     echo -e "${YELLOW}Masukkan password baru untuk VPS (root):${NC}"
     passwd root
     # Kembali ke menu setelah selesai
-    read -n1 -r -p "Tekan enter untuk kembali..." ; ./menu_pw_host.sh
+    read -n1 -r -p "Tekan enter untuk kembali..." ; /usr/bin/menu_pw_host
     ;;
   2)
     # Mengubah hostname VPS
@@ -49,7 +49,7 @@ case $pilih in
           "$newhost" =~ [-.]$ || "$newhost" =~ ^[-.] ]]; then
       echo -e "${RED}Hostname tidak valid!${NC}"
       echo -e "${YELLOW}Gunakan huruf, angka, titik (.), strip (-), dan tidak boleh diawali/diakhiri simbol.${NC}"
-      read -n1 -r -p "Tekan enter untuk kembali..." ; ./menu_pw_host.sh
+      read -n1 -r -p "Tekan enter untuk kembali..." ; /usr/bin/menu_pw_host
     fi
 
     # Simpan hostname lama
@@ -65,7 +65,7 @@ case $pilih in
     echo "$(date '+%Y-%m-%d %H:%M:%S') | $oldhost -> $newhost" >> /var/log/hostname-change.log
 
     # Kembali ke menu setelah selesai
-    read -n1 -r -p "Tekan enter untuk kembali..." ; ./menu_pw_host.sh
+    read -n1 -r -p "Tekan enter untuk kembali..." ; /usr/bin/menu_pw_host
     ;;
   x)
     # Kembali ke menu utama
@@ -74,6 +74,6 @@ case $pilih in
     ;;
   *)
     # Jika pilihan tidak valid
-    echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; ./menu_pw_host.sh
+    echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_pw_host
     ;;
 esac
