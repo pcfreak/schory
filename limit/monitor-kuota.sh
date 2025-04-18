@@ -39,24 +39,21 @@ for file in "$KUOTA_DIR"/*-limit; do
     # Skip jika user tidak ada di sistem
     id "$user" &>/dev/null || continue
 
-    # Ambil limit kuota dari file dalam MB
+    # Baca limit dalam MB
     limit_mb=$(cat "$file" 2>/dev/null)
     [[ ! "$limit_mb" =~ ^[0-9]+$ ]] && continue
 
-    # Tidak perlu konversi lagi, tetap pakai MB
-    limit=$limit_mb  # Limit dalam MB
+    # Konversi MB ke byte
+    limit=$((limit_mb * 1024 * 1024))
 
     used_file="$KUOTA_DIR/${user}-used"
     last_file="$KUOTA_DIR/${user}-last"
 
-    # Jika file used tidak ada, buat dengan nilai 0
     [[ ! -f "$used_file" ]] && echo 0 > "$used_file"
 
-    # Ambil penggunaan saat ini
     usage_now=$(get_usage_bytes "$user")
     [[ ! -f "$last_file" ]] && echo "$usage_now" > "$last_file"
 
-    # Hitung selisih dengan nilai terakhir
     last_usage=$(cat "$last_file")
     delta=$((usage_now - last_usage))
     [[ "$delta" -lt 0 ]] && delta=0
@@ -64,18 +61,16 @@ for file in "$KUOTA_DIR"/*-limit; do
     usage_before=$(cat "$used_file")
     total_usage=$((usage_before + delta))
 
-    # Simpan nilai penggunaan saat ini dan total penggunaan
     echo "$usage_now" > "$last_file"
     echo "$total_usage" > "$used_file"
 
-    # Hitung penggunaan dalam MB untuk ditampilkan
+    # Tampilkan penggunaan dalam MB
     usage_disp=$(awk "BEGIN {printf \"%.2f\", $total_usage / 1024 / 1024}")
 
-    # Cek jika total penggunaan melebihi limit
-    if (( total_usage / 1024 / 1024 >= limit )); then
+    if [[ "$total_usage" -ge "$limit" ]]; then
         pkill -KILL -u "$user"
         usermod -L "$user"
         chmod 000 /home/"$user" &>/dev/null
-        echo "$(date '+%F %T') - User '$user' melebihi kuota (${usage_disp} MB / ${limit} MB) - akun dikunci" >> "$LOG_FILE"
+        echo "$(date '+%F %T') - User '$user' melebihi kuota (${usage_disp}/${limit_mb} MB) - akun dikunci" >> "$LOG_FILE"
     fi
 done
