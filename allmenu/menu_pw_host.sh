@@ -11,7 +11,7 @@ NC='\033[0m'  # Reset warna
 clear
 # Menampilkan header menu
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${WHITE}               ⇱ GANTI PASSWORD LOGIN & HOSTNAME VPS ⇲                 ${NC}"
+echo -e "${WHITE}         ⇱ GANTI PASSWORD LOGIN & HOSTNAME VPS ⇲         ${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 # Pilihan menu
 echo -e " ${CYAN}[${NC}1${CYAN}]${NC} •${YELLOW} Ubah Password Login VPS (root)${NC}"
@@ -35,14 +35,14 @@ case $pilih in
     # Mengubah hostname VPS
     read -p "Masukkan hostname baru: " newhost
 
-    # Mengubah hostname ke huruf kecil (lowercase)
+    # Mengubah ke huruf kecil
     newhost=$(echo "$newhost" | tr '[:upper:]' '[:lower:]')
 
     # Validasi hostname:
     # - Tidak boleh kosong
-    # - Harus mengandung huruf, angka, titik (.), dan strip (-)
-    # - Tidak boleh diawali atau diakhiri dengan simbol
-    # - Tidak boleh hanya angka
+    # - Harus huruf/angka/titik/strip
+    # - Tidak diawali/diawali dengan simbol
+    # - Tidak hanya angka
     if [[ -z "$newhost" || \
           ! "$newhost" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ || \
           "$newhost" =~ ^[0-9]+$ || \
@@ -55,25 +55,35 @@ case $pilih in
     # Simpan hostname lama
     oldhost=$(hostname)
 
-    # Ubah hostname menggunakan hostnamectl
+    # Ubah hostname
     hostnamectl set-hostname "$newhost"
 
     # Output pesan berhasil
     echo -e "${GREEN}Hostname berhasil diganti menjadi: $newhost${NC}"
-
-    # Simpan log perubahan hostname ke file log
     echo "$(date '+%Y-%m-%d %H:%M:%S') | $oldhost -> $newhost" >> /var/log/hostname-change.log
 
-    # Kembali ke menu setelah selesai
-    read -n1 -r -p "Tekan enter untuk kembali..." ; /usr/bin/menu_pw_host
+    echo ""
+    read -p "Ingin reboot VPS sekarang untuk menerapkan hostname baru? (y/n): " jawab
+    if [[ "$jawab" == "y" || "$jawab" == "Y" ]]; then
+      echo -e "${YELLOW}Rebooting VPS...${NC}"
+      sleep 2
+      reboot
+    else
+      read -n1 -r -p "Tekan enter untuk kembali..." ; /usr/bin/menu_pw_host
+    fi
     ;;
   x)
-    # Kembali ke menu utama
-    clear
-    /usr/bin/menu
+    # Kembali ke menu utama jika ada
+    if [[ -f /usr/bin/menu ]]; then
+      clear
+      /usr/bin/menu
+    else
+      echo -e "${RED}File menu utama tidak ditemukan!${NC}"
+      sleep 1
+      /usr/bin/menu_pw_host
+    fi
     ;;
   *)
-    # Jika pilihan tidak valid
     echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_pw_host
     ;;
 esac
