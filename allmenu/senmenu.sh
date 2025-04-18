@@ -47,6 +47,7 @@ wget -q -O /root/versi "https://raw.githubusercontent.com/kanghory/schory/main/a
 wget -q -O /usr/bin/renel "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/renel.sh"
 wget -q -O /usr/bin/cekl "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/cekl.sh"
 wget -q -O /usr/bin/dell "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/dell.sh"
+wget -q -O /usr/bin/update-script "https://raw.githubusercontent.com/kanghory/schory/main/update-script.sh"
 #wget -q -O /usr/bin/ns-menu "https://raw.githubusercontent.com/kanghory/VPN/main/autoscript-ssh-slowdns-main/slowdns.sh && chmod +x slowdns.sh && ./slowdns.sh"
 wget https://raw.githubusercontent.com/kanghory/schory/main/backup/set-br.sh
 bash set-br.sh
@@ -90,7 +91,7 @@ chmod +x /usr/bin/wbm
 chmod +x /usr/bin/xp
 chmod +x /usr/bin/changer
 chmod +x /usr/bin/fix
-#chmod +x /usr/bin/update
+chmod +x /usr/bin/update-script
 
 
 
