@@ -1,6 +1,10 @@
 [Unit]
-Description=Monitor Kuota SSH Per User
+Description=Monitor Kuota SSH User
+After=network.target
 
 [Service]
-Type=oneshot
-ExecStart=/usr/local/bin/monitor-kuota.sh
+ExecStart=/usr/local/bin/monitor-kuota
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
