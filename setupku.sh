@@ -261,22 +261,22 @@ apt install pv dialog -y >/dev/null 2>&1
 echo -e "[ ${green}INFO${NC} ] Aight good ... installation file is ready"
 
 # Instalasi Limit Kuota SSH
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit Quota SSH KANG HORY            $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "$green      Install Limit Quota SSH KANG HORY            $NC"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 
 # Direktori untuk menyimpan data kuota per user
-mkdir -p /etc/klmpk/limit/ssh/kuota
+#mkdir -p /etc/klmpk/limit/ssh/kuota
 
 # Install vnstat jika belum ada
-if ! command -v vnstat &> /dev/null; then
-    echo "Menginstal vnstat..."
-    apt install -y vnstat
-fi
+#if ! command -v vnstat &> /dev/null; then
+#    echo "Menginstal vnstat..."
+#    apt install -y vnstat
+#fi
 
 # Aktifkan dan jalankan vnstat
-systemctl enable vnstat
-systemctl start vnstat
+#systemctl enable vnstat
+#systemctl start vnstat
 
 # Download script monitor-kuota.sh
 #echo "Mengunduh script monitor-kuota..."
@@ -289,8 +289,8 @@ systemctl start vnstat
 #wget -O /etc/systemd/system/monitor-kuota.timer https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-kuota.timer
 
 # Memuat ulang konfigurasi systemd
-echo "Memuat ulang systemd..."
-systemctl daemon-reload
+#echo "Memuat ulang systemd..."
+#systemctl daemon-reload
 
 # Mengaktifkan dan memulai timer untuk monitoring kuota
 #echo "Mengaktifkan dan memulai monitor-kuota.timer..."
@@ -317,6 +317,10 @@ echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━�
 
 #menyimpan limit IP per user
 mkdir -p /etc/klmpk/limit/ssh/ip
+
+# pasang menu limit ssh
+wget -O /usr/bin/menu_limit_ip_ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_limit_ip_ssh.sh"
+chmod +x /usr/bin/menu_limit_ip_ssh
 
 # Download script limitssh-ip.sh
 echo "Mengunduh script limitssh-ip..."
