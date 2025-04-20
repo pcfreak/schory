@@ -12,7 +12,7 @@ LIGHT='\033[0;37m'
 clear
 echo " "
 echo " "
-# Tentukan lokasi log sesuai sistem (yakni log ssh untuk cek ssh)
+
 if [ -e "/var/log/auth.log" ]; then
         LOG="/var/log/auth.log";
 fi
