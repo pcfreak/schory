@@ -186,28 +186,28 @@ wget -O /usr/local/sbin/cekssh https://raw.githubusercontent.com/kanghory/schory
 chmod +x /usr/local/sbin/cekssh
 
 # Instalasi Limit IP SSH TIAP USER VMESS
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit IP VMESS KANG HORY            $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "$green      Install Limit IP VMESS KANG HORY            $NC"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 
-#menyimpan limit IP per user
-mkdir -p /etc/klmpk/limit/vmess/ip/username
+# menyimpan limit IP per user
+#mkdir -p /etc/klmpk/limit/vmess/ip/username
 
 # Download script monitor-ip-vmess.sh
-echo "Mengunduh script monitor-ip-vmess..."
-wget -O /usr/local/bin/monitor-ip-vmess.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-ip-vmess.sh
-chmod +x /usr/local/bin/monitor-ip-vmess.sh
+#echo "Mengunduh script monitor-ip-vmess..."
+#wget -O /usr/local/bin/monitor-ip-vmess.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-ip-vmess.sh
+$chmod +x /usr/local/bin/monitor-ip-vmess.sh
 
 # Mengunduh file monitor-kuota.service dan monitor-kuota.timer dari GitHub
-echo "Mengunduh file monitor-kuota.service dan monitor-kuota.timer..."
-wget -O /etc/systemd/system/monitor-ip-vmess.service https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-ip-vmess.service
-wget -O /etc/systemd/system/monitor-ip-vmess.timer https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-ip-vmess.timer
+#echo "Mengunduh file monitor-kuota.service dan monitor-kuota.timer..."
+#wget -O /etc/systemd/system/monitor-ip-vmess.service https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-ip-vmess.service
+#wget -O /etc/systemd/system/monitor-ip-vmess.timer https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-ip-vmess.timer
 
 #reload systemd untuk membaca konfigurasi baru dan aktifkan timer agar script dijalankan setiap 1 menit
-systemctl daemon-reload
-systemctl enable monitor-ip-vmess.timer
-systemctl start monitor-ip-vmess.timer
-echo "limit ip vmess di jalanakan..."
+#systemctl daemon-reload
+#systemctl enable monitor-ip-vmess.timer
+#systemctl start monitor-ip-vmess.timer
+#echo "limit ip vmess di jalanakan..."
 sleep 2
 
 clear
