@@ -1,45 +1,31 @@
 #!/bin/bash
-
-# Warna
-green='\e[32m'
-red='\e[31m'
-blue='\e[34m'
-NC='\e[0m'
-
-# Base URL GitHub
-REPO_URL="https://raw.githubusercontent.com/kanghory/schory/main"
-
-# Daftar script dengan format target=source
-SCRIPT_LIST=(
-    "/usr/bin/menu.sh=allmenu/menu.sh"
-    "/usr/bin/menun-ssh.sh=allmenu/menun-ssh.sh"
-    "/usr/bin/menu_pw_host.sh=allmenu/menu_pw_host.sh"
-    "/usr/bin/menu-backup.sh=allmenu/menu-backup.sh"
-    "/usr/bin/usernew.sh=allmenu/usernew.sh"
-    "/usr/bin/backup.sh=backup/backup.sh"
-    "/usr/bin/restore.sh=backup/restore.sh"
-)
-
-echo -e "${blue}--- Memulai proses update script ---${NC}"
-
-for entry in "${SCRIPT_LIST[@]}"; do
-    target_path="${entry%%=*}"
-    source_path="${entry#*=}"
-    file_name=$(basename "$target_path")
-
-    echo -e "${green}Mengupdate: $file_name${NC}"
-
-    # URL dengan bypass cache
-    URL="${REPO_URL}/${source_path}?nocache=$(date +%s)"
-
-    # Unduh dan simpan ke lokasi target
-    if wget -q --show-progress -O "${target_path}" "${URL}"; then
-        chmod +x "${target_path}"
-        echo -e "${green}Sukses update ${file_name}${NC}"
-    else
-        echo -e "${red}Gagal update ${file_name}${NC}"
-    fi
-done
+echo -e cheking update
+sleep 2
+#hapus
+rm -f /usr/bin/menu
+rm -f /usr/bin/menun-ssh
+rm -f /usr/bin/menu_pw_host
+rm -f /usr/bin/menu-backup
+rm -f /usr/bin/usernew
+rm -f /usr/bin/backup
+rm -f /usr/bin/restore
+#download
+wget -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
+wget -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
+wget -0 /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
+wget -O /usr/bin/menu-backup "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-backup.sh"
+wget -O /usr/bin/usernew "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
+wget -O /usr/bin/backup "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
+wget -O /usr/bin/restore "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
+#izin
+chmod +x /usr/bin/menu
+chmod +x /usr/bin/menun-ssh
+chmod +x /usr/bin/menu_pw_host
+chmod +x /usr/bin/menu-backup
+chmod +x /usr/bin/usernew
+chmod +x /usr/bin/backup
+chmod +x /usr/bin/restore
+rm -rf update-script.sh
 
 echo -e "${blue}--- Semua script selesai diupdate ---${NC}"
 echo -e "${green}Tekan Enter untuk kembali ke menu...${NC}"
