@@ -11,6 +11,8 @@ rm -f /usr/bin/backup
 rm -f /usr/bin/restore
 rm -f /usr/bin/menu_limit_ip_ssh
 #download
+echo -e "${YELLOW}Update all repo...${NC}"
+wget -O /usr/bin/menu_limit_ip_ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_limit_ip_ssh.sh"
 wget -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
 wget -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
 wget -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
@@ -20,7 +22,7 @@ wget -O /usr/bin/backup "https://raw.githubusercontent.com/kanghory/schory/main/
 wget -O /usr/bin/restore "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
 wget -O /usr/bin/menu_limit_ip_ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_limit_ip_ssh.sh"
 #izin
-chmod +x /usr/bin/update-script
+chmod +x /usr/bin/menu_limit_ip_ssh
 chmod +x /usr/bin/menu
 chmod +x /usr/bin/menun-ssh
 chmod +x /usr/bin/menu_pw_host
