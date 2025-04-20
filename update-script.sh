@@ -32,4 +32,4 @@ echo -e "${green}Tekan Enter untuk kembali ke menu...${NC}"
 read -r
 
 # Jalankan menu utama
-menu.sh
+menu
