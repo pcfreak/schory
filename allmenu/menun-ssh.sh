@@ -772,7 +772,7 @@ case $opt in
 9) clear ; member ;;
 10) clear ; trialssh ;;
 11) clear ; ceklimit ;;
-12) clear ; limit_ip_menu ;;
+12) clear ; menu_limit_ip_ssh ;;
 13) clear ; lock_unlock_ssh ;;
 14) clear ; menu_udp_custom ;;
 0) clear ; menu ;;
