@@ -123,6 +123,4 @@ while true; do
     
     # Kembali ke menu utama dengan mengeksekusi /usr/bin/menu
     /usr/bin/menu
-    break  # Menutup script setelah kembali ke menu utama
-done
 done
