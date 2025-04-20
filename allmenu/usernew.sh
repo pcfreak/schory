@@ -171,9 +171,5 @@ Payload CDN (Fake Host) :
 GET / HTTP/1.1[crlf]Host: www.bing.com[crlf]Connection: Keep-Alive[crlf]Upgrade: websocket[crlf][crlf]
 EOF
 
-# Restart monitor-kuota service
-echo -e "${YELLOW}[INFO]${NC} Restarting monitor-kuota.service untuk memantau kuota user baru..."
-systemctl restart monitor-kuota.service
-
 read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
 /usr/bin/menu
