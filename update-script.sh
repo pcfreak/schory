@@ -11,7 +11,7 @@ rm -f /usr/bin/usernew
 rm -f /usr/bin/backup
 rm -f /usr/bin/restore
 #download
-wget -q -O /usr/bin/update-script "https://raw.githubusercontent.com/kanghory/schory/main/update-script.sh"
+wget -O /usr/bin/update-script "https://raw.githubusercontent.com/kanghory/schory/main/update-script.sh"
 wget -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
 wget -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
 wget -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
