@@ -17,15 +17,14 @@ echo -e "${YELLOW}---------------------------------------------------${NC}"
 read -p " Username        : " Login
 read -p " Password        : " Pass
 read -p " Limit IP        : " iplimit
-read -p " Limit Kuota (MB): " kuotamb
 read -p " Expired (Days)  : " masaaktif
 
 # Validasi input
-if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" || -z "$kuotamb" ]]; then
+if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" ]]; then
     echo -e "${RED}[ERROR]${NC} Semua input harus diisi!"
     exit 1
-elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ && "$kuotamb" =~ ^[0-9]+$ ]]; then
-    echo -e "${RED}[ERROR]${NC} Limit IP, Kuota, dan Expired harus berupa angka!"
+elif ! [[ "$iplimit" =~ ^[0-9]+$ && "$masaaktif" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}[ERROR]${NC} Limit IP, dan Expired harus berupa angka!"
     exit 1
 fi
 
@@ -35,15 +34,9 @@ if id "$Login" &>/dev/null; then
     exit 1
 fi
 
-# Simpan Limit IP & Kuota
+# Simpan Limit IP
 mkdir -p /etc/klmpk/limit/ssh/ip/
 echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
-
-mkdir -p /etc/klmpk/limit/ssh/kuota/
-echo "$kuotamb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
-
-# Membuat file base untuk mencatat penggunaan awal
-echo "0" > /etc/klmpk/limit/ssh/kuota/${Login}-base
 
 # Load data sistem
 domain=$(cat /etc/xray/domain)
@@ -97,7 +90,6 @@ echo -e "Password       : $Pass"
 echo -e "Created        : $hariini"
 echo -e "Expired        : $expi"
 echo -e "Limit IP       : $iplimit"
-echo -e "Limit Kuota    : $kuotamb MB"
 echo -e "${LIGHT}=================HOST-SSH======================"
 echo -e "IP/Host        : $IP"
 echo -e "Domain SSH     : $domain"
@@ -142,7 +134,6 @@ Password : $Pass
 Created  : $hariini
 Expired  : $expi
 Limit IP : $iplimit
-Limit Kuota : $kuotamb MB
 
 ==== Host ====
 IP       : $IP
