@@ -324,34 +324,32 @@ function ubahpass_ssh() {
   fi
 }
 function ceklimit() {
-    clear
-    touch /root/.system
-    echo -e "  ${y}───────────────────────────────────────${NC}"
-    echo -e "            ️ ${g}USER LOGIN SSH${NC}  ️"
-    echo -e "  ${y}───────────────────────────────────────${NC}"
-    echo -e "    ${ungu} LOGIN IP    LIMIT IP    USERNAME ${NC}"
-    mulog=$(cekssh)
-    data=( `cat /etc/passwd | grep home | cut -d ' ' -f 1 | cut -d : -f 1`);
-    for user in "${data[@]}"
-    do
-    cekcek=$(echo -e "$mulog" | grep $user | wc -l)
-    if [[ $cekcek -gt 0 ]]; then
-    iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user)
-    printf "  %-13s %-7s %-8s %2s\n" "     ${cekcek} IP        ${iplimit} IP      ${user}"
-    echo "slot" >> /root/.system
-    else
-    echo > /dev/null
-    fi
-    echo send_log > /dev/null
-    sleep 0.1
-    done
-    aktif=$(cat /root/.system | wc -l)
-    echo -e "  ${y}───────────────────────────────────────${NC}"
-    echo -e "            $aktif User Online"
-    echo -e "  ${y}───────────────────────────────────────${NC}"
-    sed -i "d" /root/.system
-    read -n 1 -s -r -p "Press any key to back on menu"
-    menu
+clear
+touch /root/.system
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "            ️ ${g}USER LOGIN SSH${NC}  ️"
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "    ${ungu} LOGIN IP    LIMIT IP    USERNAME ${NC}"
+mulog=$(cekssh)
+data=( `cat /etc/passwd | grep home | cut -d ' ' -f 1 | cut -d : -f 1`);
+for user in "${data[@]}"
+do
+cekcek=$(echo -e "$mulog" | grep $user | wc -l)
+if [[ $cekcek -gt 0 ]]; then
+iplimit=$(cat /etc/klmpk/limit/ssh/ip/$user)
+printf "  %-13s %-7s %-8s %2s\n" "     ${cekcek} IP        ${iplimit} IP      ${user}"
+echo "slot" >> /root/.system
+else
+echo > /dev/null
+fi
+echo send_log > /dev/null
+sleep 0.1
+done
+aktif=$(cat /root/.system | wc -l)
+echo -e "  ${y}───────────────────────────────────────${NC}"
+echo -e "            $aktif User Online"
+echo -e "  ${y}───────────────────────────────────────${NC}"
+sed -i "d" /root/.system
 }
 function autokill(){
 clear
