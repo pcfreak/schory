@@ -42,6 +42,9 @@ echo "$iplimit" > /etc/klmpk/limit/ssh/ip/$Login
 mkdir -p /etc/klmpk/limit/ssh/kuota/
 echo "$kuotamb" > /etc/klmpk/limit/ssh/kuota/${Login}-limit
 
+# Membuat file base untuk mencatat penggunaan awal
+echo "0" > /etc/klmpk/limit/ssh/kuota/${Login}-base
+
 # Load data sistem
 domain=$(cat /etc/xray/domain)
 sldomain=$(cat /root/nsdomain)
