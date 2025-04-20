@@ -154,4 +154,3 @@ while true; do
     echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_limit_ip_ssh
     ;;
 esac
-done
