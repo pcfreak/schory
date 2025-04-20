@@ -28,7 +28,7 @@ chmod +x /usr/bin/menu-backup
 chmod +x /usr/bin/usernew
 chmod +x /usr/bin/backup
 chmod +x /usr/bin/restore
-chmod +x /usr/bin/menu_limit_ip_ssh.
+chmod +x /usr/bin/menu_limit_ip_ssh
 rm -rf update-script.sh
 
 echo -e "${blue}--- Semua script selesai diupdate ---${NC}"
