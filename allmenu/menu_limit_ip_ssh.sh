@@ -30,8 +30,6 @@ function show_status() {
     # Log terakhir
     echo -e "\n\e[1;36mLog Terakhir (5 baris):\e[0m"
     journalctl -u $SERVICE -n 5 --no-pager --quiet
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Lihat semua user + limit
@@ -62,8 +60,6 @@ function set_limit() {
     else
         echo "Input tidak valid. Harus angka lebih dari 0."
     fi
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Hapus limit
@@ -75,8 +71,6 @@ function delete_limit() {
     else
         echo "User tidak memiliki limit IP yang disimpan."
     fi
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Aktifkan service limitssh
@@ -84,8 +78,6 @@ function start_service() {
     systemctl enable $SERVICE
     systemctl start $SERVICE
     echo -e "\e[1;32mService $SERVICE diaktifkan.\e[0m"
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Nonaktifkan service limitssh
@@ -93,16 +85,12 @@ function stop_service() {
     systemctl stop $SERVICE
     systemctl disable $SERVICE
     echo -e "\e[1;31mService $SERVICE dinonaktifkan.\e[0m"
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Menampilkan durasi akun terkunci
 function show_lock_duration() {
     lock_duration=$(cat $LOCK_DURATION_FILE)
     echo -e "Durasi akun terkunci saat melanggar limit IP adalah: \e[1;31m$lock_duration menit\e[0m"
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Mengatur durasi akun terkunci
@@ -116,16 +104,12 @@ function set_lock_duration() {
     else
         echo "Input tidak valid. Harus angka lebih dari 0."
     fi
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Restart service limitssh
 function restart_service() {
     systemctl restart $SERVICE
     echo -e "\e[1;33mService $SERVICE berhasil direstart.\e[0m"
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Menu utama
@@ -155,19 +139,8 @@ while true; do
         7) set_lock_duration ;;
         8) show_status ;;
         9) restart_service ;;
-        0)
-    # Kembali ke menu utama jika ada
-    if [[ -f /usr/bin/menu ]]; then
-      clear
-      /usr/bin/menu
-    else
-      echo -e "${RED}File menu utama tidak ditemukan!${NC}"
-      sleep 1
-      /usr/bin/menu_limit_ip_ssh
-    fi
-    ;;
-  *)
-    echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_limit_ip_ssh
-    ;;
-esac
+        0) break ;;
+        *) echo "Opsi tidak valid." && sleep 1 ;;
+    esac
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 done
