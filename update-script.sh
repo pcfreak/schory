@@ -1,15 +1,8 @@
 #!/bin/bash
-
-# Warna
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-BLUE='\033[1;34m'
-NC='\033[0m'
-
-echo -e "${YELLOW}Checking for updates...${NC}"
+echo -e "Checking update..."
 sleep 2
 
-# Hapus script lama
+# Hapus file lama
 rm -f /usr/bin/menu
 rm -f /usr/bin/menun-ssh
 rm -f /usr/bin/menu_pw_host
@@ -19,33 +12,47 @@ rm -f /usr/bin/backup
 rm -f /usr/bin/restore
 rm -f /usr/bin/menu_limit_ip_ssh
 
-# Download script terbaru
-echo -e "${YELLOW}Downloading updated scripts...${NC}"
-wget -q -O /usr/bin/menu "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
-wget -q -O /usr/bin/menun-ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
-wget -q -O /usr/bin/menu_pw_host "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
-wget -q -O /usr/bin/menu-backup "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-backup.sh"
-wget -q -O /usr/bin/usernew "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
-wget -q -O /usr/bin/backup "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
-wget -q -O /usr/bin/restore "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
-wget -q -O /usr/bin/menu_limit_ip_ssh "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_limit_ip_ssh.sh"
+# Download update
+echo -e "${YELLOW}Update all repo...${NC}"
 
-# Beri izin eksekusi
-chmod +x /usr/bin/menu
-chmod +x /usr/bin/menun-ssh
-chmod +x /usr/bin/menu_pw_host
-chmod +x /usr/bin/menu-backup
-chmod +x /usr/bin/usernew
-chmod +x /usr/bin/backup
-chmod +x /usr/bin/restore
-chmod +x /usr/bin/menu_limit_ip_ssh
+urls=(
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_limit_ip_ssh.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menun-ssh.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu_pw_host.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-backup.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
+)
 
-# Hapus file ini jika perlu
-rm -f update-script.sh
+files=(
+    "/usr/bin/menu_limit_ip_ssh"
+    "/usr/bin/menu"
+    "/usr/bin/menun-ssh"
+    "/usr/bin/menu_pw_host"
+    "/usr/bin/menu-backup"
+    "/usr/bin/usernew"
+    "/usr/bin/backup"
+    "/usr/bin/restore"
+)
 
-echo -e "${BLUE}--- Semua script selesai diupdate ---${NC}"
-echo -e "${GREEN}Tekan Enter untuk kembali ke menu...${NC}"
+for i in ${!urls[@]}; do
+    wget -O ${files[$i]} "${urls[$i]}"
+    if [[ $? -eq 0 ]]; then
+        chmod +x ${files[$i]}
+        echo -e "${GREEN}${files[$i]} successfully updated.${NC}"
+    else
+        echo -e "${RED}Failed to update ${files[$i]}${NC}"
+    fi
+done
+
+# Clean up
+rm -rf update-script.sh
+
+echo -e "${BLUE}--- All scripts have been updated successfully ---${NC}"
+echo -e "${GREEN}Press Enter to return to the menu...${NC}"
 read -r
 
-# Jalankan menu utama
+# Run the main menu
 menu
