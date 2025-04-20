@@ -32,6 +32,7 @@ function list_limit() {
         echo "Belum ada limit IP yang diset."
     fi
     echo
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Set atau ubah limit
