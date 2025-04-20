@@ -15,8 +15,21 @@ fi
 
 # Fungsi menampilkan status service
 function show_status() {
+    echo -e "\n\e[1;36m=== STATUS SERVICE: $SERVICE ===\e[0m"
+    
+    # Status aktif dan auto start
+    systemctl is-enabled $SERVICE &>/dev/null && enabled="Enabled" || enabled="Disabled"
     status=$(systemctl is-active $SERVICE)
-    echo -e "\n\e[1;36mStatus Service: $SERVICE = $status\e[0m"
+    echo -e "Status Aktif  : \e[1;33m$status\e[0m"
+    echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
+    
+    # Ringkasan systemctl status
+    echo -e "\n\e[1;36mRingkasan Service:\e[0m"
+    systemctl status $SERVICE --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
+    
+    # Log terakhir
+    echo -e "\n\e[1;36mLog Terakhir (5 baris):\e[0m"
+    journalctl -u $SERVICE -n 5 --no-pager --quiet
 }
 
 # Lihat semua user + limit
@@ -93,6 +106,12 @@ function set_lock_duration() {
     fi
 }
 
+# Restart service limitssh
+function restart_service() {
+    systemctl restart $SERVICE
+    echo -e "\e[1;33mService $SERVICE berhasil direstart.\e[0m"
+}
+
 # Menu utama
 while true; do
     clear
@@ -105,9 +124,11 @@ while true; do
     echo -e "5. Nonaktifkan Service Limit IP"
     echo -e "6. Lihat Durasi Akun Terkunci"
     echo -e "7. Set Durasi Akun Terkunci"
+    echo -e "8. Cek Status Service"
+    echo -e "9. Restart Service Limit IP"
     echo -e "0. Keluar"
     echo
-    read -rp "Pilih opsi [0-7]: " opt
+    read -rp "Pilih opsi [0-9]: " opt
     case $opt in
         1) list_limit ;;
         2) set_limit ;;
@@ -116,6 +137,8 @@ while true; do
         5) stop_service ;;
         6) show_lock_duration ;;
         7) set_lock_duration ;;
+        8) show_status ;;
+        9) restart_service ;;
         0) break ;;
         *) echo "Opsi tidak valid." && sleep 1 ;;
     esac
