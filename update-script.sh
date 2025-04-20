@@ -2,7 +2,6 @@
 echo -e cheking update
 sleep 2
 #hapus
-rm -f /usr/bin/update-script
 rm -f /usr/bin/menu
 rm -f /usr/bin/menun-ssh
 rm -f /usr/bin/menu_pw_host
@@ -35,4 +34,4 @@ echo -e "${green}Tekan Enter untuk kembali ke menu...${NC}"
 read -r
 
 # Jalankan menu utama
-/usr/bin/menu.sh
+menu
