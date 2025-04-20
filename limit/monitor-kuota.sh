@@ -36,24 +36,21 @@ for file in "$KUOTA_DIR"/*-limit; do
     user=$(basename "$file" | cut -d'-' -f1)
     [[ -z "$user" ]] && continue
 
-    limit=$(cat "$file" 2>/dev/null)
-    used_file="$KUOTA_DIR/${user}-used"
+    # Limit dalam MB, konversi ke byte
+    limit_mb=$(cat "$file" 2>/dev/null)
+    [[ ! "$limit_mb" =~ ^[0-9]+$ ]] && continue
+    limit_bytes=$((limit_mb * 1024 * 1024))
 
-    [[ ! "$limit" =~ ^[0-9]+$ ]] && continue
+    used_file="$KUOTA_DIR/${user}-used"
     [[ ! -f "$used_file" ]] && echo 0 > "$used_file"
 
     usage_now=$(get_usage_bytes "$user")
     usage_before=$(cat "$used_file" 2>/dev/null)
     total_usage=$((usage_before + usage_now))
-
     echo "$total_usage" > "$used_file"
 
-    if [[ "$total_usage" -ge "$limit" ]]; then
+    if [[ "$total_usage" -ge "$limit_bytes" ]]; then
         pkill -KILL -u "$user" && usermod -L "$user"
-        if [[ $? -eq 0 ]]; then
-            echo "$(date '+%F %T') - User '$user' melebihi kuota ($total_usage / $limit bytes) - akun dikunci" >> "$LOG_FILE"
-        else
-            echo "$(date '+%F %T') - ERROR: Gagal mengunci akun '$user' setelah melebihi kuota" >> "$LOG_FILE"
-        fi
+        echo "$(date '+%F %T') - User '$user' melebihi kuota (${total_usage} bytes / ${limit_bytes} bytes) - akun dikunci" >> "$LOG_FILE"
     fi
 done
