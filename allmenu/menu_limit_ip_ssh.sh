@@ -5,30 +5,21 @@ SERVICE="limitssh.service"
 LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
 DEFAULT_LOCK_DURATION=15
 
+# Pastikan direktori limit ada
 [[ ! -d $LIMIT_DIR ]] && mkdir -p $LIMIT_DIR
-[[ ! -f $LOCK_DURATION_FILE ]] && echo "$DEFAULT_LOCK_DURATION" > "$LOCK_DURATION_FILE"
 
-# Tampilkan status singkat
+# Jika file lock_duration belum ada, buat dengan default 15 menit
+if [[ ! -f $LOCK_DURATION_FILE ]]; then
+    echo "$DEFAULT_LOCK_DURATION" > "$LOCK_DURATION_FILE"
+fi
+
+# Fungsi menampilkan status service
 function show_status() {
     status=$(systemctl is-active $SERVICE)
     echo -e "\n\e[1;36mStatus Service: $SERVICE = $status\e[0m"
 }
 
-# Tampilkan status detail + log
-function show_service_details() {
-    echo -e "\n\e[1;34m=== DETAIL STATUS $SERVICE ===\e[0m"
-    systemctl status $SERVICE --no-pager
-    echo -e "\n\e[1;34m=== LOG TERAKHIR $SERVICE ===\e[0m"
-    journalctl -u $SERVICE -n 10 --no-pager
-}
-
-# Restart service
-function restart_service() {
-    systemctl restart $SERVICE
-    echo -e "\e[1;33mService $SERVICE telah direstart.\e[0m"
-}
-
-# List semua limit IP
+# Lihat semua user + limit
 function list_limit() {
     echo -e "\n\e[1;33m=== Daftar Limit IP SSH ===\e[0m"
     if [ "$(ls -A $LIMIT_DIR)" ]; then
@@ -43,7 +34,7 @@ function list_limit() {
     echo
 }
 
-# Set limit
+# Set atau ubah limit
 function set_limit() {
     read -p "Masukkan username SSH: " user
     id -u "$user" &>/dev/null || { echo "User tidak ditemukan!"; return; }
@@ -68,30 +59,31 @@ function delete_limit() {
     fi
 }
 
-# Aktifkan service
+# Aktifkan service limitssh
 function start_service() {
     systemctl enable $SERVICE
     systemctl start $SERVICE
     echo -e "\e[1;32mService $SERVICE diaktifkan.\e[0m"
 }
 
-# Nonaktifkan service
+# Nonaktifkan service limitssh
 function stop_service() {
     systemctl stop $SERVICE
     systemctl disable $SERVICE
     echo -e "\e[1;31mService $SERVICE dinonaktifkan.\e[0m"
 }
 
-# Lihat durasi lock
+# Menampilkan durasi akun terkunci
 function show_lock_duration() {
     lock_duration=$(cat $LOCK_DURATION_FILE)
     echo -e "Durasi akun terkunci saat melanggar limit IP adalah: \e[1;31m$lock_duration menit\e[0m"
 }
 
-# Set durasi lock
+# Mengatur durasi akun terkunci
 function set_lock_duration() {
     read -p "Masukkan durasi akun terkunci dalam menit (default 15 menit): " duration
-    duration=${duration:-$DEFAULT_LOCK_DURATION}
+    duration=${duration:-$DEFAULT_LOCK_DURATION}  # Menggunakan default jika kosong
+
     if [[ "$duration" =~ ^[0-9]+$ && "$duration" -gt 0 ]]; then
         echo "$duration" > "$LOCK_DURATION_FILE"
         echo -e "Durasi akun terkunci telah diatur ke \e[1;31m$duration menit\e[0m"
@@ -112,11 +104,9 @@ while true; do
     echo -e "5. Nonaktifkan Service Limit IP"
     echo -e "6. Lihat Durasi Akun Terkunci"
     echo -e "7. Set Durasi Akun Terkunci"
-    echo -e "8. Cek Status & Log Service Limit IP"
-    echo -e "9. Restart Service Limit IP"
     echo -e "0. Keluar"
     echo
-    read -rp "Pilih opsi [0-9]: " opt
+    read -rp "Pilih opsi [0-7]: " opt
     case $opt in
         1) list_limit ;;
         2) set_limit ;;
@@ -125,28 +115,19 @@ while true; do
         5) stop_service ;;
         6) show_lock_duration ;;
         7) set_lock_duration ;;
-        8)
-            show_service_details
-            echo
-            read -n 1 -s -r -p "Tekan sembarang tombol untuk kembali ke menu..."
-            ;;
-        9)
-            restart_service
-            sleep 1
-            ;;
         0)
-            if [[ -f /usr/bin/menu ]]; then
-                clear
-                /usr/bin/menu
-            else
-                echo -e "${RED}File menu utama tidak ditemukan!${NC}"
-                sleep 1
-                /usr/bin/menu_limit_ip_ssh
-            fi
-            ;;
-        *)
-            echo -e "${RED}Pilihan tidak valid!${NC}"
-            sleep 1
-            ;;
-    esac
+    # Kembali ke menu utama jika ada
+    if [[ -f /usr/bin/menu ]]; then
+      clear
+      /usr/bin/menu
+    else
+      echo -e "${RED}File menu utama tidak ditemukan!${NC}"
+      sleep 1
+      /usr/bin/menu_limit_ip_ssh
+    fi
+    ;;
+  *)
+    echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_limit_ip_ssh
+    ;;
+esac
 done
