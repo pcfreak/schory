@@ -1,35 +1,60 @@
 #!/bin/bash
 
-LIMIT_DIR="/etc/klmpk/limit/ssh/quota"
-USAGE_DIR="/etc/klmpk/limit/ssh/usage"
+kuota_dir="/etc/klmpk/limit/ssh/kuota"
+interval=60
 
-mkdir -p "$LIMIT_DIR" "$USAGE_DIR"
+convert_to_bytes() {
+  local value="$1"
+  case "$value" in
+    *GB|*gb) echo $(( ${value%GB} * 1024 * 1024 * 1024 )) ;;
+    *MB|*mb) echo $(( ${value%MB} * 1024 * 1024 )) ;;
+    *B|*b)   echo $(( ${value%B} )) ;;
+    *)       echo "$value" ;; # fallback
+  esac
+}
+
+format_bytes() {
+  local bytes="$1"
+  if (( bytes >= 1073741824 )); then
+    printf "%.2f GB" "$(bc -l <<< "$bytes/1073741824")"
+  elif (( bytes >= 1048576 )); then
+    printf "%.2f MB" "$(bc -l <<< "$bytes/1048576")"
+  elif (( bytes >= 1024 )); then
+    printf "%.2f KB" "$(bc -l <<< "$bytes/1024")"
+  else
+    echo "$bytes B"
+  fi
+}
 
 while true; do
-    users=$(ls $LIMIT_DIR)
-    for user in $users; do
-        if id "$user" &>/dev/null; then
-            # Ambil limit kuota (dalam MB)
-            limit=$(cat "$LIMIT_DIR/$user")
-            usage_file="$USAGE_DIR/$user"
+  for file in "$kuota_dir"/*; do
+    [[ -f "$file" ]] || continue
+    user=$(basename "$file")
+    kuota_raw=$(cat "$file")
+    kuota_byte=$(convert_to_bytes "$kuota_raw")
 
-            # Ambil total bytes digunakan oleh user (TX+RX)
-            used=$(grep "$user" /proc/net/dev | awk '{tx+=$10; rx+=$2} END {print tx+rx}')
-            
-            # Jika file penggunaan belum ada, inisialisasi
-            if [ ! -f "$usage_file" ]; then
-                echo "$used" > "$usage_file"
-                continue
-            fi
+    # Ambil expired dari /etc/shadow
+    exp_days=$(grep -w "^$user" /etc/shadow | cut -d: -f8)
+    if [[ -n "$exp_days" ]]; then
+      today_days=$(($(date +%s) / 86400))
+      if (( today_days > exp_days )); then
+        userdel -f "$user"
+        rm -f "$file"
+        echo "$(date '+%F %T') - $user expired, akun dihapus"
+        continue
+      fi
+    fi
 
-            start=$(cat "$usage_file")
-            total_used=$(( (used - start) / 1024 / 1024 )) # MB
+    # Hitung penggunaan
+    usage_byte=$(grep -w "$user" /proc/net/dev | awk -F'[: ]+' '{rx+=$2; tx+=$10} END {print rx+tx}')
+    usage_byte=${usage_byte:-0}
 
-            if (( total_used >= limit )); then
-                pkill -KILL -u "$user"
-                echo "User $user melebihi kuota (${limit}MB), koneksi dihentikan."
-            fi
-        fi
-    done
-    sleep 60
+    if (( usage_byte >= kuota_byte )); then
+      pkill -KILL -u "$user"
+      echo "$(date '+%F %T') - $user melebihi kuota $(format_bytes "$kuota_byte"), disconnect"
+    else
+      echo "$(date '+%F %T') - $user: $(format_bytes "$usage_byte") dari $(format_bytes "$kuota_byte")"
+    fi
+  done
+  sleep "$interval"
 done
