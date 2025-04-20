@@ -1,60 +1,59 @@
 #!/bin/bash
 
-kuota_dir="/etc/klmpk/limit/ssh/kuota"
-interval=60
+# === Konfigurasi ===
+KUOTA_DIR="/etc/klmpk/limit/ssh/kuota"
+LOG_FILE="/var/log/limit-kuota.log"
 
-convert_to_bytes() {
-  local value="$1"
-  case "$value" in
-    *GB|*gb) echo $(( ${value%GB} * 1024 * 1024 * 1024 )) ;;
-    *MB|*mb) echo $(( ${value%MB} * 1024 * 1024 )) ;;
-    *B|*b)   echo $(( ${value%B} )) ;;
-    *)       echo "$value" ;; # fallback
-  esac
+# Pastikan direktori kuota ada
+if [[ ! -d "$KUOTA_DIR" ]]; then
+    echo "$(date '+%F %T') - ERROR: Direktori kuota tidak ditemukan" >> "$LOG_FILE"
+    exit 1
+fi
+
+# Logging waktu eksekusi
+echo "$(date '+%F %T') - monitor-kuota.sh dijalankan" >> "$LOG_FILE"
+
+# Fungsi untuk dapatkan total data RX+TX user dari /proc
+get_usage_bytes() {
+    local user="$1"
+    local total=0
+    for pid in $(pgrep -u "$user"); do
+        if [[ -f "/proc/$pid/net/dev" ]]; then
+            while read -r line; do
+                [[ "$line" == *:* ]] || continue
+                local rx tx
+                rx=$(echo "$line" | awk -F: '{print $2}' | awk '{print $1}')
+                tx=$(echo "$line" | awk -F: '{print $2}' | awk '{print $9}')
+                total=$((total + rx + tx))
+            done < "/proc/$pid/net/dev" 2>/dev/null
+        fi
+    done
+    echo "$total"
 }
 
-format_bytes() {
-  local bytes="$1"
-  if (( bytes >= 1073741824 )); then
-    printf "%.2f GB" "$(bc -l <<< "$bytes/1073741824")"
-  elif (( bytes >= 1048576 )); then
-    printf "%.2f MB" "$(bc -l <<< "$bytes/1048576")"
-  elif (( bytes >= 1024 )); then
-    printf "%.2f KB" "$(bc -l <<< "$bytes/1024")"
-  else
-    echo "$bytes B"
-  fi
-}
+# Loop pengecekan
+for file in "$KUOTA_DIR"/*-limit; do
+    user=$(basename "$file" | cut -d'-' -f1)
+    [[ -z "$user" ]] && continue
 
-while true; do
-  for file in "$kuota_dir"/*; do
-    [[ -f "$file" ]] || continue
-    user=$(basename "$file")
-    kuota_raw=$(cat "$file")
-    kuota_byte=$(convert_to_bytes "$kuota_raw")
+    limit=$(cat "$file" 2>/dev/null)
+    used_file="$KUOTA_DIR/${user}-used"
 
-    # Ambil expired dari /etc/shadow
-    exp_days=$(grep -w "^$user" /etc/shadow | cut -d: -f8)
-    if [[ -n "$exp_days" ]]; then
-      today_days=$(($(date +%s) / 86400))
-      if (( today_days > exp_days )); then
-        userdel -f "$user"
-        rm -f "$file"
-        echo "$(date '+%F %T') - $user expired, akun dihapus"
-        continue
-      fi
+    [[ ! "$limit" =~ ^[0-9]+$ ]] && continue
+    [[ ! -f "$used_file" ]] && echo 0 > "$used_file"
+
+    usage_now=$(get_usage_bytes "$user")
+    usage_before=$(cat "$used_file" 2>/dev/null)
+    total_usage=$((usage_before + usage_now))
+
+    echo "$total_usage" > "$used_file"
+
+    if [[ "$total_usage" -ge "$limit" ]]; then
+        pkill -KILL -u "$user" && usermod -L "$user"
+        if [[ $? -eq 0 ]]; then
+            echo "$(date '+%F %T') - User '$user' melebihi kuota ($total_usage / $limit bytes) - akun dikunci" >> "$LOG_FILE"
+        else
+            echo "$(date '+%F %T') - ERROR: Gagal mengunci akun '$user' setelah melebihi kuota" >> "$LOG_FILE"
+        fi
     fi
-
-    # Hitung penggunaan
-    usage_byte=$(grep -w "$user" /proc/net/dev | awk -F'[: ]+' '{rx+=$2; tx+=$10} END {print rx+tx}')
-    usage_byte=${usage_byte:-0}
-
-    if (( usage_byte >= kuota_byte )); then
-      pkill -KILL -u "$user"
-      echo "$(date '+%F %T') - $user melebihi kuota $(format_bytes "$kuota_byte"), disconnect"
-    else
-      echo "$(date '+%F %T') - $user: $(format_bytes "$usage_byte") dari $(format_bytes "$kuota_byte")"
-    fi
-  done
-  sleep "$interval"
 done
