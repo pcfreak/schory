@@ -1,12 +1,6 @@
 [Unit]
-Description=Monitor Limit Kuota SSH per User
-After=network.target
+Description=Monitor Kuota SSH Per User
 
 [Service]
-ExecStart=/usr/local/bin/monitor-kuota
-Restart=always
-RestartSec=5
-User=root
-
-[Install]
-WantedBy=multi-user.target
+Type=oneshot
+ExecStart=/usr/local/bin/monitor-kuota.sh
