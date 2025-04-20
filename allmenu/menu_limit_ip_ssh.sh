@@ -119,4 +119,10 @@ while true; do
         *) echo "Opsi tidak valid." && sleep 1 ;;
     esac
     read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
+    clear  # Menghapus layar sebelum kembali ke menu utama
+    
+    # Kembali ke menu utama dengan mengeksekusi /usr/bin/menu
+    /usr/bin/menu
+    break  # Menutup script setelah kembali ke menu utama
+done
 done
