@@ -3,10 +3,6 @@
 KUOTA_DIR="/etc/klmpk/limit/ssh/kuota"
 LOG_FILE="/var/log/limit-kuota.log"
 
-[[ ! -d "$KUOTA_DIR" ]] && echo "$(date '+%F %T') - ERROR: Direktori kuota tidak ditemukan" >> "$LOG_FILE" && exit 1
-
-echo "$(date '+%F %T') - monitor-kuota.sh dijalankan" >> "$LOG_FILE"
-
 get_usage_bytes() {
     local user="$1"
     local total=0
@@ -24,23 +20,30 @@ get_usage_bytes() {
     echo "$total"
 }
 
+echo "$(date '+%F %T') - monitor-kuota.sh dijalankan" >> "$LOG_FILE"
+
 for file in "$KUOTA_DIR"/*-limit; do
     user=$(basename "$file" | cut -d'-' -f1)
     [[ -z "$user" ]] && continue
 
-    limit_mb=$(cat "$file" 2>/dev/null)
-    [[ ! "$limit_mb" =~ ^[0-9]+$ ]] && continue
-    limit_bytes=$((limit_mb * 1024 * 1024))
+    limit_mb=$(cat "$file")
+    limit_bytes=$(( limit_mb * 1024 * 1024 ))
 
     base_file="$KUOTA_DIR/${user}-base"
-    [[ ! -f "$base_file" ]] && get_usage_bytes "$user" > "$base_file"
+    [[ ! -f "$base_file" ]] && echo 0 > "$base_file"
 
     usage_now=$(get_usage_bytes "$user")
-    usage_base=$(cat "$base_file" 2>/dev/null)
-    diff_usage=$((usage_now - usage_base))
+    base=$(cat "$base_file")
+    usage_total=$(( usage_now - base ))
 
-    if [[ "$diff_usage" -ge "$limit_bytes" ]]; then
-        pkill -KILL -u "$user" && usermod -L "$user"
-        echo "$(date '+%F %T') - User '$user' melebihi kuota ($((diff_usage / 1024 / 1024)) MB / $limit_mb MB) - akun dikunci" >> "$LOG_FILE"
+    if [[ "$usage_total" -lt 0 ]]; then
+        usage_total=0
+        echo 0 > "$base_file"
+    fi
+
+    if [[ "$usage_total" -ge "$limit_bytes" ]]; then
+        pkill -KILL -u "$user"
+        usermod -L "$user"
+        echo "$(date '+%F %T') - User '$user' melewati limit ($usage_total / $limit_bytes bytes) - akun dikunci" >> "$LOG_FILE"
     fi
 done
