@@ -23,35 +23,6 @@ touch /etc/xray/domain
 touch /etc/v2ray/domain
 touch /etc/xray/scdomain
 touch /etc/v2ray/scdomain
-touch /etc/.{ssh,noobzvpns,vmess,vless,trojan,shadowsocks}.db
-mkdir -p /etc/{xray,bot,vmess,vless,trojan,shadowsocks,ssh,noobzvpns,limit,usr}
-touch /etc/noobzvpns/users.json
-mkdir -p /etc/xray/limit
-mkdir -p /etc/xray/limit/{ssh,vmess,vless,trojan,shadowsocks}
-mkdir -p /etc/klmpk/limit/vmess/ip
-mkdir -p /etc/klmpk/limit/vless/ip
-mkdir -p /etc/klmpk/limit/trojan/ip
-mkdir -p /etc/klmpk/limit/ssh/ip
-mkdir -p /etc/limit/vmess
-mkdir -p /etc/limit/vless
-mkdir -p /etc/limit/trojan
-mkdir -p /etc/limit/ssh
-mkdir -p /etc/vmess
-mkdir -p /etc/vless
-mkdir -p /etc/trojan
-mkdir -p /etc/shadowsocks
-mkdir -p /etc/ssh
-touch /etc/vmess/.vmess.db
-touch /etc/vless/.vless.db
-touch /etc/trojan/.trojan.db
-touch /etc/shadowsocks/.shadowsocks.db
-touch /etc/ssh/.ssh.db
-touch /etc/bot/.bot.db
-echo "& plughin Account" >>/etc/vmess/.vmess.db
-echo "& plughin Account" >>/etc/vless/.vless.db
-echo "& plughin Account" >>/etc/trojan/.trojan.db
-echo "& plughin Account" >>/etc/shadowsocks/.shadowsocks.db
-echo "& plughin Account" >>/etc/ssh/.ssh.db
 
 ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1
@@ -169,123 +140,32 @@ echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━�
 sleep 2
 wget -q -O open-vpn.sh https://raw.githubusercontent.com/kanghory/schory/main/autoscript-ssh-slowdns-main/open-vpn.sh && chmod 777 open-vpn.sh && ./open-vpn.sh
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit IP              $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-
-# Mengatur limit-ip
-wget -q -O /usr/bin/limit-ip "https://raw.githubusercontent.com/Andyyuda/vip/main/limit/limit-ip"
-chmod +x /usr/bin/limit-ip
-cd /usr/bin
-sed -i 's/\r//' limit-ip
-cd
-# Konfigurasi dan memulai layanan vmip
-cat > /etc/systemd/system/vmip.service << EOF
-[Unit]
-Description=My
-After=network.target
-
-[Service]
-WorkingDirectory=/root
-ExecStart=/usr/bin/limit-ip vmip
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload
-systemctl restart vmip
-systemctl enable vmip
-
-# Konfigurasi dan memulai layanan vlip
-cat > /etc/systemd/system/vlip.service << EOF
-[Unit]
-Description=My
-After=network.target
-
-[Service]
-WorkingDirectory=/root
-ExecStart=/usr/bin/limit-ip vlip
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload
-systemctl restart vlip
-systemctl enable vlip
-
-# Konfigurasi dan memulai layanan trip
-cat > /etc/systemd/system/trip.service << EOF
-[Unit]
-Description=My
-After=network.target
-
-[Service]
-WorkingDirectory=/root
-ExecStart=/usr/bin/limit-ip trip
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload
-systemctl restart trip
-systemctl enable trip
-clear
-sleep2
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit Quota              $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-
-cd
-# Mengunduh dan mengatur limit.sh
-wget https://raw.githubusercontent.com/Andyyuda/vip/main/limit/limit.sh -O limit.sh
-chmod +x limit.sh
-./limit.sh
-
-#cronjob
-#echo "30 * * * * root removelog" >> /etc/crontab
-
-#pemangkuvmessvless
-mkdir /root/akun
-mkdir /root/akun/vmess
-mkdir /root/akun/vless
-mkdir /root/akun/shadowsocks
-mkdir /root/akun/trojan
-
-# Tambahkan setelah bagian install tool dasar
-# Tambahkan ini untuk install pv dan dialog
-apt install git curl -y >/dev/null 2>&1
-apt install python -y >/dev/null 2>&1
-apt install pv dialog -y >/dev/null 2>&1
-echo -e "[ ${green}INFO${NC} ] Aight good ... installation file is ready"
 
 # Instalasi Limit Kuota SSH
-# Instalasi Limit Kuota SSH
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit Quota SSH KANG HORY            $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "$green      Install Limit Quota SSH KANG HORY            $NC"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 
 # Direktori untuk menyimpan data kuota per user
-mkdir -p /etc/klmpk/limit/ssh/kuota
+#mkdir -p /etc/klmpk/limit/ssh/kuota
 
 # Download script monitor-kuota.sh
-echo "Mengunduh script monitor-kuota..."
-wget -O /usr/local/bin/monitor-kuota.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-kuota.sh
-chmod +x /usr/local/bin/monitor-kuota.sh
+#echo "Mengunduh script monitor-kuota..."
+#wget -O /usr/local/bin/monitor-kuota.sh https://raw.githubusercontent.com/kanghory/schory/main/limit/monitor-kuota.sh
+#chmod +x /usr/local/bin/monitor-kuota.sh
 
 # Download file systemd service & timer
-echo "Mengunduh file monitor-kuota.service dan monitor-kuota.timer..."
-wget -O /etc/systemd/system/monitor-kuota.service https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-kuota.service
-wget -O /etc/systemd/system/monitor-kuota.timer https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-kuota.timer
+#echo "Mengunduh file monitor-kuota.service dan monitor-kuota.timer..."
+#wget -O /etc/systemd/system/monitor-kuota.service https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-kuota.service
+#wget -O /etc/systemd/system/monitor-kuota.timer https://raw.githubusercontent.com/kanghory/schory/main/systemd/monitor-kuota.timer
 
 # Reload systemd dan aktifkan timer
-echo "Memuat ulang systemd dan mengaktifkan timer..."
-systemctl daemon-reload
-systemctl enable --now monitor-kuota.timer
+#echo "Memuat ulang systemd dan mengaktifkan timer..."
+#systemctl daemon-reload
+#systemctl enable --now monitor-kuota.timer
 
 # Proses setup selesai
-echo -e "\e[32mSetup Limit Kuota SSH selesai.\e[0m"
+#echo -e "\e[32mSetup Limit Kuota SSH selesai.\e[0m"
 
 # Instalasi Limit IP SSH TIAP USER
 echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
