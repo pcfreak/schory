@@ -139,8 +139,19 @@ while true; do
         7) set_lock_duration ;;
         8) show_status ;;
         9) restart_service ;;
-        0) break ;;
-        *) echo "Opsi tidak valid." && sleep 1 ;;
-    esac
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
+        0)
+    # Kembali ke menu utama jika ada
+    if [[ -f /usr/bin/menu ]]; then
+      clear
+      /usr/bin/menu
+    else
+      echo -e "${RED}File menu utama tidak ditemukan!${NC}"
+      sleep 1
+      /usr/bin/menu_limit_ip_ssh
+    fi
+    ;;
+  *)
+    echo -e "${RED}Pilihan tidak valid!${NC}" ; sleep 1 ; /usr/bin/menu_limit_ip_ssh
+    ;;
+esac
 done
