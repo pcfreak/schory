@@ -299,15 +299,36 @@ function extend_ssh() {
 
     chage -E "$new_exp" "$user"
 
-    echo -e "\n\e[36m╔═══════════════════════════"
-    echo -e "║ HASIL $mode        \e[36m "
-    echo -e "╠═══════════════════════════"
-    printf  "║ %-18s : %-14s \n" "Username" "$user"
-    printf  "║ %-18s : %-14s \n" "Hari ditambahkan" "$extend hari"
-    printf  "║ %-18s : %-14s \n" "Masa aktif akhir" "$new_exp"
-    echo -e "╚═══════════════════════════\e[0m"
-}
+    # Ambil limit IP
+    ip_limit_file="/etc/klmpk/limit/ssh/ip/$user"
+    ip_limit="Tidak dibatasi"
+    [[ -f "$ip_limit_file" ]] && ip_limit=$(cat "$ip_limit_file")
 
+    # Ambil domain
+    domain="Tidak ditemukan"
+    [[ -f /etc/xray/domain ]] && domain=$(cat /etc/xray/domain)
+
+    # Ambil password dari log
+    pass="Tidak diketahui"
+    log_file="/etc/klmpk/log-ssh/${user}.txt"
+    if [[ -f "$log_file" ]]; then
+        pass=$(grep -i "Password" "$log_file" | awk -F ':' '{print $2}' | xargs)
+    fi
+
+    echo -e "\n\e[36m╔═══════════════════════════════"
+    echo -e "║           HASIL $mode           "
+    echo -e "╠═══════════════════════════════"
+    printf  "║ %-20s : %-16s \n" "Username" "$user"
+    printf  "║ %-20s : %-16s \n" "Password" "$pass"
+    printf  "║ %-20s : %-16s \n" "Domain" "$domain"
+    printf  "║ %-20s : %-16s \n" "Hari ditambahkan" "$extend hari"
+    printf  "║ %-20s : %-16s \n" "Masa aktif akhir" "$new_exp"
+    printf  "║ %-20s : %-16s \n" "Limit IP Login" "$ip_limit"
+    echo -e "╚═══════════════════════════════\e[0m"
+
+    read -n 1 -s -r -p $'\nTekan Enter untuk kembali ke menu...'
+    menu
+}
 function ubahpass_ssh() {
   clear
   echo -e "\e[0;36m┌────────────────────────────────────────────┐\e[0m"
