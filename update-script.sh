@@ -11,6 +11,7 @@ rm -f /usr/bin/usernew
 rm -f /usr/bin/backup
 rm -f /usr/bin/restore
 rm -f /usr/bin/menu_limit_ip_ssh
+rm -f /usr/bin/trialssh
 
 # Download update
 echo -e "${YELLOW}Update all repo...${NC}"
@@ -24,6 +25,7 @@ urls=(
     "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/trialssh.sh
 )
 
 files=(
@@ -35,6 +37,7 @@ files=(
     "/usr/bin/usernew"
     "/usr/bin/backup"
     "/usr/bin/restore"
+    "/usr/bin/trialssh"
 )
 
 for i in ${!urls[@]}; do
