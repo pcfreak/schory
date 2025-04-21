@@ -299,13 +299,13 @@ function extend_ssh() {
 
     chage -E "$new_exp" "$user"
 
-    echo -e "\n\e[36m╔═══════════════════════════╗"
-    echo -e "║ HASIL $mode        \e[36m║"
-    echo -e "╠═══════════════════════════╣"
-    printf  "║ %-18s : %-14s ║\n" "Username" "$user"
-    printf  "║ %-18s : %-14s ║\n" "Hari ditambahkan" "$extend hari"
-    printf  "║ %-18s : %-14s ║\n" "Masa aktif akhir" "$new_exp"
-    echo -e "╚═══════════════════════════╝\e[0m"
+    echo -e "\n\e[36m╔═══════════════════════════"
+    echo -e "║ HASIL $mode        \e[36m "
+    echo -e "╠═══════════════════════════"
+    printf  "║ %-18s : %-14s \n" "Username" "$user"
+    printf  "║ %-18s : %-14s \n" "Hari ditambahkan" "$extend hari"
+    printf  "║ %-18s : %-14s \n" "Masa aktif akhir" "$new_exp"
+    echo -e "╚═══════════════════════════\e[0m"
 }
 
 function ubahpass_ssh() {
