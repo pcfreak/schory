@@ -1,5 +1,5 @@
 [Unit]
-Description=Run limit-ip.sh script every 1 minute @Andyyuda
+Description=Run limit-ip.sh script every 1 minute @kanghory
 After=network.target
 
 [Service]
