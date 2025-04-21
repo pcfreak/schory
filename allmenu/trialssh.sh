@@ -139,3 +139,6 @@ echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${CYAN}        Terimakasih sudah menggunakan" 
 echo -e "${CYAN}        script premium BY KANGHORY TUNNELING"
 echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
+/usr/bin/menu
+
