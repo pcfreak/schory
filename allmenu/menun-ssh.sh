@@ -259,7 +259,7 @@ menu
 function extend_ssh() {
     clear
     echo -e "\e[36m╔════════════════════════════════════════╗"
-    echo -e "║      PERPANJANG / RESET MASA AKTIF    ║"
+    echo -e "║      PERPANJANG / RESET MASA AKTIF     ║"
     echo -e "╚════════════════════════════════════════╝\e[0m"
     echo -e "\nPilih metode:"
     echo -e "  \e[32m1.\e[0m Perpanjang dari tanggal expired lama"
@@ -316,7 +316,7 @@ function extend_ssh() {
     fi
 
     echo -e "\n\e[36m╔═══════════════════════════════"
-    echo -e "║           HASIL $mode           "
+    echo -e "║ HASIL $mode           "
     echo -e "╠═══════════════════════════════"
     printf  "║ %-20s : %-16s \n" "Username" "$user"
     printf  "║ %-20s : %-16s \n" "Password" "$pass"
