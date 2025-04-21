@@ -256,49 +256,58 @@ echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━�
 read -n 1 -s -r -p "Press any key to back on menu"
 menu
 }
-function renew(){
-clear
-clear
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[0;41;36m               RENEW  USER                \E[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo
-read -p "Username : " User
-egrep "^$User" /etc/passwd >/dev/null
-if [ $? -eq 0 ]; then
-read -p "Day Extend : " Days
-Today=`date +%s`
-Days_Detailed=$(( $Days * 86400 ))
-Expire_On=$(($Today + $Days_Detailed))
-Expiration=$(date -u --date="1970-01-01 $Expire_On sec GMT" +%Y/%m/%d)
-Expiration_Display=$(date -u --date="1970-01-01 $Expire_On sec GMT" '+%d %b %Y')
-passwd -u $User
-usermod -e  $Expiration $User
-egrep "^$User" /etc/passwd >/dev/null
-echo -e "$Pass\n$Pass\n"|passwd $User &> /dev/null
-clear
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[0;41;36m               RENEW  USER                \E[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e ""
-echo -e " Username : $User"
-echo -e " Days Added : $Days Days"
-echo -e " Expires on :  $Expiration_Display"
-echo -e ""
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-else
-clear
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "\E[0;41;36m               RENEW  USER                \E[0m"
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e ""
-echo -e "   Username Doesnt Exist      "
-echo -e ""
-echo -e "\033[0;34m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-fi
-read -n 1 -s -r -p "Press any key to back on menu"
-menu
+function extend_ssh() {
+    clear
+    echo -e "\e[36m╔════════════════════════════════════════╗"
+    echo -e "║      PERPANJANG / RESET MASA AKTIF    ║"
+    echo -e "╚════════════════════════════════════════╝\e[0m"
+    echo -e "\nPilih metode:"
+    echo -e "  \e[32m1.\e[0m Perpanjang dari tanggal expired lama"
+    echo -e "  \e[33m2.\e[0m Reset expired dari hari ini"
+    read -p "Pilih opsi (1/2): " opsi
+
+    if [[ "$opsi" != "1" && "$opsi" != "2" ]]; then
+        echo -e "\e[31mOpsi tidak valid!\e[0m"
+        return
+    fi
+
+    read -p "Masukkan username SSH : " user
+
+    if ! id "$user" &>/dev/null; then
+        echo -e "\e[31mUser $user tidak ditemukan!\e[0m"
+        return
+    fi
+
+    read -p "Set masa aktif (dalam hari): " extend
+
+    case $opsi in
+        1)
+            exp_old=$(chage -l "$user" | grep "Account expires" | cut -d: -f2 | xargs)
+            if [[ "$exp_old" == "never" ]]; then
+                base_date=$(date +%Y-%m-%d)
+            else
+                base_date=$(date -d "$exp_old" +%Y-%m-%d)
+            fi
+            new_exp=$(date -d "$base_date +$extend days" +%Y-%m-%d)
+            mode="Perpanjang dari expired lama"
+            ;;
+        2)
+            new_exp=$(date -d "+$extend days" +%Y-%m-%d)
+            mode="Reset dari hari ini"
+            ;;
+    esac
+
+    chage -E "$new_exp" "$user"
+
+    echo -e "\n\e[36m╔════════════════════════════════════╗"
+    echo -e "║        HASIL $mode        \e[36m║"
+    echo -e "╠════════════════════════════════════╣"
+    printf  "║ %-18s : %-14s ║\n" "Username" "$user"
+    printf  "║ %-18s : %-14s ║\n" "Hari ditambahkan" "$extend hari"
+    printf  "║ %-18s : %-14s ║\n" "Masa aktif akhir" "$new_exp"
+    echo -e "╚════════════════════════════════════╝\e[0m"
 }
+
 function ubahpass_ssh() {
   clear
   echo -e "\e[0;36m┌────────────────────────────────────────────┐\e[0m"
@@ -655,7 +664,7 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e ""
 echo -e "     ${BICyan}[${BIWhite}1${BICyan}] Add Account SSH      "
 echo -e "     ${BICyan}[${BIWhite}2${BICyan}] Delete Account SSH      "
-echo -e "     ${BICyan}[${BIWhite}3${BICyan}] Renew Account SSH      "
+echo -e "     ${BICyan}[${BIWhite}3${BICyan}] Perpanjang / Reset Account SSH      "
 echo -e "     ${BICyan}[${BIWhite}4${BICyan}] Ubah Password Akun SSH      "
 echo -e "     ${BICyan}[${BIWhite}5${BICyan}] Cek User SSH     "
 echo -e "     ${BICyan}[${BIWhite}6${BICyan}] Mullog SSH     "
@@ -677,7 +686,7 @@ echo -e ""
 case $opt in
 1) clear ; usernew ;;
 2) clear ; del ;;
-3) clear ; renew;;
+3) clear ; extend_ssh ;;
 4) ubahpass_ssh ;;
 5) clear ; cek ;;
 6) clear ; ceklim ;;
