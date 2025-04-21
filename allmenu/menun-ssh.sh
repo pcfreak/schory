@@ -316,7 +316,7 @@ function extend_ssh() {
     fi
 
     echo -e "\n\e[36m╔═══════════════════════════════"
-    echo -e "║ HASIL $mode           "
+    echo -e "║         HASIL $mode           "
     echo -e "╠═══════════════════════════════"
     printf  "║ %-20s : %-16s \n" "Username" "$user"
     printf  "║ %-20s : %-16s \n" "Password" "$pass"
@@ -380,6 +380,8 @@ echo -e "  ${y}─────────────────────�
 echo -e "            $aktif User Online"
 echo -e "  ${y}───────────────────────────────────────${NC}"
 sed -i "d" /root/.system
+read -n 1 -s -r -p "Press any key to back on menu"
+menu
 }
 function autokill(){
 clear
