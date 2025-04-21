@@ -44,8 +44,6 @@ function list_limit() {
     else
         echo "Belum ada limit IP yang diset."
     fi
-    echo
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Set atau ubah limit
@@ -139,7 +137,7 @@ while true; do
         7) set_lock_duration ;;
         8) show_status ;;
         9) restart_service ;;
-        0) break ;;
+        0) clear && menu ;;
         *) echo "Opsi tidak valid." && sleep 1 ;;
     esac
     read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
