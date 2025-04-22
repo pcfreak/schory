@@ -60,9 +60,7 @@ for user in $(ls $LIMIT_DIR); do
         send_log_lock
 
         # Jadwalkan untuk membuka akun kembali setelah durasi terkunci
-        echo "passwd -u $user" | at now + $LOCK_DURATION minutes > /dev/null
-
-        # Kirim notifikasi akun telah dibuka kembali
-        echo "send_log_unlock" | at now + $LOCK_DURATION minutes > /dev/null
+        # Perintah untuk membuka akun + notifikasi akun terbuka kembali
+        echo "passwd -u $user && curl -s -X POST https://api.telegram.org/bot$(grep '^#bot#' /etc/bot/limitip.db | cut -d ' ' -f2)/sendMessage -d chat_id=$(grep '^#bot#' /etc/bot/limitip.db | cut -d ' ' -f3) -d text=\"✅ *SSH User:* \\\`$user\\\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit.\" -d parse_mode=Markdown" | at now + $LOCK_DURATION minutes > /dev/null
     fi
 done
