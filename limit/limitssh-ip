@@ -3,8 +3,8 @@ LIMIT_DIR="/etc/klmpk/limit/ssh/ip"
 LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
 SERVICE="limitssh.service"
 
-# Fungsi kirim notifikasi Telegram
-send_log() {
+# Fungsi kirim notifikasi Telegram saat akun dikunci
+send_log_lock() {
     BOT_FILE="/etc/bot/limitip.db"
     [[ -f "$BOT_FILE" ]] || return
 
@@ -17,6 +17,20 @@ send_log() {
 *Status:* Dikunci sementara selama *$LOCK_DURATION menit*.
 *Jumlah IP Aktif:* $cekcek
 *Batas Maksimal:* $iplimit" \
+        -d parse_mode="Markdown" > /dev/null
+}
+
+# Fungsi kirim notifikasi Telegram saat akun dibuka kembali
+send_log_unlock() {
+    BOT_FILE="/etc/bot/limitip.db"
+    [[ -f "$BOT_FILE" ]] || return
+
+    read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
+    [[ -z "$bottoken" || -z "$idtelegram" ]] && return
+
+    curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
+        -d chat_id="${idtelegram}" \
+        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit." \
         -d parse_mode="Markdown" > /dev/null
 }
 
