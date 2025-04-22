@@ -271,7 +271,7 @@ case $opt in
 22) clear ; fix ;;
 23) clear ; menu_pw_host ;;
 24) clear ; update-script ;;
-25) clear ; menu_bot_tele.sh ;;
+25) clear ; menu_bot_tele ;;
 26) clear ; wayo ;;
 
 0) clear ; menu ;;
