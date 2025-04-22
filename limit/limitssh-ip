@@ -56,10 +56,13 @@ for user in $(ls $LIMIT_DIR); do
         # Kunci akun
         passwd -l "$user" > /dev/null
 
-        # Kirim log ke Telegram
-        send_log
+        # Kirim log ke Telegram saat akun dikunci
+        send_log_lock
 
         # Jadwalkan untuk membuka akun kembali setelah durasi terkunci
         echo "passwd -u $user" | at now + $LOCK_DURATION minutes > /dev/null
+
+        # Kirim log ke Telegram saat akun dibuka kembali
+        echo "send_log_unlock" | at now + $LOCK_DURATION minutes > /dev/null
     fi
 done
