@@ -1,109 +1,118 @@
 #!/bin/bash
 
-# Directory untuk menyimpan bot token dan ID
 BOT_DIR="/etc/bot"
 mkdir -p $BOT_DIR
 
-# Fungsi untuk menambahkan bot baru
-add_bot() {
+# Daftar fungsi bot yang tersedia
+list_fungsi=("backup" "limitip" "addakun" "autokill" "hapusakun" "expired" "monitor")
+
+# Warna
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+NC='\033[0m'
+
+# Fungsi tambah / ganti bot per fungsi
+set_bot() {
     clear
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m          ADD BOT NOTIFIKASI          \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "${grenbo}Tutorial Creat Bot and ID Telegram${NC}"
-    echo -e "${grenbo}[*] Create Bot and Token Bot : @BotFather${NC}"
-    echo -e "${grenbo}[*] Info Id Telegram : @MissRose_bot , perintah /info${NC}"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-
-    read -rp "[*] Input your Bot Token : " -e bottoken 
-    read -rp "[*] Input Your Id Telegram : " -e admin
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    clear
-
-    # Simpan bot token dan ID ke dalam file terpisah sesuai jenis bot
-    echo "#bot# ${bottoken} ${admin}" >> "$BOT_DIR/${bottoken}.db"
-
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m      SUCCESS ADD BOT NOTIFIKASI      \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo " Bot Token    : $bottoken"
-    echo " ID Telegram  : $admin"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    read -n 1 -s -r -p "Press [ Enter ] to back menu"
-    menu
-}
-
-# Fungsi untuk mengganti bot yang sudah ada
-change_bot() {
-    clear
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m          CHANGE BOT NOTIFIKASI         \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-
-    read -rp "[*] Input Bot Token yang akan diganti : " -e bottoken
-    read -rp "[*] Input Bot Token Baru : " -e new_bottoken 
-    read -rp "[*] Input ID Telegram Baru : " -e new_admin
-
-    # Update file database bot yang lama
-    if [[ -f "$BOT_DIR/${bottoken}.db" ]]; then
-        sed -i "s/^#bot# ${bottoken}/#bot# ${new_bottoken}/g" "$BOT_DIR/${bottoken}.db"
-        sed -i "s/${bottoken}/${new_bottoken}/g" "$BOT_DIR/${bottoken}.db"
-    fi
-
-    # Simpan bot baru
-    echo "#bot# ${new_bottoken} ${new_admin}" >> "$BOT_DIR/${new_bottoken}.db"
-
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m      SUCCESS CHANGE BOT NOTIFIKASI     \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo " Bot Token Baru  : $new_bottoken"
-    echo " ID Telegram Baru: $new_admin"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    read -n 1 -s -r -p "Press [ Enter ] to back menu"
-    menu
-}
-
-# Fungsi untuk menghapus bot
-delete_bot() {
-    clear
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m          DELETE BOT NOTIFIKASI          \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "        SET BOT NOTIFIKASI         "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e " Fungsi bot yang tersedia:"
     
-    read -rp "[*] Input Bot Token yang akan dihapus : " -e bottoken
-    
-    if [[ -f "$BOT_DIR/${bottoken}.db" ]]; then
-        rm -f "$BOT_DIR/${bottoken}.db"
-        echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-        echo -e " \e[1;97;101m      SUCCESS DELETE BOT NOTIFIKASI     \e[0m"
-        echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-        echo " Bot Token    : $bottoken"
-        echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    for i in "${!list_fungsi[@]}"; do
+        echo -e " [$((i+1))] ${list_fungsi[$i]}"
+    done
+
+    echo -e " [0] Kembali"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -p " Pilih fungsi bot: " pilihan
+
+    if [[ "$pilihan" == "0" ]]; then
+        menu
+    elif [[ "$pilihan" =~ ^[1-9][0-9]*$ ]] && (( pilihan <= ${#list_fungsi[@]} )); then
+        fungsi="${list_fungsi[$((pilihan-1))]}"
+        read -rp " Input Bot Token untuk fungsi '$fungsi' : " bottoken
+        read -rp " Input ID Telegram Admin               : " adminid
+        echo "#bot# $bottoken $adminid" > "$BOT_DIR/$fungsi.db"
+        echo -e "${GREEN}Sukses set bot untuk fungsi '$fungsi'.${NC}"
     else
-        echo -e "Bot token tidak ditemukan!"
+        echo -e "${RED}Pilihan tidak valid!${NC}"
     fi
-    read -n 1 -s -r -p "Press [ Enter ] to back menu"
+
+    read -n 1 -s -r -p " Tekan Enter untuk kembali ke menu"
+    menu
+}
+
+# Fungsi hapus bot
+hapus_bot() {
+    clear
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "        HAPUS BOT NOTIFIKASI        "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e " Fungsi bot yang tersedia:"
+    
+    for i in "${!list_fungsi[@]}"; do
+        echo -e " [$((i+1))] ${list_fungsi[$i]}"
+    done
+
+    echo -e " [0] Kembali"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -p " Pilih fungsi bot yang ingin dihapus: " pilihan
+
+    if [[ "$pilihan" == "0" ]]; then
+        menu
+    elif [[ "$pilihan" =~ ^[1-9][0-9]*$ ]] && (( pilihan <= ${#list_fungsi[@]} )); then
+        fungsi="${list_fungsi[$((pilihan-1))]}"
+        rm -f "$BOT_DIR/$fungsi.db"
+        echo -e "${GREEN}Bot untuk fungsi '$fungsi' berhasil dihapus.${NC}"
+    else
+        echo -e "${RED}Pilihan tidak valid!${NC}"
+    fi
+
+    read -n 1 -s -r -p " Tekan Enter untuk kembali ke menu"
+    menu
+}
+
+# Fungsi lihat semua bot yang tersimpan
+lihat_bot() {
+    clear
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "        DATA BOT TERSIMPAN         "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    for fungsi in "${list_fungsi[@]}"; do
+        file="$BOT_DIR/$fungsi.db"
+        if [[ -f "$file" ]]; then
+            data=$(cat "$file" | grep '^#bot#' | cut -d ' ' -f2-)
+            echo -e "$fungsi => $data"
+        else
+            echo -e "$fungsi => [belum diatur]"
+        fi
+    done
+
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -n 1 -s -r -p " Tekan Enter untuk kembali ke menu"
     menu
 }
 
 # Menu utama
 menu() {
     clear
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e " \e[1;97;101m          MENU BOT NOTIFIKASI           \e[0m"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "${grenbo}[1]${NC}${YELL} Add Bot Notifikasi${NC}"
-    echo -e "${grenbo}[2]${NC}${YELL} Change Bot Notifikasi${NC}"
-    echo -e "${grenbo}[3]${NC}${YELL} Delete Bot Notifikasi${NC}"
-    echo -e "${grenbo}[0]${NC}${YELL} Back To Main Menu${NC}"
-    echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "      MENU BOT NOTIFIKASI VPS      "
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e " [1] Tambah / Ganti Bot"
+    echo -e " [2] Hapus Bot"
+    echo -e " [3] Lihat Bot Aktif"
+    echo -e " [0] Kembali ke menu utama"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    read -p " Pilih opsi: " opsi
 
-    read -p "  Select From Options [ 1 - 3 or 0 ] : " option
-    case $option in
-        1) add_bot ;;
-        2) change_bot ;;
-        3) delete_bot ;;
-        0) exit ;;
+    case "$opsi" in
+        1) set_bot ;;
+        2) hapus_bot ;;
+        3) lihat_bot ;;
+        0) clear; exit ;;
         *) menu ;;
     esac
 }
