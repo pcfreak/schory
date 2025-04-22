@@ -11,6 +11,7 @@ rm -f /usr/bin/usernew
 rm -f /usr/bin/backup
 rm -f /usr/bin/restore
 rm -f /usr/bin/menu_limit_ip_ssh
+rm -f /usr/bin/menu_bot.tele.sh
 rm -f /usr/bin/trialssh
 
 # Download update
@@ -25,6 +26,7 @@ urls=(
     "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/usernew.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
+    "https://raw.githubusercontent.com/kanghory/schory/main/bot/menu_bot_tele.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/trialssh.sh
 )
 
@@ -37,6 +39,7 @@ files=(
     "/usr/bin/usernew"
     "/usr/bin/backup"
     "/usr/bin/restore"
+    "/usr/bin/menu_bot_tele"
     "/usr/bin/trialssh"
 )
 
