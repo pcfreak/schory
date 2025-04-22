@@ -27,7 +27,7 @@ urls=(
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/backup.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/backup/restore.sh"
     "https://raw.githubusercontent.com/kanghory/schory/main/bot/menu_bot_tele.sh"
-    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/trialssh.sh
+    "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/trialssh.sh"
 )
 
 files=(
