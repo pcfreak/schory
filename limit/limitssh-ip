@@ -1,9 +1,7 @@
 #!/bin/bash
 LIMIT_DIR="/etc/klmpk/limit/ssh/ip"
 LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
-SERVICE="limitssh.service"
 
-# Fungsi kirim notifikasi Telegram saat akun dikunci
 send_log_lock() {
     BOT_FILE="/etc/bot/limitip.db"
     [[ -f "$BOT_FILE" ]] || return
@@ -20,50 +18,27 @@ send_log_lock() {
         -d parse_mode="Markdown" > /dev/null
 }
 
-# Fungsi kirim notifikasi Telegram saat akun dibuka kembali
-send_log_unlock() {
-    BOT_FILE="/etc/bot/limitip.db"
-    [[ -f "$BOT_FILE" ]] || return
-
-    read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
-    [[ -z "$bottoken" || -z "$idtelegram" ]] && return
-
-    curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
-        -d chat_id="${idtelegram}" \
-        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit." \
-        -d parse_mode="Markdown" > /dev/null
-}
-
-# Membaca durasi terkunci dari file
+# Durasi kunci
 if [[ -f "$LOCK_DURATION_FILE" ]]; then
     LOCK_DURATION=$(cat "$LOCK_DURATION_FILE")
 else
-    LOCK_DURATION=15  # Default durasi 15 menit
+    LOCK_DURATION=15
 fi
 
-# Mengambil log aktivitas login
+# Log SSH aktif
 mulog=$(cekssh)
 
-# Loop untuk mengecek user dan limit IP
+# Loop user
 for user in $(ls $LIMIT_DIR); do
     iplimit=$(cat "$LIMIT_DIR/$user")
-    cekcek=$(echo "$mulog" | grep "$user" | wc -l)
+    cekcek=$(echo "$mulog" | grep -w "$user" | wc -l)
 
-    # Cek jika jumlah login melebihi limit
     if [[ $cekcek -gt $iplimit ]]; then
-        echo "Akun $user melebihi batas login, mengunci akun selama $LOCK_DURATION menit..."
-
-        # Kunci akun
+        echo "Akun $user melebihi limit IP, dikunci $LOCK_DURATION menit"
         passwd -l "$user" > /dev/null
-
-        # Kirim log ke Telegram
         send_log_lock
 
-        # Jadwalkan untuk membuka akun kembali setelah durasi terkunci
-        # Pastikan kita membuka akun dan mengirimkan notif dengan benar
-        echo "
-            passwd -u $user && 
-            bash -c 'curl -s -X POST https://api.telegram.org/bot\$(grep '^#bot#' /etc/bot/limitip.db | cut -d ' ' -f2)/sendMessage -d chat_id=\$(grep '^#bot#' /etc/bot/limitip.db | cut -d ' ' -f3) -d text=\"✅ *SSH User:* \\\`$user\\\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit.\" -d parse_mode=Markdown'
-        " | at now + $LOCK_DURATION minutes > /dev/null
+        # Schedule unlock pakai script terpisah
+        echo "/usr/local/sbin/unlock_limit_ip_user_ssh_notif $user $LOCK_DURATION" | at now + $LOCK_DURATION minutes > /dev/null
     fi
 done
