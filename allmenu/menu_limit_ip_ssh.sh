@@ -74,7 +74,7 @@ show_status_limitssh() {
     done
 
     if [[ -n "$alert_message" ]]; then
-        send_telegram_notification "<b>Service Mati di VPS</b>\n$alert_message"
+        send_telegram_notification "🔺<b>Service Mati di VPS</b>🔺\n$alert_message"
     fi
 }
 
