@@ -118,10 +118,27 @@ function delete_limit() {
 }
 
 # Aktifkan service limitssh
-function start_service() {
-    systemctl enable $SERVICE
-    systemctl start $SERVICE
-    echo -e "\e[1;32mService $SERVICE diaktifkan.\e[0m"
+enable_all_limit_services() {
+    local SERVICES=("limitssh.service" "cron" "atd")
+
+    echo -e "\n\e[1;93m== MENGAKTIFKAN SEMUA SERVICE LIMIT IP SSH ==\e[0m"
+
+    for service in "${SERVICES[@]}"; do
+        echo -e "\n\e[1;96m=> Mengaktifkan $service...\e[0m"
+        systemctl enable "$service" >/dev/null 2>&1
+        systemctl start "$service"
+
+        local status=$(systemctl is-active "$service")
+        if [[ "$status" == "active" ]]; then
+            echo -e "\e[1;92m✅ $service berhasil aktif\e[0m"
+        else
+            echo -e "\e[1;91m❌ Gagal mengaktifkan $service\e[0m"
+        fi
+    done
+
+    echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
+    echo -e "Tekan enter untuk kembali..."
+    read
 }
 
 # Nonaktifkan service limitssh
@@ -177,7 +194,7 @@ while true; do
         1) list_limit ;;
         2) set_limit ;;
         3) delete_limit ;;
-        4) start_service ;;
+        4) enable_all_limit_services ;;
         5) stop_service ;;
         6) show_lock_duration ;;
         7) set_lock_duration ;;
