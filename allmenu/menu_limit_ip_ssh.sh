@@ -120,7 +120,7 @@ function delete_limit() {
 # Aktifkan service limitssh
 enable_all_limit_services() {
     local SERVICES=("limitssh.service" "cron" "atd")
-    local status_message="✅<b>Aktifkan Service</b>✅\n\n"
+    local status_message="✅<b>Aktifkan Service</b>✅\n<pre>"
 
     echo -e "\n\e[1;93m== MENGAKTIFKAN SEMUA SERVICE LIMIT IP SSH ==\e[0m"
 
@@ -132,15 +132,18 @@ enable_all_limit_services() {
         local status=$(systemctl is-active "$service")
         if [[ "$status" == "active" ]]; then
             echo -e "\e[1;92m✅ $service berhasil aktif\e[0m"
-            status_message+="<code>$(printf '%-18s' "$service")</code> : Aktif ✅\n"
+            status_message+=$(printf '%-20s : Aktif ✅\n' "$service")
         else
             echo -e "\e[1;91m❌ Gagal mengaktifkan $service\e[0m"
-            status_message+="<code>$(printf '%-18s' "$service")</code> : Gagal ❌\n"
+            status_message+=$(printf '%-20s : Gagal ❌\n' "$service")
         fi
     done
 
+    status_message+="</pre>"
     echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
     send_telegram_notification "$status_message"
+    echo -e "Tekan enter untuk kembali..."
+    read
 }
 
 # Nonaktifkan service limitssh
