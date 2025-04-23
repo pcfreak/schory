@@ -18,11 +18,15 @@ show_status_limitssh() {
     clear
     echo -e "=== MENU LIMIT IP SSH ==="
 
-    # Warna
-    green="\e[32m"
-    red="\e[31m"
-    yellow="\e[33m"
+    # Warna ANSI bersinar
+    green="\e[1;92m"
+    red="\e[1;91m"
+    yellow="\e[1;93m"
     reset="\e[0m"
+
+    # Emoji
+    checkmark="✅"
+    crossmark="❌"
 
     # Function kirim notifikasi Telegram
     send_telegram_notification() {
@@ -52,21 +56,18 @@ show_status_limitssh() {
         local is_active=$(systemctl is-active "$service")
         local is_enabled=$(systemctl is-enabled "$service" 2>/dev/null)
 
-        local status_color status_text autostart_text
-
         if [[ "$is_active" == "active" ]]; then
-            status_color=$green
-            status_text="Aktif"
+            echo -e "Status Aktif  : ${green}${checkmark} Aktif${reset}"
         else
-            status_color=$red
-            status_text="Tidak Aktif"
+            echo -e "Status Aktif  : ${red}${crossmark} Tidak Aktif${reset}"
             alert_message+="$service <code>tidak aktif</code>\n"
         fi
 
-        [[ "$is_enabled" == "enabled" ]] && autostart_text="Enabled" || autostart_text="Disabled"
-
-        echo -e "Status Aktif  : ${status_color}${status_text}${reset}"
-        echo -e "Auto Start    : ${yellow}${autostart_text}${reset}"
+        if [[ "$is_enabled" == "enabled" ]]; then
+            echo -e "Auto Start    : ${green}${checkmark} Enabled${reset}"
+        else
+            echo -e "Auto Start    : ${red}${crossmark} Disabled${reset}"
+        fi
 
         systemctl status "$service" --no-pager | grep -E "Loaded:|Main PID:|Memory:" | sed 's/^/     /'
         journalctl -u "$service" -n 5 --no-pager 2>/dev/null | sed 's/^/Log Terakhir (5 baris):\n     /'
@@ -76,7 +77,6 @@ show_status_limitssh() {
         send_telegram_notification "<b>Service Mati di VPS</b>\n$alert_message"
     fi
 }
-
 
 # Lihat semua user + limit
 function list_limit() {
