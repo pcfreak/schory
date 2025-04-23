@@ -148,7 +148,7 @@ disable_all_services() {
     echo -e "\n\e[1;93m== MENONAKTIFKAN SEMUA SERVICE ==\e[0m"
 
     for service in "${SERVICES[@]}"; do
-        echo -e "\n\e[1;96m=> Menonaktifkan $service...\e[0m"
+        echo -e "\n\e[1;96m=> ❌ Menonaktifkan ❌ $service...\e[0m"
         systemctl stop "$service" >/dev/null 2>&1
         systemctl disable "$service" >/dev/null 2>&1
 
