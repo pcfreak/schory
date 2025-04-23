@@ -133,7 +133,7 @@ enable_all_limit_services() {
             echo -e "\e[1;92m✅ $service berhasil aktif\e[0m"
         else
             echo -e "\e[1;91m❌ Gagal mengaktifkan $service\e[0m"
-     echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
+            echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
         fi
 }
 
@@ -153,7 +153,7 @@ disable_all_services() {
             echo -e "\e[1;92m✅ $service berhasil dinonaktifkan\e[0m"
         else
             echo -e "\e[1;91m❌ Gagal menonaktifkan $service\e[0m"
-    echo -e "\n\e[1;92mSelesai menonaktifkan semua service.\e[0m"
+            echo -e "\n\e[1;92mSelesai menonaktifkan semua service.\e[0m"
         fi
 }
 
