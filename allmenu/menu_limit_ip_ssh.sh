@@ -15,49 +15,53 @@ fi
 
 # Fungsi untuk cek status service dan kirim notifikasi jika ada masalah
 show_status_limitssh() {
-    # Konfigurasi Bot Telegram
-    local BOT_FILE="/etc/bot/limitip.db"
-    local token=$(awk -F '=' '/^token/ {print $2}' "$BOT_FILE" | tr -d '[:space:]')
-    local chat_id=$(awk -F '=' '/^chat_id/ {print $2}' "$BOT_FILE" | tr -d '[:space:]')
+    clear
+    echo -e "\e[1;36m=== MENU LIMIT IP SSH ===\e[0m"
 
-    local SERVICES=("limitssh.service" "cron" "atd")
+    BOT_FILE="/etc/bot/limitip.db"
+    if [[ -f "$BOT_FILE" ]]; then
+        BOT_TOKEN=$(grep -w "TOKEN" "$BOT_FILE" | cut -d= -f2-)
+        BOT_CHATID=$(grep -w "CHATID" "$BOT_FILE" | cut -d= -f2-)
+    else
+        BOT_TOKEN=""
+        BOT_CHATID=""
+    fi
+
+    send_telegram_notification() {
+        local message="$1"
+        [[ -z $BOT_TOKEN || -z $BOT_CHATID ]] && return
+        curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${BOT_CHATID}" \
+            -d "text=${message}" >/dev/null 2>&1
+    }
+
     local alert=""
-    
-    for SERVICE in "${SERVICES[@]}"; do
-        # Status aktif dan auto start
-        systemctl is-enabled $SERVICE &>/dev/null && enabled="Enabled" || enabled="Disabled"
-        status=$(systemctl is-active $SERVICE)
-        
-        # Cek jika service tidak aktif atau tidak auto-start
-        if [[ "$status" != "active" || "$enabled" != "Enabled" ]]; then
-            alert+="$SERVICE status: $status | Auto Start: $enabled\n"
-        fi
 
-        # Ringkasan systemctl status
-        echo -e "\n=== STATUS SERVICE: $SERVICE ==="
-        echo -e "Status Aktif  : \e[1;33m$status\e[0m"
-        echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
-        systemctl status $SERVICE --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
-        echo -e "\nLog Terakhir (5 baris):"
-        journalctl -u $SERVICE -n 5 --no-pager --quiet
+    for srv in limitssh.service cron atd; do
+        echo -e "\e[1;33m=== STATUS SERVICE: $srv ===\e[0m"
+        local active=$(systemctl is-active "$srv")
+        local enabled=$(systemctl is-enabled "$srv" 2>/dev/null || echo "disabled")
 
-        # Jika ada masalah, simpan alert
-        if [[ -n "$alert" ]]; then
-            # Kirim notifikasi ke Telegram
-            curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
-                -d chat_id="$chat_id" \
-                -d text="⚠️ STATUS SERVICE BERMASALAH:\n$alert" \
-                -d parse_mode="Markdown" &>/dev/null
+        [[ $active == "active" ]] && status_active="\e[1;32mactive\e[0m" || status_active="\e[1;31m$active\e[0m"
+        [[ $enabled == "enabled" ]] && status_enabled="\e[1;32mEnabled\e[0m" || status_enabled="\e[1;31mDisabled\e[0m"
+
+        echo -e "Status Aktif  : $status_active"
+        echo -e "Auto Start    : $status_enabled"
+
+        systemctl status "$srv" | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:" | sed 's/^/     /'
+        journalctl -u "$srv" -n 5 --no-pager 2>/dev/null | sed 's/^/Log Terakhir (5 baris):\n     /'
+
+        if [[ $active != "active" || $enabled != "enabled" ]]; then
+            alert+=$'\n'"SERVICE: $srv => Status: $active, Autostart: $enabled"
         fi
     done
 
-    # Menunggu input untuk kembali ke menu
-    echo -e "\nTekan enter untuk kembali ke menu..."
-    read -r
-}
+    if [[ -n $alert ]]; then
+        send_telegram_notification "PERINGATAN:\nTerdapat service yang tidak aktif atau tidak autostart.$alert"
+    fi
 
-# Menjalankan fungsi show_status_limitssh
-show_status_limitssh
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
+}
 
 # Lihat semua user + limit
 function list_limit() {
