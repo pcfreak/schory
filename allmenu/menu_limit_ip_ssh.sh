@@ -134,7 +134,11 @@ enable_all_limit_services() {
         else
             echo -e "\e[1;91m❌ Gagal mengaktifkan $service\e[0m"
         fi
+    done
+
+    echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
 }
+
 
 # Nonaktifkan service limitssh
 disable_all_services() {
@@ -153,9 +157,10 @@ disable_all_services() {
         else
             echo -e "\e[1;91m❌ Gagal menonaktifkan $service\e[0m"
         fi
+    done
+
+    echo -e "\n\e[1;92mSelesai menonaktifkan semua service.\e[0m"
 }
-
-
 
 # Menampilkan durasi akun terkunci
 function show_lock_duration() {
