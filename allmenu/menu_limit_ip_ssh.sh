@@ -133,17 +133,28 @@ enable_all_limit_services() {
             echo -e "\e[1;92m✅ $service berhasil aktif\e[0m"
         else
             echo -e "\e[1;91m❌ Gagal mengaktifkan $service\e[0m"
+     echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
         fi
-    done
-
-    echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
 }
 
 # Nonaktifkan service limitssh
-function stop_service() {
-    systemctl stop $SERVICE
-    systemctl disable $SERVICE
-    echo -e "\e[1;31mService $SERVICE dinonaktifkan.\e[0m"
+disable_all_services() {
+    local SERVICES=("limitssh.service" "cron" "atd")
+
+    echo -e "\n\e[1;93m== MENONAKTIFKAN SEMUA SERVICE ==\e[0m"
+
+    for service in "${SERVICES[@]}"; do
+        echo -e "\n\e[1;96m=> Menonaktifkan $service...\e[0m"
+        systemctl stop "$service" >/dev/null 2>&1
+        systemctl disable "$service" >/dev/null 2>&1
+
+        local status=$(systemctl is-active "$service")
+        if [[ "$status" == "inactive" ]]; then
+            echo -e "\e[1;92m✅ $service berhasil dinonaktifkan\e[0m"
+        else
+            echo -e "\e[1;91m❌ Gagal menonaktifkan $service\e[0m"
+    echo -e "\n\e[1;92mSelesai menonaktifkan semua service.\e[0m"
+        fi
 }
 
 # Menampilkan durasi akun terkunci
@@ -193,7 +204,7 @@ while true; do
         2) set_limit ;;
         3) delete_limit ;;
         4) enable_all_limit_services ;;
-        5) stop_service ;;
+        5) disable_all_services ;;
         6) show_lock_duration ;;
         7) set_lock_duration ;;
         8) show_status_limitssh ;;
