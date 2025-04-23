@@ -15,21 +15,26 @@ fi
 
 # Fungsi menampilkan status service
 function show_status() {
-    echo -e "\n\e[1;36m=== STATUS SERVICE: $SERVICE ===\e[0m"
-    
-    # Status aktif dan auto start
-    systemctl is-enabled $SERVICE &>/dev/null && enabled="Enabled" || enabled="Disabled"
-    status=$(systemctl is-active $SERVICE)
-    echo -e "Status Aktif  : \e[1;33m$status\e[0m"
-    echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
-    
-    # Ringkasan systemctl status
-    echo -e "\n\e[1;36mRingkasan Service:\e[0m"
-    systemctl status $SERVICE --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
-    
-    # Log terakhir
-    echo -e "\n\e[1;36mLog Terakhir (5 baris):\e[0m"
-    journalctl -u $SERVICE -n 5 --no-pager --quiet
+    local TARGET="$1"
+    local SERV
+
+    for SERV in "$TARGET" cron atd; do
+        echo -e "\n\e[1;36m=== STATUS SERVICE: $SERV ===\e[0m"
+
+        # Status aktif dan auto start
+        systemctl is-enabled $SERV &>/dev/null && enabled="Enabled" || enabled="Disabled"
+        status=$(systemctl is-active $SERV)
+        echo -e "Status Aktif  : \e[1;33m$status\e[0m"
+        echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
+
+        # Ringkasan systemctl status
+        echo -e "\n\e[1;36mRingkasan Service:\e[0m"
+        systemctl status $SERV --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
+
+        # Log terakhir
+        echo -e "\n\e[1;36mLog Terakhir (5 baris):\e[0m"
+        journalctl -u $SERV -n 5 --no-pager --quiet
+    done
 }
 
 # Lihat semua user + limit
