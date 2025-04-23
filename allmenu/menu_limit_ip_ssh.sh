@@ -143,6 +143,7 @@ enable_all_limit_services() {
 # Nonaktifkan service limitssh
 disable_all_services() {
     local SERVICES=("limitssh.service" "cron" "atd")
+    local status_message="<b>Nonaktifkan Service</b>\n"
 
     echo -e "\n\e[1;93m== MENONAKTIFKAN SEMUA SERVICE ==\e[0m"
 
@@ -154,12 +155,15 @@ disable_all_services() {
         local status=$(systemctl is-active "$service")
         if [[ "$status" == "inactive" ]]; then
             echo -e "\e[1;92m✅ $service berhasil dinonaktifkan\e[0m"
+            status_message+="\n<b>${service}</b> : <code>Nonaktif</code> ✅"
         else
             echo -e "\e[1;91m❌ Gagal menonaktifkan $service\e[0m"
+            status_message+="\n<b>${service}</b> : <code>Gagal Dinonaktifkan</code> ❌"
         fi
     done
 
     echo -e "\n\e[1;92mSelesai menonaktifkan semua service.\e[0m"
+    send_telegram_notification "$status_message"
 }
 
 # Menampilkan durasi akun terkunci
@@ -224,8 +228,8 @@ while true; do
     echo -e "1. Lihat Semua Limit IP"
     echo -e "2. Set / Ubah Limit IP"
     echo -e "3. Hapus Limit IP"
-    echo -e "4. Aktifkan Service Limit IP"
-    echo -e "5. Nonaktifkan Service Limit IP"
+    echo -e "4. Aktifkan all services Limit IP"
+    echo -e "5. Nonaktifkan all Service Limit IP"
     echo -e "6. Lihat Durasi Akun Terkunci"
     echo -e "7. Set Durasi Akun Terkunci"
     echo -e "8. Cek Status Service"
