@@ -13,27 +13,51 @@ if [[ ! -f $LOCK_DURATION_FILE ]]; then
     echo "$DEFAULT_LOCK_DURATION" > "$LOCK_DURATION_FILE"
 fi
 
-# Fungsi menampilkan status service
-function show_status_limitssh() {
-    local list_service=("limitssh.service" "cron" "atd")
-    for SERVICE in "${list_service[@]}"; do
-        echo -e "\n\e[1;36m=== STATUS SERVICE: $SERVICE ===\e[0m"
+# Fungsi untuk cek status service dan kirim notifikasi jika ada masalah
+show_status_limitssh() {
+    # Konfigurasi Bot Telegram
+    local BOT_FILE="/etc/bot/limitip.db"
+    local token=$(awk -F '=' '/^token/ {print $2}' "$BOT_FILE" | tr -d '[:space:]')
+    local chat_id=$(awk -F '=' '/^chat_id/ {print $2}' "$BOT_FILE" | tr -d '[:space:]')
 
+    local SERVICES=("limitssh.service" "cron" "atd")
+    local alert=""
+    
+    for SERVICE in "${SERVICES[@]}"; do
         # Status aktif dan auto start
-        systemctl is-enabled "$SERVICE" &>/dev/null && enabled="Enabled" || enabled="Disabled"
-        status=$(systemctl is-active "$SERVICE")
-        echo -e "Status Aktif  : \e[1;33m$status\e[0m"
-        echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
+        systemctl is-enabled $SERVICE &>/dev/null && enabled="Enabled" || enabled="Disabled"
+        status=$(systemctl is-active $SERVICE)
+        
+        # Cek jika service tidak aktif atau tidak auto-start
+        if [[ "$status" != "active" || "$enabled" != "Enabled" ]]; then
+            alert+="$SERVICE status: $status | Auto Start: $enabled\n"
+        fi
 
         # Ringkasan systemctl status
-        echo -e "\n\e[1;36mRingkasan Service:\e[0m"
-        systemctl status "$SERVICE" --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
+        echo -e "\n=== STATUS SERVICE: $SERVICE ==="
+        echo -e "Status Aktif  : \e[1;33m$status\e[0m"
+        echo -e "Auto Start    : \e[1;33m$enabled\e[0m"
+        systemctl status $SERVICE --no-pager | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:|CPU:"
+        echo -e "\nLog Terakhir (5 baris):"
+        journalctl -u $SERVICE -n 5 --no-pager --quiet
 
-        # Log terakhir
-        echo -e "\n\e[1;36mLog Terakhir (5 baris):\e[0m"
-        journalctl -u "$SERVICE" -n 5 --no-pager --quiet
+        # Jika ada masalah, simpan alert
+        if [[ -n "$alert" ]]; then
+            # Kirim notifikasi ke Telegram
+            curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
+                -d chat_id="$chat_id" \
+                -d text="⚠️ STATUS SERVICE BERMASALAH:\n$alert" \
+                -d parse_mode="Markdown" &>/dev/null
+        fi
     done
+
+    # Menunggu input untuk kembali ke menu
+    echo -e "\nTekan enter untuk kembali ke menu..."
+    read -r
 }
+
+# Menjalankan fungsi show_status_limitssh
+show_status_limitssh
 
 # Lihat semua user + limit
 function list_limit() {
