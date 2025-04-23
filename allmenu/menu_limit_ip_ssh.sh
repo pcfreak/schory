@@ -143,7 +143,7 @@ enable_all_limit_services() {
 # Nonaktifkan service limitssh
 disable_all_services() {
     local SERVICES=("limitssh.service" "cron" "atd")
-    local status_message="<b>Nonaktifkan Service</b>\n"
+    local status_message="❌<b>Nonaktifkan Service</b>❌\n"
 
     echo -e "\n\e[1;93m== MENONAKTIFKAN SEMUA SERVICE ==\e[0m"
 
@@ -188,7 +188,7 @@ function set_lock_duration() {
 # Restart service limitssh
 refresh_services_and_notify() {
     local services=("limitssh.service" "cron" "atd")
-    local status_message="<b>Update Status Service</b>\n"
+    local status_message="✅<b>Update Status Service</b>✅\n"
     local GREEN="\e[92;1m"
     local RED="\e[91;1m"
     local NC="\e[0m"
