@@ -182,10 +182,39 @@ function set_lock_duration() {
 }
 
 # Restart service limitssh
-function restart_service() {
-    systemctl restart $SERVICE
-    echo -e "\e[1;33mService $SERVICE berhasil direstart.\e[0m"
+refresh_services_and_notify() {
+    local services=("limitssh.service" "cron" "atd")
+    local status_message="<b>Update Status Service</b>\n"
+    local GREEN="\e[92;1m"
+    local RED="\e[91;1m"
+    local NC="\e[0m"
+
+    echo -e "\n\033[1;36m== MENYEGARKAN STATUS SEMUA SERVICE ==\033[0m"
+    
+    for service in "${services[@]}"; do
+        echo -ne "• Memproses ${service} ... "
+
+        systemctl daemon-reexec >/dev/null 2>&1
+        systemctl daemon-reload >/dev/null 2>&1
+        systemctl enable "$service" >/dev/null 2>&1
+        systemctl restart "$service" >/dev/null 2>&1
+
+        local active=$(systemctl is-active "$service")
+        local enabled=$(systemctl is-enabled "$service" 2>/dev/null)
+
+        if [[ "$active" == "active" ]]; then
+            echo -e "${GREEN}[AKTIF]${NC}"
+            status_message+="\n<b>${service}</b> : <code>Aktif</code> ✅"
+        else
+            echo -e "${RED}[TIDAK AKTIF]${NC}"
+            status_message+="\n<b>${service}</b> : <code>Tidak Aktif</code> ❌"
+        fi
+    done
+
+    echo -e "\n\033[1;32mSelesai memperbarui semua status service.\033[0m"
+    send_telegram_notification "$status_message"
 }
+
 
 # Menu utama
 while true; do
@@ -200,7 +229,7 @@ while true; do
     echo -e "6. Lihat Durasi Akun Terkunci"
     echo -e "7. Set Durasi Akun Terkunci"
     echo -e "8. Cek Status Service"
-    echo -e "9. Restart Service Limit IP"
+    echo -e "9. refresh all services Limit IP"
     echo -e "0. Keluar"
     echo
     read -rp "Pilih opsi [0-9]: " opt
@@ -213,7 +242,7 @@ while true; do
         6) show_lock_duration ;;
         7) set_lock_duration ;;
         8) show_status_limitssh ;;
-        9) restart_service ;;
+        9) refresh_services_and_notify ;;
         0) clear && menu ;;
         *) echo "Opsi tidak valid." && sleep 1 ;;
     esac
