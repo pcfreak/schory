@@ -137,8 +137,6 @@ enable_all_limit_services() {
     done
 
     echo -e "\n\e[1;92mSelesai mengaktifkan semua service.\e[0m"
-    echo -e "Tekan enter untuk kembali..."
-    read
 }
 
 # Nonaktifkan service limitssh
