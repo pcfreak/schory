@@ -1,22 +1,18 @@
 #!/bin/bash
-# File: /usr/local/sbin/unlock_limit_ip_user_ssh_notif
-
 user="$1"
+LOCK_DURATION="$2"
+
+# Buka akun
+passwd -u "$user" > /dev/null
+
+# Kirim notifikasi Telegram
 BOT_FILE="/etc/bot/limitip.db"
+[[ -f "$BOT_FILE" ]] || exit
 
-if id "$user" &>/dev/null; then
-    passwd -u "$user" > /dev/null
+read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
+[[ -z "$bottoken" || -z "$idtelegram" ]] && exit
 
-    # Ambil token & id Telegram bot limit IP
-    if [[ -f "$BOT_FILE" ]]; then
-        BOT_TOKEN=$(grep '#bot#' "$BOT_FILE" | awk '{print $2}')
-        CHAT_ID=$(grep '#bot#' "$BOT_FILE" | awk '{print $3}')
-
-        # Kirim notifikasi
-        TEXT="Akun SSH *$user* telah dibuka kembali setelah terkunci karena melebihi limit IP."
-        curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-            -d chat_id="$CHAT_ID" \
-            -d text="$TEXT" \
-            -d parse_mode="Markdown" > /dev/null
-    fi
-fi
+curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
+    -d chat_id="${idtelegram}" \
+    -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit." \
+    -d parse_mode="Markdown" > /dev/null
