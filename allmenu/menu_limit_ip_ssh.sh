@@ -13,56 +13,47 @@ if [[ ! -f $LOCK_DURATION_FILE ]]; then
     echo "$DEFAULT_LOCK_DURATION" > "$LOCK_DURATION_FILE"
 fi
 
-# Fungsi Kirim Notif Telegram (letakkan di luar, di bagian atas script)
-send_telegram_notification() {
-    local message="$1"
-    local BOT_FILE="/etc/bot/limitip.db"
-
-    if [[ -f "$BOT_FILE" ]]; then
-        local BOT_TOKEN=$(grep -w "TOKEN" "$BOT_FILE" | cut -d= -f2-)
-        local BOT_CHATID=$(grep -w "CHATID" "$BOT_FILE" | cut -d= -f2-)
-
-        [[ -z $BOT_TOKEN || -z $BOT_CHATID ]] && return
-
-        curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${BOT_CHATID}" \
-            -d "text=${message}" \
-            -d "parse_mode=HTML" >/dev/null 2>&1
-    fi
-}
-
-# Menu Status Service
+# cek all servis dan notif tele jika ada yg blm jalan
 show_status_limitssh() {
     clear
-    echo -e "\e[1;36m=== MENU LIMIT IP SSH ===\e[0m"
+    echo -e "=== MENU LIMIT IP SSH ==="
 
-    local alert=""
-    for srv in limitssh.service cron atd; do
-        echo -e "\e[1;33m=== STATUS SERVICE: $srv ===\e[0m"
-        local active=$(systemctl is-active "$srv")
-        local enabled=$(systemctl is-enabled "$srv" 2>/dev/null || echo "disabled")
+    # Function kirim notifikasi Telegram
+    send_telegram_notification() {
+        local message="$1"
+        local BOT_FILE="/etc/bot/limitip.db"
 
-        [[ $active == "active" ]] && status_active="\e[1;32mactive\e[0m" || status_active="\e[1;31m$active\e[0m"
-        [[ $enabled == "enabled" ]] && status_enabled="\e[1;32mEnabled\e[0m" || status_enabled="\e[1;31mDisabled\e[0m"
+        if [[ -f "$BOT_FILE" ]]; then
+            local BOT_LINE=$(grep -E '^#bot#' "$BOT_FILE")
+            local BOT_TOKEN=$(echo "$BOT_LINE" | awk '{print $2}')
+            local BOT_CHATID=$(echo "$BOT_LINE" | awk '{print $3}')
 
-        echo -e "Status Aktif  : $status_active"
-        echo -e "Auto Start    : $status_enabled"
+            [[ -z $BOT_TOKEN || -z $BOT_CHATID ]] && return
 
-        systemctl status "$srv" | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:" | sed 's/^/     /'
-        journalctl -u "$srv" -n 5 --no-pager 2>/dev/null | sed 's/^/Log Terakhir (5 baris):\n     /'
+            curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+                -d "chat_id=${BOT_CHATID}" \
+                -d "text=${message}" \
+                -d "parse_mode=HTML" >/dev/null 2>&1
+        fi
+    }
 
-        # Buat alert jika service tidak aktif atau disable
-        if [[ $active != "active" || $enabled != "enabled" ]]; then
-            alert+="\n<b>$srv</b>\nStatus : <code>$active</code>\nAutostart : <code>$enabled</code>\n"
+    local SERVICES=("limitssh.service" "cron" "atd")
+    local alert_message=""
+
+    for service in "${SERVICES[@]}"; do
+        echo -e "\n=== STATUS SERVICE: $service ==="
+        systemctl status "$service" --no-pager | grep -E "Active:|Loaded:|Main PID:|Memory:" | sed 's/^/     /'
+        journalctl -u "$service" -n 5 --no-pager 2>/dev/null | sed 's/^/Log Terakhir (5 baris):\n     /'
+
+        local status=$(systemctl is-active "$service")
+        if [[ "$status" != "active" ]]; then
+            alert_message+="$service <code>tidak aktif</code>\n"
         fi
     done
 
-    # Kirim notif jika ada masalah
-    if [[ -n $alert ]]; then
-        send_telegram_notification "<b>PERINGATAN:</b>\nTerdapat service tidak aktif atau tidak autostart:$alert"
+    if [[ -n "$alert_message" ]]; then
+        send_telegram_notification "<b>Service Mati di VPS</b>\n$alert_message"
     fi
-
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
 
 # Lihat semua user + limit
