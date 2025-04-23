@@ -32,10 +32,12 @@ show_status_limitssh() {
         [[ -z $BOT_TOKEN || -z $BOT_CHATID ]] && return
         curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d "chat_id=${BOT_CHATID}" \
-            -d "text=${message}" >/dev/null 2>&1
+            -d "text=${message}" \
+            -d "parse_mode=HTML" >/dev/null 2>&1
     }
 
     local alert=""
+    local service_status_report=""
 
     for srv in limitssh.service cron atd; do
         echo -e "\e[1;33m=== STATUS SERVICE: $srv ===\e[0m"
@@ -51,17 +53,17 @@ show_status_limitssh() {
         systemctl status "$srv" | grep -E "Loaded:|Active:|Main PID:|Tasks:|Memory:" | sed 's/^/     /'
         journalctl -u "$srv" -n 5 --no-pager 2>/dev/null | sed 's/^/Log Terakhir (5 baris):\n     /'
 
+        # Buat alert jika service tidak aktif atau disable
         if [[ $active != "active" || $enabled != "enabled" ]]; then
-            alert+=$'\n'"SERVICE: $srv => Status: $active, Autostart: $enabled"
+            alert+="\n<b>$srv</b>\nStatus : <code>$active</code>\nAutostart : <code>$enabled</code>\n"
         fi
     done
 
     if [[ -n $alert ]]; then
-        send_telegram_notification "PERINGATAN:\nTerdapat service yang tidak aktif atau tidak autostart.$alert"
+        send_telegram_notification "<b>PERINGATAN:</b>\nTerdapat service tidak aktif atau tidak autostart:$alert"
     fi
-
-    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
 }
+
 
 # Lihat semua user + limit
 function list_limit() {
