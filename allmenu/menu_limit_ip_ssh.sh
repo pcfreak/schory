@@ -13,32 +13,30 @@ if [[ ! -f $LOCK_DURATION_FILE ]]; then
     echo "$DEFAULT_LOCK_DURATION" > "$LOCK_DURATION_FILE"
 fi
 
-# Fungsi untuk cek status service dan kirim notifikasi jika ada masalah
-show_status_limitssh() {
-    clear
-    echo -e "\e[1;36m=== MENU LIMIT IP SSH ===\e[0m"
+# Fungsi Kirim Notif Telegram (letakkan di luar, di bagian atas script)
+send_telegram_notification() {
+    local message="$1"
+    local BOT_FILE="/etc/bot/limitip.db"
 
-    BOT_FILE="/etc/bot/limitip.db"
     if [[ -f "$BOT_FILE" ]]; then
-        BOT_TOKEN=$(grep -w "TOKEN" "$BOT_FILE" | cut -d= -f2-)
-        BOT_CHATID=$(grep -w "CHATID" "$BOT_FILE" | cut -d= -f2-)
-    else
-        BOT_TOKEN=""
-        BOT_CHATID=""
-    fi
+        local BOT_TOKEN=$(grep -w "TOKEN" "$BOT_FILE" | cut -d= -f2-)
+        local BOT_CHATID=$(grep -w "CHATID" "$BOT_FILE" | cut -d= -f2-)
 
-    send_telegram_notification() {
-        local message="$1"
         [[ -z $BOT_TOKEN || -z $BOT_CHATID ]] && return
+
         curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d "chat_id=${BOT_CHATID}" \
             -d "text=${message}" \
             -d "parse_mode=HTML" >/dev/null 2>&1
-    }
+    fi
+}
+
+# Menu Status Service
+show_status_limitssh() {
+    clear
+    echo -e "\e[1;36m=== MENU LIMIT IP SSH ===\e[0m"
 
     local alert=""
-    local service_status_report=""
-
     for srv in limitssh.service cron atd; do
         echo -e "\e[1;33m=== STATUS SERVICE: $srv ===\e[0m"
         local active=$(systemctl is-active "$srv")
@@ -59,11 +57,13 @@ show_status_limitssh() {
         fi
     done
 
+    # Kirim notif jika ada masalah
     if [[ -n $alert ]]; then
         send_telegram_notification "<b>PERINGATAN:</b>\nTerdapat service tidak aktif atau tidak autostart:$alert"
     fi
-}
 
+    read -n 1 -s -r -p "Tekan enter untuk kembali ke menu..."
+}
 
 # Lihat semua user + limit
 function list_limit() {
