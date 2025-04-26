@@ -3,64 +3,136 @@
 # Warna
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-clear
-echo -e "${GREEN}Installer Web Server${NC}"
-echo "======================================="
-echo "Pilih opsi:"
-echo "1. Instal Apache Web Server"
-echo "2. Uninstall Apache Web Server"
-read -rp "Pilih [1/2]: " opsi
+function tambah_website() {
+    echo -e "${YELLOW}Menambahkan Website Baru${NC}"
+    read -rp "Masukkan nama domain (contoh: domainmu.com): " domain
 
-if [[ $opsi == "1" ]]; then
-    echo "Memasang Apache2..."
-    apt update -y
-    apt install apache2 -y
+    mkdir -p /var/www/$domain
+    chown -R www-data:www-data /var/www/$domain
+    chmod -R 755 /var/www/$domain
 
-    echo "Menghapus file default..."
-    rm -f /var/www/html/index.html
+    cat > /var/www/$domain/index.html <<-END
+<html>
+<head><title>Selamat Datang di $domain</title></head>
+<body><h1>Website $domain Berjalan dengan Apache!</h1></body>
+</html>
+END
 
-    echo "Membuat file index baru..."
-    echo "<html><head><title>Web Server Aktif</title></head><body><h1>Apache di Port 8888 Aktif!</h1></body></html>" > /var/www/html/index.html
-
-    echo "Mengatur Apache listen di port 8888..."
-    echo "Listen 8888" > /etc/apache2/ports.conf
-
-    echo "Membuat VirtualHost baru..."
-    cat > /etc/apache2/sites-available/webku.conf <<-END
-<VirtualHost *:8888>
-    ServerAdmin admin@webku.com
-    DocumentRoot /var/www/html
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
+    cat > /etc/apache2/sites-available/$domain.conf <<-END
+<VirtualHost *:80>
+    ServerAdmin admin@$domain
+    ServerName $domain
+    ServerAlias www.$domain
+    DocumentRoot /var/www/$domain
+    ErrorLog \${APACHE_LOG_DIR}/$domain-error.log
+    CustomLog \${APACHE_LOG_DIR}/$domain-access.log combined
 </VirtualHost>
 END
 
-    echo "Menonaktifkan default site..."
-    a2dissite 000-default.conf
+    a2ensite $domain.conf
+    systemctl reload apache2
 
-    echo "Mengaktifkan site webku.conf..."
-    a2ensite webku.conf
+    echo -e "${YELLOW}Mendapatkan sertifikat SSL Let's Encrypt untuk $domain...${NC}"
+    certbot --apache --non-interactive --agree-tos -m admin@$domain -d $domain -d www.$domain
 
-    echo "Restarting Apache..."
     systemctl restart apache2
+    echo -e "${GREEN}Website $domain berhasil dibuat dengan SSL aktif!${NC}"
+}
 
-    echo -e "${GREEN}======================================="
-    echo "Apache Web Server sudah aktif di port 8888"
-    echo "Akses via: http://$(curl -s ipv4.icanhazip.com):8888/"
-    echo "=======================================${NC}"
+function hapus_website() {
+    echo -e "${YELLOW}Menghapus Website${NC}"
+    read -rp "Masukkan nama domain yang akan dihapus (contoh: domainmu.com): " domain
 
-elif [[ $opsi == "2" ]]; then
-    echo "Menghapus Apache2 dan membersihkan file..."
-    systemctl stop apache2
-    apt purge apache2* -y
-    apt autoremove -y
-    rm -rf /etc/apache2
-    rm -rf /var/www/html/*
-    echo -e "${RED}======================================="
-    echo "Apache Web Server berhasil dihapus."
-    echo "=======================================${NC}"
-else
-    echo -e "${RED}Opsi tidak valid.${NC}"
-fi
+    a2dissite $domain.conf
+    systemctl reload apache2
+
+    rm -f /etc/apache2/sites-available/$domain.conf
+    rm -rf /var/www/$domain
+    certbot delete --cert-name $domain
+
+    systemctl restart apache2
+    echo -e "${GREEN}Website $domain berhasil dihapus.${NC}"
+}
+
+function list_website() {
+    echo -e "${YELLOW}Daftar Website Aktif:${NC}"
+    ls /etc/apache2/sites-enabled/ | sed 's/.conf$//'
+}
+
+function renew_ssl() {
+    echo -e "${YELLOW}Perpanjang SSL Manual${NC}"
+    certbot renew --force-renewal
+    systemctl reload apache2
+    echo -e "${GREEN}Perpanjangan SSL selesai.${NC}"
+}
+
+function uninstall_webserver() {
+    echo -e "${RED}WARNING: Ini akan menghapus semua website, SSL, dan konfigurasi apache2!${NC}"
+    read -rp "Yakin mau lanjut? (yes/no): " confirm
+    if [[ "$confirm" == "yes" ]]; then
+        echo -e "${YELLOW}Menghapus Apache2, website, dan SSL...${NC}"
+        
+        systemctl stop apache2
+        apt purge apache2* certbot python3-certbot* -y
+        apt autoremove --purge -y
+        apt clean
+
+        rm -rf /var/www/*
+        rm -rf /etc/apache2
+        rm -rf /etc/letsencrypt
+        rm -rf /var/log/apache2
+
+        echo -e "${GREEN}Apache2, website, dan SSL berhasil dihapus bersih.${NC}"
+    else
+        echo -e "${RED}Batal menghapus Web Server.${NC}"
+    fi
+}
+
+function install_webserver() {
+    echo -e "${YELLOW}Menginstall Apache2 dan Certbot...${NC}"
+    apt update -y
+    apt install apache2 certbot python3-certbot-apache -y
+    systemctl enable apache2
+    systemctl start apache2
+    echo -e "${GREEN}Apache2 dan Certbot berhasil dipasang.${NC}"
+}
+
+function cek_instalasi() {
+    if ! command -v apache2 > /dev/null; then
+        echo -e "${YELLOW}Apache2 belum terinstall.${NC}"
+    fi
+
+    if ! command -v certbot > /dev/null; then
+        echo -e "${YELLOW}Certbot belum terinstall.${NC}"
+    fi
+}
+
+# Main Program
+cek_instalasi
+while true; do
+    clear
+    echo -e "${GREEN}=== Apache Multi Website Manager ===${NC}"
+    echo "[1] Tambah Website Baru"
+    echo "[2] Hapus Website"
+    echo "[3] Lihat Website Aktif"
+    echo "[4] Perpanjang SSL Manual"
+    echo "[5] Uninstall Web Server (hapus semua)"
+    echo "[6] Install Web Server (Apache2 + Certbot)"
+    echo "[0] Exit"
+    echo
+    read -rp "Pilih opsi: " opsi
+
+    case $opsi in
+        1) tambah_website ;;
+        2) hapus_website ;;
+        3) list_website ;;
+        4) renew_ssl ;;
+        5) uninstall_webserver ;;
+        6) install_webserver ;;
+        0) exit ;;
+        *) echo -e "${RED}Pilihan tidak valid.${NC}"; sleep 1 ;;
+    esac
+done
