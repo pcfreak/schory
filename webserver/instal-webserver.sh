@@ -1,105 +1,66 @@
 #!/bin/bash
-# Installer Web Server (Apache) Port 8080/8888
-# By ChatGPT
+
+# Warna
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
 
 clear
+echo -e "${GREEN}Installer Web Server${NC}"
 echo "======================================="
-echo "        Installer Web Server           "
-echo "======================================="
-echo ""
 echo "Pilih opsi:"
 echo "1. Instal Apache Web Server"
 echo "2. Uninstall Apache Web Server"
-read -p "Pilih [1/2]: " option_choice
+read -rp "Pilih [1/2]: " opsi
 
-if [[ "$option_choice" == "1" ]]; then
-    # Pilih port untuk Web Server
-    echo "Pilih port untuk Web Server:"
-    echo "1. 8080"
-    echo "2. 8888"
-    read -p "Pilih [1/2]: " port_choice
+if [[ $opsi == "1" ]]; then
+    echo "Memasang Apache2..."
+    apt update -y
+    apt install apache2 -y
 
-    if [[ "$port_choice" == "1" ]]; then
-        port="8080"
-    elif [[ "$port_choice" == "2" ]]; then
-        port="8888"
-    else
-        echo "Pilihan tidak valid!"
-        exit 1
-    fi
+    echo "Menghapus file default..."
+    rm -f /var/www/html/index.html
 
-    # Hapus file lama Apache jika ada
-    echo "Menghapus file lama Apache (jika ada)..."
-    rm -rf /etc/apache2/*
-    rm -rf /var/www/html/*
+    echo "Membuat file index baru..."
+    echo "<html><head><title>Web Server Aktif</title></head><body><h1>Apache di Port 8888 Aktif!</h1></body></html>" > /var/www/html/index.html
 
-    # Update sistem dan install apache2
-    echo ""
-    echo "Mengupdate sistem dan menginstal Apache2..."
-    apt update -y && apt install apache2 -y
+    echo "Mengatur Apache listen di port 8888..."
+    echo "Listen 8888" > /etc/apache2/ports.conf
 
-    # Pastikan file konfigurasi default ada
-    echo "Memastikan konfigurasi Apache ada..."
-    if [ ! -f /etc/apache2/apache2.conf ]; then
-        echo "Membuat file apache2.conf..."
-        cat <<EOF > /etc/apache2/apache2.conf
-# apache2.conf file
-
-ServerRoot "/etc/apache2"
-Listen $port
-
-# LoadModule directives for the Apache modules
-IncludeOptional sites-enabled/*.conf
-EOF
-    fi
-
-    # Pastikan VirtualHost ada
-    echo "Memastikan VirtualHost ada untuk port $port..."
-    if [ ! -f /etc/apache2/sites-available/000-default.conf ]; then
-        echo "Membuat file 000-default.conf..."
-        cat <<EOF > /etc/apache2/sites-available/000-default.conf
-<VirtualHost *:$port>
-    ServerAdmin webmaster@localhost
+    echo "Membuat VirtualHost baru..."
+    cat > /etc/apache2/sites-available/webku.conf <<-END
+<VirtualHost *:8888>
+    ServerAdmin admin@webku.com
     DocumentRoot /var/www/html
     ErrorLog \${APACHE_LOG_DIR}/error.log
     CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
-EOF
-    fi
+END
 
-    # Mengatur Apache untuk listen di port yang dipilih
-    echo "Mengatur Apache untuk listen di port $port..."
-    sed -i "s/Listen 80/Listen $port/g" /etc/apache2/ports.conf
-    sed -i "s/<VirtualHost \*:80>/<VirtualHost *:$port>/g" /etc/apache2/sites-available/000-default.conf
+    echo "Menonaktifkan default site..."
+    a2dissite 000-default.conf
 
-    # Restart apache2
-    echo "Restarting Apache2..."
+    echo "Mengaktifkan site webku.conf..."
+    a2ensite webku.conf
+
+    echo "Restarting Apache..."
     systemctl restart apache2
 
-    # Buka port di firewall jika ufw aktif
-    if systemctl is-active --quiet ufw; then
-        echo "Membuka port $port di firewall (ufw)..."
-        ufw allow $port/tcp
-    fi
+    echo -e "${GREEN}======================================="
+    echo "Apache Web Server sudah aktif di port 8888"
+    echo "Akses via: http://$(curl -s ipv4.icanhazip.com):8888/"
+    echo "=======================================${NC}"
 
-    # Cek status
-    echo ""
-    echo "======================================="
-    echo "Apache Web Server sudah aktif di port $port"
-    echo "Akses via: http://$(curl -s ifconfig.me):$port/"
-    echo "======================================="
-
-elif [[ "$option_choice" == "2" ]]; then
-    # Uninstall Apache Web Server
-    echo "Menghapus Apache Web Server..."
+elif [[ $opsi == "2" ]]; then
+    echo "Menghapus Apache2 dan membersihkan file..."
     systemctl stop apache2
-    apt-get purge apache2 apache2-utils apache2-bin apache2.2-common -y
-    apt-get autoremove -y
+    apt purge apache2* -y
+    apt autoremove -y
     rm -rf /etc/apache2
-    rm -rf /var/www/html
-
+    rm -rf /var/www/html/*
+    echo -e "${RED}======================================="
     echo "Apache Web Server berhasil dihapus."
+    echo "=======================================${NC}"
 else
-    echo "Pilihan tidak valid!"
-    exit 1
+    echo -e "${RED}Opsi tidak valid.${NC}"
 fi
