@@ -23,35 +23,12 @@ install_nginx() {
     sudo apt update
     sudo apt install -y nginx
     echo "Nginx berhasil diinstal."
-}
-
-# Fungsi untuk menginstal SSL Let's Encrypt
-install_ssl() {
-    echo "Menginstal SSL Let's Encrypt..."
-    sudo apt install -y certbot python3-certbot-nginx
-    sudo certbot --nginx -d "$DOMAIN"
-    echo "SSL Let's Encrypt berhasil diinstal dan diterapkan."
-}
-
-# Fungsi untuk menginstal dan mengonfigurasi Nginx untuk multi-website dan SSL
-install_all() {
-    echo "Menginstal semua web server dan SSL Let's Encrypt..."
-
-    # Simpan DOMAIN dari parameter
-    DOMAIN="$1"
-
-    # Install Apache
-    install_apache
-    
-    # Install Nginx
-    install_nginx
 
     # Backup konfigurasi default nginx
     sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
 
-    echo "Membuat konfigurasi Nginx untuk domain/IP: $DOMAIN"
-
-    # Konfigurasi Nginx untuk meneruskan ke Apache di port 700
+    # Buat konfigurasi reverse proxy ke Apache
+    DOMAIN="$1"
     cat > /etc/nginx/sites-available/default <<EOF
 server {
     listen 80;
@@ -67,34 +44,54 @@ server {
 }
 EOF
 
-    # Reload Nginx agar konfigurasi diterapkan
+    # Reload Nginx
     sudo systemctl reload nginx
-
-    # Install SSL Let's Encrypt
-    install_ssl
-
-    echo "Semua web server (Apache dan Nginx) berhasil diinstal dan dikonfigurasi."
+    echo "Nginx berhasil dikonfigurasi sebagai reverse proxy ke Apache."
 }
 
-# Fungsi untuk menghapus semua web server
+# Fungsi untuk menginstal SSL Let's Encrypt
+install_ssl() {
+    echo "Menginstal SSL Let's Encrypt..."
+    sudo apt install -y certbot python3-certbot-nginx
+    sudo certbot --nginx -d "$DOMAIN"
+    echo "SSL Let's Encrypt berhasil diterapkan."
+}
+
+# Fungsi gabungan instalasi
+install_all() {
+    echo "Instalasi Web Server dan Reverse Proxy..."
+
+    DOMAIN="$1"
+
+    install_apache
+    install_nginx "$DOMAIN"
+
+    echo ""
+    echo "Website seharusnya sudah bisa diakses di http://$DOMAIN"
+    echo "Sekarang, pastikan domain mengarah ke IP server INI."
+    echo "Kalau sudah online, lanjutkan manual untuk SSL dengan perintah:"
+    echo "    sudo certbot --nginx -d $DOMAIN"
+}
+
+# Fungsi hapus semua
 remove_all() {
-    echo "Menghapus semua web server (Apache dan Nginx)..."
+    echo "Menghapus Apache dan Nginx..."
     sudo apt remove --purge -y apache2 nginx
     sudo apt autoremove -y
-    echo "Semua web server berhasil dihapus."
+    echo "Selesai menghapus."
 }
 
-# Menu pilihan
+# Menu utama
 while true; do
     clear
     echo "Pilih opsi:"
-    echo "1) Instal Semua Web Server (Apache, Nginx, SSL)"
-    echo "2) Hapus Semua Web Server (Apache dan Nginx)"
+    echo "1) Install Web Server (Apache, Nginx Reverse Proxy)"
+    echo "2) Remove Web Server"
     read -p "Masukkan pilihan (1-2): " pilihan
 
     case $pilihan in
         1)
-            read -p "Masukkan domain atau IP untuk konfigurasi multi-website dan SSL (contoh: example.com atau 192.168.1.1): " DOMAIN
+            read -p "Masukkan domain atau IP server: " DOMAIN
             install_all "$DOMAIN"
             ;;
         2)
@@ -104,5 +101,5 @@ while true; do
             echo "Pilihan tidak valid!"
             ;;
     esac
-    read -p "Tekan Enter untuk melanjutkan..."
+    read -p "Tekan Enter untuk kembali ke menu..."
 done
