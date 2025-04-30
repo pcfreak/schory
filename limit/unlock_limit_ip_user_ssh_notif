@@ -1,17 +1,33 @@
 #!/bin/bash
 user="$1"
 LOCK_DURATION="$2"
+LIMIT_DIR="/etc/klmpk/limit/ssh/ip"
 
-# Validasi
-[[ -z "$user" || -z "$LOCK_DURATION" ]] && exit 1
+# Cek apakah user ada
+id "$user" &>/dev/null || exit 1
 
-BOT_FILE="/etc/bot/limitip.db"
-[[ -f "$BOT_FILE" ]] || exit
+# Ambil limit IP user
+[[ -f "$LIMIT_DIR/$user" ]] || exit 1
+iplimit=$(cat "$LIMIT_DIR/$user")
 
-read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
-[[ -z "$bottoken" || -z "$idtelegram" ]] && exit
+# Hitung jumlah IP aktif user
+mulog=$(cekssh)
+ipaktif=$(echo "$mulog" | grep -w "$user" | wc -l)
 
-curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
-    -d chat_id="${idtelegram}" \
-    -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci selama $LOCK_DURATION menit." \
-    -d parse_mode="Markdown" > /dev/null
+if [[ "$ipaktif" -le "$iplimit" ]]; then
+    # Jika sudah tidak melanggar, buka akun dan kirim notifikasi
+    passwd -u "$user" > /dev/null
+
+    BOT_FILE="/etc/bot/limitip.db"
+    [[ -f "$BOT_FILE" ]] || exit
+    read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
+    [[ -z "$bottoken" || -z "$idtelegram" ]] && exit
+
+    curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
+        -d chat_id="${idtelegram}" \
+        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci selama $LOCK_DURATION menit." \
+        -d parse_mode="Markdown" > /dev/null
+else
+    # Jika masih melanggar, jadwalkan ulang pengecekan
+    echo "/usr/local/sbin/unlock_limit_ip_user_ssh_notif $user $LOCK_DURATION" | at now + $LOCK_DURATION minutes > /dev/null
+fi
