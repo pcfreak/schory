@@ -113,7 +113,7 @@ menu() {
         1) set_bot ;;
         2) hapus_bot ;;
         3) lihat_bot ;;
-        0) return ;;
+        0) clear ; /usr/bin/menu ;;
         *) echo -e "${RED}Opsi tidak valid!${NC}" ; sleep 1 ;;
     esac
     menu
