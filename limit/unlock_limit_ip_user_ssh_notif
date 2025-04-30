@@ -2,17 +2,16 @@
 user="$1"
 LOCK_DURATION="$2"
 
-# Buka akun
-passwd -u "$user" > /dev/null
+# Validasi
+[[ -z "$user" || -z "$LOCK_DURATION" ]] && exit 1
 
-# Kirim notifikasi Telegram
 BOT_FILE="/etc/bot/limitip.db"
 [[ -f "$BOT_FILE" ]] || exit
 
 read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
 [[ -z "$bottoken" || -z "$idtelegram" ]] && exit
 
-curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
+curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
     -d chat_id="${idtelegram}" \
-    -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit." \
+    -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci selama $LOCK_DURATION menit." \
     -d parse_mode="Markdown" > /dev/null
