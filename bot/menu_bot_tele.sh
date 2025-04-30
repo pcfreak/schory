@@ -112,9 +112,6 @@ menu() {
         1) set_bot ;;
         2) hapus_bot ;;
         3) lihat_bot ;;
-        0) clear; menu ;;
-        *) menu ;;
-    esac
-}
-
-menu
+        0) clear ; menu ;;
+*) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
+esac
