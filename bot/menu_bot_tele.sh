@@ -4,7 +4,7 @@ BOT_DIR="/etc/bot"
 mkdir -p $BOT_DIR
 
 # Daftar fungsi bot yang tersedia
-list_fungsi=("backup" "limitip" "addakun" "autokill" "hapusakun" "expired" "monitor")
+list_fungsi=("management-akun" "limitip" "bot-admin")
 
 # Warna
 RED='\033[1;31m'
@@ -112,7 +112,7 @@ menu() {
         1) set_bot ;;
         2) hapus_bot ;;
         3) lihat_bot ;;
-        0) clear; exit ;;
+        0) clear; menu ;;
         *) menu ;;
     esac
 }
