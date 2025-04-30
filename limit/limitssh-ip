@@ -1,7 +1,11 @@
 #!/bin/bash
+
 LIMIT_DIR="/etc/klmpk/limit/ssh/ip"
 LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
+LOCK_MARK="/etc/klmpk/lock/ssh"
+mkdir -p "$LOCK_MARK"
 
+# Fungsi notifikasi kunci
 send_log_lock() {
     BOT_FILE="/etc/bot/limitip.db"
     [[ -f "$BOT_FILE" ]] || return
@@ -18,27 +22,55 @@ send_log_lock() {
         -d parse_mode="Markdown" > /dev/null
 }
 
-# Durasi kunci
+# Fungsi notifikasi buka
+send_log_unlock() {
+    BOT_FILE="/etc/bot/limitip.db"
+    [[ -f "$BOT_FILE" ]] || return
+
+    read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
+    [[ -z "$bottoken" || -z "$idtelegram" ]] && return
+
+    curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
+        -d chat_id="${idtelegram}" \
+        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci selama $LOCK_DURATION menit." \
+        -d parse_mode="Markdown" > /dev/null
+}
+
+# Ambil durasi kunci
 if [[ -f "$LOCK_DURATION_FILE" ]]; then
     LOCK_DURATION=$(cat "$LOCK_DURATION_FILE")
 else
     LOCK_DURATION=15
 fi
 
-# Log SSH aktif
+# Ambil log user login aktif
 mulog=$(cekssh)
+now=$(date +%s)
 
-# Loop user
+# Proses tiap user yang dibatasi
 for user in $(ls $LIMIT_DIR); do
     iplimit=$(cat "$LIMIT_DIR/$user")
     cekcek=$(echo "$mulog" | grep -w "$user" | wc -l)
 
     if [[ $cekcek -gt $iplimit ]]; then
-        echo "Akun $user melebihi limit IP, dikunci $LOCK_DURATION menit"
-        passwd -l "$user" > /dev/null
-        send_log_lock
-
-        # Schedule unlock pakai script terpisah
-        echo "/usr/local/sbin/unlock_limit_ip_user_ssh_notif $user $LOCK_DURATION" | at now + $LOCK_DURATION minutes > /dev/null
+        # Jika user belum dikunci sebelumnya, kunci sekarang
+        if [[ ! -f "$LOCK_MARK/$user" ]]; then
+            echo "Akun $user melebihi limit IP, dikunci $LOCK_DURATION menit"
+            passwd -l "$user" > /dev/null
+            date +%s > "$LOCK_MARK/$user"
+            send_log_lock
+        fi
+    else
+        # Jika user terkunci tapi waktunya sudah habis, buka akun
+        if [[ -f "$LOCK_MARK/$user" ]]; then
+            lock_time=$(cat "$LOCK_MARK/$user")
+            expire=$((lock_time + LOCK_DURATION * 60))
+            if [[ $now -ge $expire ]]; then
+                echo "Akun $user dibuka kembali setelah kunci"
+                passwd -u "$user" > /dev/null
+                rm -f "$LOCK_MARK/$user"
+                send_log_unlock
+            fi
+        fi
     fi
 done
