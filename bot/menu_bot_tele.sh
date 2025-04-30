@@ -1,7 +1,7 @@
-TFT#!/bin/bash
+#!/bin/bash
 
 BOT_DIR="/etc/bot"
-mkdir -p $BOT_DIR
+mkdir -p "$BOT_DIR"
 
 # Daftar fungsi bot yang tersedia
 list_fungsi=("management-akun" "limitip" "bot-admin")
@@ -28,7 +28,7 @@ set_bot() {
     read -p " Pilih fungsi bot: " pilihan
 
     if [[ "$pilihan" == "0" ]]; then
-        menu
+        return
     elif [[ "$pilihan" =~ ^[1-9][0-9]*$ ]] && (( pilihan <= ${#list_fungsi[@]} )); then
         fungsi="${list_fungsi[$((pilihan-1))]}"
         read -rp " Input Bot Token untuk fungsi '$fungsi' : " bottoken
@@ -60,7 +60,7 @@ hapus_bot() {
     read -p " Pilih fungsi bot yang ingin dihapus: " pilihan
 
     if [[ "$pilihan" == "0" ]]; then
-        menu
+        return
     elif [[ "$pilihan" =~ ^[1-9][0-9]*$ ]] && (( pilihan <= ${#list_fungsi[@]} )); then
         fungsi="${list_fungsi[$((pilihan-1))]}"
         rm -f "$BOT_DIR/$fungsi.db"
@@ -83,7 +83,7 @@ lihat_bot() {
     for fungsi in "${list_fungsi[@]}"; do
         file="$BOT_DIR/$fungsi.db"
         if [[ -f "$file" ]]; then
-            data=$(cat "$file" | grep '^#bot#' | cut -d ' ' -f2-)
+            data=$(grep '^#bot#' "$file" | cut -d ' ' -f2-)
             echo -e "$fungsi => $data"
         else
             echo -e "$fungsi => [belum diatur]"
@@ -97,23 +97,27 @@ lihat_bot() {
 
 # Menu utama
 menu() {
-    clear
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "      MENU BOT NOTIFIKASI VPS      "
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e " [1] Tambah / Ganti Bot"
-    echo -e " [2] Hapus Bot"
-    echo -e " [3] Lihat Bot Aktif"
-    echo -e " [0] Kembali ke menu utama"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    read -p " Pilih opsi: " opsi
+    while true; do
+        clear
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "      MENU BOT NOTIFIKASI VPS      "
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e " [1] Tambah / Ganti Bot"
+        echo -e " [2] Hapus Bot"
+        echo -e " [3] Lihat Bot Aktif"
+        echo -e " [0] Kembali ke menu utama"
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        read -p " Pilih opsi: " opsi
 
-    case "$opsi" in
-        1) set_bot ;;
-        2) hapus_bot ;;
-        3) lihat_bot ;;
-        0) break ;;
-        *) echo -e "${RED}Opsi tidak valid!${NC}" ; sleep 1 ;;
-    esac
-done
+        case "$opsi" in
+            1) set_bot ;;
+            2) hapus_bot ;;
+            3) lihat_bot ;;
+            0) break ;;
+            *) echo -e "${RED}Opsi tidak valid!${NC}" ; sleep 1 ;;
+        esac
+    done
 }
+
+# Jalankan menu saat script dieksekusi
+menu
