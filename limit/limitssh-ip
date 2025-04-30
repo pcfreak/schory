@@ -1,11 +1,21 @@
 #!/bin/bash
-
 LIMIT_DIR="/etc/klmpk/limit/ssh/ip"
-LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
 LOCK_MARK="/etc/klmpk/lock/ssh"
+LOCK_DURATION_FILE="/etc/klmpk/limit/ssh/lock_duration"
+
 mkdir -p "$LOCK_MARK"
 
-# Fungsi notifikasi kunci
+# Durasi kunci (default 15 menit)
+if [[ -f "$LOCK_DURATION_FILE" ]]; then
+    LOCK_DURATION=$(cat "$LOCK_DURATION_FILE")
+else
+    LOCK_DURATION=15
+fi
+
+# Cek log SSH aktif
+mulog=$(cekssh)
+
+# Fungsi kirim notif Telegram
 send_log_lock() {
     BOT_FILE="/etc/bot/limitip.db"
     [[ -f "$BOT_FILE" ]] || return
@@ -15,14 +25,13 @@ send_log_lock() {
 
     curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
         -d chat_id="${idtelegram}" \
-        -d text="🚫 *SSH User:* \`$user\` melanggar batas login IP.
+        -d text="🚫 *SSH User Warning:* \`$user\` melanggar batas login IP.
 *Status:* Dikunci sementara selama *$LOCK_DURATION menit*.
 *Jumlah IP Aktif:* $cekcek
 *Batas Maksimal:* $iplimit" \
         -d parse_mode="Markdown" > /dev/null
 }
 
-# Fungsi notifikasi buka
 send_log_unlock() {
     BOT_FILE="/etc/bot/limitip.db"
     [[ -f "$BOT_FILE" ]] || return
@@ -32,45 +41,35 @@ send_log_unlock() {
 
     curl -s -X POST https://api.telegram.org/bot${bottoken}/sendMessage \
         -d chat_id="${idtelegram}" \
-        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci selama $LOCK_DURATION menit." \
+        -d text="✅ *SSH User:* \`$user\` telah *dibuka kembali* setelah terkunci $LOCK_DURATION menit." \
         -d parse_mode="Markdown" > /dev/null
 }
 
-# Ambil durasi kunci
-if [[ -f "$LOCK_DURATION_FILE" ]]; then
-    LOCK_DURATION=$(cat "$LOCK_DURATION_FILE")
-else
-    LOCK_DURATION=15
-fi
-
-# Ambil log user login aktif
-mulog=$(cekssh)
-now=$(date +%s)
-
-# Proses tiap user yang dibatasi
-for user in $(ls $LIMIT_DIR); do
+# Loop user
+for user in $(ls "$LIMIT_DIR"); do
     iplimit=$(cat "$LIMIT_DIR/$user")
     cekcek=$(echo "$mulog" | grep -w "$user" | wc -l)
 
+    # Jika melebihi limit IP
     if [[ $cekcek -gt $iplimit ]]; then
-        # Jika user belum dikunci sebelumnya, kunci sekarang
         if [[ ! -f "$LOCK_MARK/$user" ]]; then
             echo "Akun $user melebihi limit IP, dikunci $LOCK_DURATION menit"
             passwd -l "$user" > /dev/null
+            pkill -KILL -u "$user"  # Putus semua koneksi aktif
             date +%s > "$LOCK_MARK/$user"
             send_log_lock
         fi
-    else
-        # Jika user terkunci tapi waktunya sudah habis, buka akun
-        if [[ -f "$LOCK_MARK/$user" ]]; then
-            lock_time=$(cat "$LOCK_MARK/$user")
-            expire=$((lock_time + LOCK_DURATION * 60))
-            if [[ $now -ge $expire ]]; then
-                echo "Akun $user dibuka kembali setelah kunci"
-                passwd -u "$user" > /dev/null
-                rm -f "$LOCK_MARK/$user"
-                send_log_unlock
-            fi
+    fi
+
+    # Jika terkunci dan waktunya sudah lewat
+    if [[ -f "$LOCK_MARK/$user" ]]; then
+        locktime=$(cat "$LOCK_MARK/$user")
+        now=$(date +%s)
+        unlocktime=$((locktime + LOCK_DURATION * 60))
+        if [[ $now -ge $unlocktime ]]; then
+            passwd -u "$user" > /dev/null
+            rm -f "$LOCK_MARK/$user"
+            send_log_unlock
         fi
     fi
 done
