@@ -1,4 +1,4 @@
-#!/bin/bash
+TFT#!/bin/bash
 
 BOT_DIR="/etc/bot"
 mkdir -p $BOT_DIR
@@ -112,6 +112,8 @@ menu() {
         1) set_bot ;;
         2) hapus_bot ;;
         3) lihat_bot ;;
-        0) clear ; menu ;;
-*) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
-esac
+        0) break ;;
+        *) echo -e "${RED}Opsi tidak valid!${NC}" ; sleep 1 ;;
+    esac
+done
+}
