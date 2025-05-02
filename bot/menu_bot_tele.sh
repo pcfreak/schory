@@ -104,7 +104,7 @@ menu() {
     echo -e " [1] Tambah / Ganti Bot"
     echo -e " [2] Hapus Bot"
     echo -e " [3] Lihat Bot Aktif"
-    echo -e " [4] install bot management-akun"
+    echo -e " [4] install bot management akun"
     echo -e " [0] Kembali ke menu utama"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     read -p " Pilih opsi: " opsi
