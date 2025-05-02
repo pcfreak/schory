@@ -104,7 +104,7 @@ menu() {
     echo -e " [1] Tambah / Ganti Bot"
     echo -e " [2] Hapus Bot"
     echo -e " [3] Lihat Bot Aktif"
-    echo -e " [3] install bot management-akun"
+    echo -e " [4] install bot management-akun"
     echo -e " [0] Kembali ke menu utama"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     read -p " Pilih opsi: " opsi
@@ -114,7 +114,7 @@ menu() {
         1) set_bot ;;
         2) hapus_bot ;;
         3) lihat_bot ;;
-        3) install_bot_management_akun ;;
+        4) install_bot_management_akun ;;
         0) clear ; /usr/bin/menu ;;
         *) echo -e "${RED}Opsi tidak valid!${NC}" ; sleep 1 ;;
     esac
