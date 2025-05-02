@@ -1,77 +1,35 @@
+#!/usr/bin/env python3
+import os
+import sys
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import sqlite3
-import os
 
-BOT_DIR = "/etc/bot"
-DB_PATH = os.path.join(BOT_DIR, "db", "member.db")
+DB_PATH = "/etc/bot/management-akun.db"
 
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+def get_token_admin(db_path):
+    if not os.path.exists(db_path):
+        print("File token tidak ditemukan:", db_path)
+        sys.exit(1)
 
-conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-cursor = conn.cursor()
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS members (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT,
-    saldo INTEGER DEFAULT 0
-)
-''')
-conn.commit()
+    with open(db_path, "r") as f:
+        for line in f:
+            if line.startswith("#bot#"):
+                parts = line.strip().split()
+                if len(parts) >= 3:
+                    return parts[1], parts[2]  # BOT_TOKEN, ADMIN_ID
 
-ADMIN_IDS = ["123456789"]  # Ganti dengan Telegram user ID admin
+    print("Format token tidak valid di file:", db_path)
+    sys.exit(1)
 
+BOT_TOKEN, ADMIN_ID = get_token_admin(DB_PATH)
+
+# Perintah /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Selamat datang di Bot Management Akun!")
+    await update.message.reply_text("Halo! Bot management-akun aktif.")
 
-async def add_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) not in ADMIN_IDS:
-        await update.message.reply_text("Akses ditolak.")
-        return
-
-    if len(context.args) != 2:
-        await update.message.reply_text("Usage: /add_member <user_id> <username>")
-        return
-
-    user_id, username = context.args
-    try:
-        cursor.execute("INSERT INTO members (user_id, username) VALUES (?, ?)", (user_id, username))
-        conn.commit()
-        await update.message.reply_text(f"Member {username} berhasil ditambahkan.")
-    except sqlite3.IntegrityError:
-        await update.message.reply_text("Member sudah terdaftar.")
-
-async def saldo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    cursor.execute("SELECT saldo FROM members WHERE user_id = ?", (user_id,))
-    result = cursor.fetchone()
-    if result:
-        await update.message.reply_text(f"Saldo kamu: {result[0]} poin")
-    else:
-        await update.message.reply_text("Kamu belum terdaftar.")
-
-async def topup(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) not in ADMIN_IDS:
-        await update.message.reply_text("Akses ditolak.")
-        return
-
-    if len(context.args) != 2:
-        await update.message.reply_text("Usage: /topup <user_id> <jumlah>")
-        return
-
-    user_id, jumlah = context.args
-    try:
-        cursor.execute("UPDATE members SET saldo = saldo + ? WHERE user_id = ?", (int(jumlah), user_id))
-        conn.commit()
-        await update.message.reply_text(f"Saldo user {user_id} ditambah {jumlah} poin.")
-    except Exception as e:
-        await update.message.reply_text(f"Gagal: {str(e)}")
-
-app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
+# Inisialisasi dan jalankan bot
+app = ApplicationBuilder().token(BOT_TOKEN).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("add_member", add_member))
-app.add_handler(CommandHandler("saldo", saldo))
-app.add_handler(CommandHandler("topup", topup))
 
-print("Bot Management Akun berjalan...")
+print("Bot management-akun berjalan...")
 app.run_polling()
