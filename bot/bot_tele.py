@@ -1,165 +1,170 @@
-#!/usr/bin/env python3
 import os
-import sys
-import random
+import time
+import logging
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import ConversationHandler
 import subprocess
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, CallbackQueryHandler,
-    MessageHandler, ContextTypes, filters
-)
 
-DB_PATH = "/etc/bot/management-akun.db"
-SALDO_DIR = "/etc/bot/saldo"
-SCRIPT_SSH = "/usr/bin/usernew"
-HARGA_SSH = 1000
+# Setup Logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Ambil token dan admin
-def get_token_admin(db_path):
-    if not os.path.exists(db_path):
-        print("File token tidak ditemukan:", db_path)
-        sys.exit(1)
+# Step identifiers for conversation
+USERNAME, PASSWORD, LIMIT_IP, EXPIRATION, BALANCE, TOPUP = range(6)
 
-    with open(db_path, "r") as f:
-        for line in f:
-            if line.startswith("#bot#"):
-                parts = line.strip().split()
-                if len(parts) >= 3:
-                    return parts[1], parts[2]
-    print("Format token tidak valid.")
-    sys.exit(1)
+# Path to your existing SSH account management scripts and logs
+USERNEW_PATH = "/root/usernew.sh"
+LOG_DIR = "/etc/klmpk/log-ssh/"
+BALANCE_DIR = "/etc/bot/balance/"  # Directory to store balances
 
-BOT_TOKEN, ADMIN_ID = get_token_admin(DB_PATH)
+# Start the conversation
+def start(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text("Selamat datang! Silakan ketik /saldo untuk cek saldo atau /topup untuk menambah saldo.")
+    return ConversationHandler.END
 
-# MENU utama
-def get_main_menu(is_admin=False):
-    buttons = [
-        [InlineKeyboardButton("💰 Cek Saldo", callback_data="cek_saldo")],
-        [InlineKeyboardButton("➕ Buat SSH (1 Hari)", callback_data="buat_ssh")],
-    ]
-    if is_admin:
-        buttons.append([InlineKeyboardButton("⚙️ Topup Saldo Member", callback_data="topup_saldo")])
-    return InlineKeyboardMarkup(buttons)
+# Cek saldo
+def check_balance(update: Update, context: CallbackContext) -> int:
+    username = update.message.from_user.username
+    balance_file = os.path.join(BALANCE_DIR, f"{username}.txt")
+    
+    if os.path.exists(balance_file):
+        with open(balance_file, 'r') as f:
+            balance = f.read()
+        update.message.reply_text(f"Saldo Anda: {balance} MB")
+    else:
+        update.message.reply_text("Saldo Anda belum ada. Silakan top-up terlebih dahulu.")
+    
+    return ConversationHandler.END
 
-# START
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    is_admin = str(update.effective_user.id) == ADMIN_ID
-    await update.message.reply_text(
-        "*Selamat datang di Bot Management Akun!*\nGunakan tombol di bawah.",
-        reply_markup=get_main_menu(is_admin),
-        parse_mode="Markdown"
+# Top-up saldo
+def top_up(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text("Masukkan username untuk top-up saldo.")
+    return TOPUP
+
+# Proses top-up saldo
+def process_topup(update: Update, context: CallbackContext) -> int:
+    username = update.message.text
+    context.user_data['topup_username'] = username
+    update.message.reply_text(f"Masukkan jumlah saldo (dalam MB) yang ingin ditambahkan untuk {username}.")
+    return BALANCE
+
+# Update saldo
+def update_balance(update: Update, context: CallbackContext) -> int:
+    amount = update.message.text
+    if not amount.isdigit():
+        update.message.reply_text("Jumlah saldo harus berupa angka. Coba lagi.")
+        return BALANCE
+    
+    amount = int(amount)
+    username = context.user_data['topup_username']
+    balance_file = os.path.join(BALANCE_DIR, f"{username}.txt")
+    
+    # Cek apakah saldo sudah ada
+    if os.path.exists(balance_file):
+        with open(balance_file, 'r') as f:
+            current_balance = int(f.read())
+        new_balance = current_balance + amount
+    else:
+        new_balance = amount
+
+    # Update saldo
+    with open(balance_file, 'w') as f:
+        f.write(str(new_balance))
+    
+    update.message.reply_text(f"Saldo untuk {username} berhasil di top-up. Saldo sekarang: {new_balance} MB.")
+    return ConversationHandler.END
+
+# Get username
+def get_username(update: Update, context: CallbackContext) -> int:
+    username = update.message.text
+    context.user_data['username'] = username
+    update.message.reply_text(f"Username yang dipilih: {username}\nSekarang, masukkan password untuk akun SSH.")
+    return PASSWORD
+
+# Get password
+def get_password(update: Update, context: CallbackContext) -> int:
+    password = update.message.text
+    context.user_data['password'] = password
+    update.message.reply_text(f"Password untuk {context.user_data['username']} telah diterima.\nSekarang, masukkan limit IP.")
+    return LIMIT_IP
+
+# Get IP limit
+def get_ip_limit(update: Update, context: CallbackContext) -> int:
+    ip_limit = update.message.text
+    if not ip_limit.isdigit():
+        update.message.reply_text("Limit IP harus berupa angka. Coba lagi.")
+        return LIMIT_IP
+
+    context.user_data['ip_limit'] = ip_limit
+    update.message.reply_text(f"Limit IP: {ip_limit}. Sekarang, masukkan durasi expired (dalam hari).")
+    return EXPIRATION
+
+# Get expiration days
+def get_expiration(update: Update, context: CallbackContext) -> int:
+    expiration = update.message.text
+    if not expiration.isdigit():
+        update.message.reply_text("Expired harus berupa angka. Coba lagi.")
+        return EXPIRATION
+
+    context.user_data['expiration'] = expiration
+    # Now create the SSH account using usernew.sh
+    username = context.user_data['username']
+    password = context.user_data['password']
+    ip_limit = context.user_data['ip_limit']
+    expiration = context.user_data['expiration']
+    
+    # Execute the usernew.sh script to create the account
+    create_account_command = f"bash {USERNEW_PATH} {username} {password} {ip_limit} {expiration}"
+    try:
+        # Run the script and wait for completion
+        subprocess.run(create_account_command, shell=True, check=True)
+
+        # Send the result log to user
+        log_file = os.path.join(LOG_DIR, f"{username}.txt")
+        if os.path.exists(log_file):
+            with open(log_file, 'r') as f:
+                log_content = f.read()
+            update.message.reply_text(f"Akun SSH telah dibuat:\n\n{log_content}")
+        else:
+            update.message.reply_text("Terjadi kesalahan saat membuat akun SSH. Coba lagi.")
+    except subprocess.CalledProcessError as e:
+        update.message.reply_text(f"Terjadi kesalahan dalam eksekusi script: {e}")
+    
+    return ConversationHandler.END
+
+# Cancel the process
+def cancel(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text("Proses telah dibatalkan.")
+    return ConversationHandler.END
+
+# Main function to start the bot
+def main():
+    # Replace 'YOUR_API_KEY' with your actual bot API key
+    updater = Updater("YOUR_API_KEY", use_context=True)
+
+    dispatcher = updater.dispatcher
+
+    # ConversationHandler to manage the user input process
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start), CommandHandler('saldo', check_balance), CommandHandler('topup', top_up)],
+        states={
+            USERNAME: [MessageHandler(Filters.text & ~Filters.command, get_username)],
+            PASSWORD: [MessageHandler(Filters.text & ~Filters.command, get_password)],
+            LIMIT_IP: [MessageHandler(Filters.text & ~Filters.command, get_ip_limit)],
+            EXPIRATION: [MessageHandler(Filters.text & ~Filters.command, get_expiration)],
+            BALANCE: [MessageHandler(Filters.text & ~Filters.command, update_balance)],
+            TOPUP: [MessageHandler(Filters.text & ~Filters.command, process_topup)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
     )
 
-# CALLBACK
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user_id = str(query.from_user.id)
-    is_admin = user_id == ADMIN_ID
-    saldo_path = os.path.join(SALDO_DIR, user_id)
+    dispatcher.add_handler(conv_handler)
 
-    if query.data == "cek_saldo":
-        if not os.path.exists(saldo_path):
-            await query.edit_message_text(
-                "Kamu belum punya saldo.\nSilakan hubungi admin.",
-                reply_markup=get_main_menu(is_admin)
-            )
-            return
-        with open(saldo_path) as f:
-            saldo = int(f.read().strip())
-        keterangan = f"""
-*Saldo Kamu:* Rp{saldo:,}
-*Harga SSH 1 Hari:* Rp{HARGA_SSH:,}
-"""
-        await query.edit_message_text(
-            keterangan.strip(),
-            parse_mode="Markdown",
-            reply_markup=get_main_menu(is_admin)
-        )
+    # Start polling updates
+    updater.start_polling()
+    updater.idle()
 
-    elif query.data == "buat_ssh":
-        if not os.path.exists(saldo_path):
-            await query.edit_message_text("Kamu belum punya saldo. Hubungi admin.", reply_markup=get_main_menu(is_admin))
-            return
-        with open(saldo_path) as f:
-            saldo = int(f.read().strip())
-        if saldo < HARGA_SSH:
-            await query.edit_message_text(
-                f"Saldo tidak cukup!\nHarga SSH 1 Hari: Rp{HARGA_SSH:,}\nSaldo kamu: Rp{saldo:,}",
-                reply_markup=get_main_menu(is_admin)
-            )
-            return
-
-        hari = 1
-        username = f"user{random.randint(1000,9999)}"
-        try:
-            result = subprocess.check_output(
-                [SCRIPT_SSH, username, str(hari)],
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-            saldo_baru = saldo - HARGA_SSH
-            with open(saldo_path, "w") as f:
-                f.write(str(saldo_baru))
-
-            await query.edit_message_text(
-                f"*Akun SSH berhasil dibuat:*\n\n```{result}```\n\n*Sisa Saldo:* Rp{saldo_baru:,}",
-                parse_mode="Markdown",
-                reply_markup=get_main_menu(is_admin)
-            )
-        except subprocess.CalledProcessError as e:
-            await query.edit_message_text(f"Gagal membuat akun:\n```{e.output}```", parse_mode="Markdown")
-        except Exception as e:
-            await query.edit_message_text(f"Terjadi kesalahan:\n`{e}`", parse_mode="Markdown")
-
-    elif query.data == "topup_saldo":
-        if not is_admin:
-            await query.edit_message_text("Akses ditolak. Hanya admin.", reply_markup=get_main_menu(False))
-            return
-        await query.edit_message_text("Kirim format:\n`id saldo`\nContoh: `123456789 5000`", parse_mode="Markdown")
-        context.user_data["topup_mode"] = True
-
-# HANDLE INPUT TOPUP ADMIN
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    if user_id != ADMIN_ID or "topup_mode" not in context.user_data:
-        return
-
-    try:
-        parts = update.message.text.strip().split()
-        if len(parts) != 2:
-            raise ValueError("Format salah.")
-        target_id, jumlah = parts
-        jumlah = int(jumlah)
-        if jumlah <= 0:
-            raise ValueError("Jumlah harus > 0.")
-
-        saldo_file = os.path.join(SALDO_DIR, target_id)
-        if os.path.exists(saldo_file):
-            with open(saldo_file) as f:
-                saldo_awal = int(f.read().strip())
-        else:
-            saldo_awal = 0
-
-        saldo_akhir = saldo_awal + jumlah
-        with open(saldo_file, "w") as f:
-            f.write(str(saldo_akhir))
-
-        await update.message.reply_text(
-            f"Topup berhasil!\nID: `{target_id}`\nSaldo lama: Rp{saldo_awal:,}\nSaldo baru: Rp{saldo_akhir:,}",
-            parse_mode="Markdown"
-        )
-    except Exception as e:
-        await update.message.reply_text(f"Format salah atau error:\n`{e}`", parse_mode="Markdown")
-
-    context.user_data.pop("topup_mode", None)
-
-# Bot init
-app = ApplicationBuilder().token(BOT_TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("menu", start))
-app.add_handler(CallbackQueryHandler(handle_button))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-
-print("Bot management-akun berjalan...")
-app.run_polling()
+if __name__ == '__main__':
+    main()
