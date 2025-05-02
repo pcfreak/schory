@@ -7,21 +7,6 @@ NC='\033[0m'
 YELLOW='\033[1;93m'
 RED='\033[1;91m'
 
-# usernew-auto.sh (versi otomatis dari usernew)
-
-Login="$1"
-Pass="$2"
-iplimit="$3"
-masaaktif="$4"
-
-if [[ -z "$Login" || -z "$Pass" || -z "$iplimit" || -z "$masaaktif" ]]; then
-    echo "ERROR: Semua argumen harus diisi!"
-    exit 1
-fi
-
-# Lanjutkan dengan script yang sama, hilangkan bagian `read` dan langsung pakai variabel di atas
-
-
 # Header
 clear
 echo -e "${YELLOW}---------------------------------------------------${NC}"
