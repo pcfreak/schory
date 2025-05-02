@@ -11,7 +11,7 @@ from telegram.ext import (
 
 DB_PATH = "/etc/bot/management-akun.db"
 SALDO_DIR = "/etc/bot/saldo"
-SCRIPT_SSH = "/usr/bin/usernew"
+SCRIPT_SSH = "/usr/bin/add_ssh_bot"
 HARGA_SSH = 1000
 
 # Ambil token dan admin
