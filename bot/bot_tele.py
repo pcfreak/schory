@@ -104,47 +104,6 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Kirim format:\n`id saldo`\nContoh: `123456789 5000`", parse_mode="Markdown")
         context.user_data["topup_mode"] = True
 
-# Fungsi untuk membuat akun SSH dengan perintah usernew
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user_id = str(query.from_user.id)
-    is_admin = user_id == ADMIN_ID
-    saldo_path = os.path.join(SALDO_DIR, user_id)
-
-    if query.data == "buat_ssh":
-        if not os.path.exists(saldo_path):
-            await query.edit_message_text("Kamu belum punya saldo. Hubungi admin.", reply_markup=get_main_menu(is_admin))
-            return
-        with open(saldo_path) as f:
-            saldo = int(f.read().strip())
-        if saldo < HARGA_SSH:
-            await query.edit_message_text(
-                f"Saldo tidak cukup!\nHarga SSH 1 Hari: Rp{HARGA_SSH:,}\nSaldo kamu: Rp{saldo:,}",
-                reply_markup=get_main_menu(is_admin)
-            )
-            return
-
-        hari = 1  # Mengatur masa aktif 1 hari
-        username = f"user{random.randint(1000,9999)}"
-        password = "password123"  # Misal kita set password default atau bisa generate lebih dinamis
-
-        try:
-            # Memanggil perintah usernew dengan argumen yang diperlukan
-            result = subprocess.check_output([SCRIPT_SSH, username, password, str(hari)], stderr=subprocess.STDOUT, text=True)
-            saldo_baru = saldo - HARGA_SSH
-            with open(saldo_path, "w") as f:
-                f.write(str(saldo_baru))
-            await query.edit_message_text(
-                f"*Akun SSH berhasil dibuat:*\n\n```{result}```\n\n*Sisa Saldo:* Rp{saldo_baru:,}",
-                parse_mode="Markdown", reply_markup=get_main_menu(is_admin)
-            )
-        except subprocess.CalledProcessError as e:
-            await query.edit_message_text(f"Gagal membuat akun:\n```{e.output}```", parse_mode="Markdown")
-        except Exception as e:
-            await query.edit_message_text(f"Terjadi kesalahan:\n`{e}`", parse_mode="Markdown")
-
-
 # HANDLE teks (topup)
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
