@@ -1,0 +1,13 @@
+[Unit]
+Description=Bot Telegram Management Akun
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /etc/bot/management-akun/bot_tele.py
+Restart=on-failure
+User=root
+WorkingDirectory=/etc/bot/management-akun
+
+[Install]
+WantedBy=multi-user.target
