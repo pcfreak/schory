@@ -1,10 +1,17 @@
 import os
 import time
 import logging
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from telegram.ext import ConversationHandler
 import subprocess
+
+from telegram import Update
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    CallbackContext,
+    ConversationHandler
+)
 
 # Setup Logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -17,138 +24,126 @@ USERNAME, PASSWORD, LIMIT_IP, EXPIRATION, BALANCE, TOPUP = range(6)
 # Path to your existing SSH account management scripts and logs
 USERNEW_PATH = "/root/usernew.sh"
 LOG_DIR = "/etc/klmpk/log-ssh/"
-BALANCE_DIR = "/etc/bot/balance/"  # Directory to store balances
+BALANCE_DIR = "/etc/bot/balance/"
+TOKEN_FILE = "/etc/bot/management-akun.db"
 
-# Start the conversation
+# Load token from file
+def load_token(path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Token file '{path}' tidak ditemukan.")
+    with open(path, "r") as f:
+        token = f.read().strip()
+    if not token:
+        raise ValueError("Token kosong di file token.")
+    return token
+
+# Start message
 def start(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text("Selamat datang! Silakan ketik /saldo untuk cek saldo atau /topup untuk menambah saldo.")
+    update.message.reply_text("Selamat datang! Ketik /saldo untuk cek saldo atau /topup untuk menambah saldo.")
     return ConversationHandler.END
 
-# Cek saldo
 def check_balance(update: Update, context: CallbackContext) -> int:
     username = update.message.from_user.username
     balance_file = os.path.join(BALANCE_DIR, f"{username}.txt")
-    
     if os.path.exists(balance_file):
         with open(balance_file, 'r') as f:
             balance = f.read()
         update.message.reply_text(f"Saldo Anda: {balance} MB")
     else:
         update.message.reply_text("Saldo Anda belum ada. Silakan top-up terlebih dahulu.")
-    
     return ConversationHandler.END
 
-# Top-up saldo
 def top_up(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Masukkan username untuk top-up saldo.")
     return TOPUP
 
-# Proses top-up saldo
 def process_topup(update: Update, context: CallbackContext) -> int:
-    username = update.message.text
+    username = update.message.text.strip()
     context.user_data['topup_username'] = username
-    update.message.reply_text(f"Masukkan jumlah saldo (dalam MB) yang ingin ditambahkan untuk {username}.")
+    update.message.reply_text(f"Masukkan jumlah saldo (MB) yang ingin ditambahkan untuk {username}.")
     return BALANCE
 
-# Update saldo
 def update_balance(update: Update, context: CallbackContext) -> int:
-    amount = update.message.text
+    amount = update.message.text.strip()
     if not amount.isdigit():
         update.message.reply_text("Jumlah saldo harus berupa angka. Coba lagi.")
         return BALANCE
-    
     amount = int(amount)
     username = context.user_data['topup_username']
     balance_file = os.path.join(BALANCE_DIR, f"{username}.txt")
-    
-    # Cek apakah saldo sudah ada
+    os.makedirs(BALANCE_DIR, exist_ok=True)
+    current_balance = 0
     if os.path.exists(balance_file):
         with open(balance_file, 'r') as f:
             current_balance = int(f.read())
-        new_balance = current_balance + amount
-    else:
-        new_balance = amount
-
-    # Update saldo
+    new_balance = current_balance + amount
     with open(balance_file, 'w') as f:
         f.write(str(new_balance))
-    
-    update.message.reply_text(f"Saldo untuk {username} berhasil di top-up. Saldo sekarang: {new_balance} MB.")
+    update.message.reply_text(f"Saldo untuk {username} ditambahkan. Sekarang: {new_balance} MB.")
     return ConversationHandler.END
 
-# Get username
 def get_username(update: Update, context: CallbackContext) -> int:
-    username = update.message.text
+    username = update.message.text.strip()
     context.user_data['username'] = username
-    update.message.reply_text(f"Username yang dipilih: {username}\nSekarang, masukkan password untuk akun SSH.")
+    update.message.reply_text(f"Username: {username}\nMasukkan password untuk akun SSH.")
     return PASSWORD
 
-# Get password
 def get_password(update: Update, context: CallbackContext) -> int:
-    password = update.message.text
-    context.user_data['password'] = password
-    update.message.reply_text(f"Password untuk {context.user_data['username']} telah diterima.\nSekarang, masukkan limit IP.")
+    context.user_data['password'] = update.message.text.strip()
+    update.message.reply_text("Masukkan limit IP.")
     return LIMIT_IP
 
-# Get IP limit
 def get_ip_limit(update: Update, context: CallbackContext) -> int:
-    ip_limit = update.message.text
+    ip_limit = update.message.text.strip()
     if not ip_limit.isdigit():
-        update.message.reply_text("Limit IP harus berupa angka. Coba lagi.")
+        update.message.reply_text("Limit IP harus angka.")
         return LIMIT_IP
-
     context.user_data['ip_limit'] = ip_limit
-    update.message.reply_text(f"Limit IP: {ip_limit}. Sekarang, masukkan durasi expired (dalam hari).")
+    update.message.reply_text("Masukkan masa aktif akun (hari).")
     return EXPIRATION
 
-# Get expiration days
 def get_expiration(update: Update, context: CallbackContext) -> int:
-    expiration = update.message.text
+    expiration = update.message.text.strip()
     if not expiration.isdigit():
-        update.message.reply_text("Expired harus berupa angka. Coba lagi.")
+        update.message.reply_text("Expired harus angka.")
         return EXPIRATION
-
-    context.user_data['expiration'] = expiration
-    # Now create the SSH account using usernew.sh
     username = context.user_data['username']
     password = context.user_data['password']
     ip_limit = context.user_data['ip_limit']
-    expiration = context.user_data['expiration']
-    
-    # Execute the usernew.sh script to create the account
-    create_account_command = f"bash {USERNEW_PATH} {username} {password} {ip_limit} {expiration}"
+    create_cmd = f"bash {USERNEW_PATH} {username} {password} {ip_limit} {expiration}"
     try:
-        # Run the script and wait for completion
-        subprocess.run(create_account_command, shell=True, check=True)
-
-        # Send the result log to user
+        subprocess.run(create_cmd, shell=True, check=True)
         log_file = os.path.join(LOG_DIR, f"{username}.txt")
         if os.path.exists(log_file):
             with open(log_file, 'r') as f:
-                log_content = f.read()
-            update.message.reply_text(f"Akun SSH telah dibuat:\n\n{log_content}")
+                update.message.reply_text(f"Akun SSH berhasil dibuat:\n\n{f.read()}")
         else:
-            update.message.reply_text("Terjadi kesalahan saat membuat akun SSH. Coba lagi.")
-    except subprocess.CalledProcessError as e:
-        update.message.reply_text(f"Terjadi kesalahan dalam eksekusi script: {e}")
-    
+            update.message.reply_text("Akun dibuat, tapi log tidak ditemukan.")
+    except subprocess.CalledProcessError:
+        update.message.reply_text("Gagal menjalankan script.")
     return ConversationHandler.END
 
-# Cancel the process
 def cancel(update: Update, context: CallbackContext) -> int:
-    update.message.reply_text("Proses telah dibatalkan.")
+    update.message.reply_text("Proses dibatalkan.")
     return ConversationHandler.END
 
-# Main function to start the bot
+# Main
 def main():
-    # Replace 'YOUR_API_KEY' with your actual bot API key
-    updater = Updater("YOUR_API_KEY", use_context=True)
+    try:
+        token = load_token(TOKEN_FILE)
+    except Exception as e:
+        print(f"Gagal memuat token: {e}")
+        return
 
+    updater = Updater(token, use_context=True)
     dispatcher = updater.dispatcher
 
-    # ConversationHandler to manage the user input process
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start), CommandHandler('saldo', check_balance), CommandHandler('topup', top_up)],
+        entry_points=[
+            CommandHandler('start', start),
+            CommandHandler('saldo', check_balance),
+            CommandHandler('topup', top_up)
+        ],
         states={
             USERNAME: [MessageHandler(Filters.text & ~Filters.command, get_username)],
             PASSWORD: [MessageHandler(Filters.text & ~Filters.command, get_password)],
@@ -162,7 +157,6 @@ def main():
 
     dispatcher.add_handler(conv_handler)
 
-    # Start polling updates
     updater.start_polling()
     updater.idle()
 
