@@ -21,3 +21,13 @@ if [ -z "$TOKEN" ]; then
 else
     echo "Token sudah ada di database."
 fi
+
+REPO="https://raw.githubusercontent.com/kanghory/schory/main/"
+wget -q -O /etc/systemd/system/bot_management_akun.service "${REPO}bot/bot_management_akun.service" && chmod +x bot_management_akun.service >/dev/null 2>&1
+chmod +x /etc/bot/management-akun/install_bot_management_akun.sh
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable bot_management_akun
+systemctl start bot_management_akun
+
+
