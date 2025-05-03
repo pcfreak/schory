@@ -237,70 +237,90 @@ echo -e "$COLOR1┌────────────────────�
 echo -e "$COLOR1│${NC} ${COLBG1}           • CREATE TROJAN USER •              ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-tr="$(cat ~/log-install.txt | grep -w "Trojan WS " | cut -d: -f2|sed 's/ //g')"
+tr="$(cat ~/log-install.txt | grep -w "Trojan WS " | cut -d: -f2 | sed 's/ //g')"
+
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${user_EXISTS} == '0' ]]; do
-read -rp "   Input Username : " -e user
-if [ -z $user ]; then
-echo -e "$COLOR1│${NC}   [Error] Username cannot be empty "
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-echo -e "$COLOR1│${NC}                 • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo ""
-read -n 1 -s -r -p "   Press any key to back on menu"
-menu
-fi
-user_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
-if [[ ${user_EXISTS} == '1' ]]; then
-clear
-echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1}           • CREATE TROJAN USER •              ${NC} $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC}  Please choose another name."
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-read -n 1 -s -r -p "   Press any key to back on menu"
-trojan-menu
-fi
+  read -rp "   Input Username : " -e user
+  [[ -z $user ]] && {
+    echo -e "$COLOR1│${NC}   [Error] Username cannot be empty "
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+    echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+    echo -e "$COLOR1│${NC}                 • KANGHORY •                 $COLOR1│$NC"
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+    read -n 1 -s -r -p "   Press any key to back on menu"
+    menu
+  }
+  user_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
+  [[ ${user_EXISTS} == '1' ]] && {
+    clear
+    echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+    echo -e "$COLOR1│${NC} ${COLBG1}           • CREATE TROJAN USER •              ${NC} $COLOR1│$NC"
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+    echo -e "$COLOR1│${NC}  Please choose another name."
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+    echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+    echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+    echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+    read -n 1 -s -r -p "   Press any key to back on menu"
+    trojan-menu
+  }
 done
+
 uuid=$(cat /proc/sys/kernel/random/uuid)
 read -p "   Expired (days): " masaaktif
-exp=`date -d "$masaaktif days" +"%Y-%m-%d"`
+read -p "   Limit IP        : " limitip
+exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+
+# Tambah konfigurasi ke Xray
 sed -i '/#trojanws$/a\#! '"$user $exp"'\
 },{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/config.json
 sed -i '/#trojangrpc$/a\#! '"$user $exp"'\
 },{"password": "'""$uuid""'","email": "'""$user""'"' /etc/xray/config.json
+
+# Simpan limit IP
+mkdir -p /etc/klmpk/limit/trojan/ip
+echo "$limitip" > /etc/klmpk/limit/trojan/ip/$user
+
+# Restart layanan
 systemctl restart xray
-trojanlink1="trojan://${uuid}@${domain}:${tr}?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
+
+# Generate link
 trojanlink="trojan://${uuid}@bug.com:${tr}?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
+trojanlink1="trojan://${uuid}@${domain}:${tr}?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
+
+# Tampilkan hasil akun
 clear
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1}           • CREATE TROJAN USER •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1│${NC} ${COLBG1}           • TROJAN ACCOUNT CREATED •          ${NC} $COLOR1│$NC"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1 ${NC} Remarks     : ${user}" 
-echo -e "$COLOR1 ${NC} Expired On  : $exp" 
-echo -e "$COLOR1 ${NC} Host/IP     : ${domain}" 
-echo -e "$COLOR1 ${NC} Port        : ${tr}" 
-echo -e "$COLOR1 ${NC} Key         : ${uuid}" 
-echo -e "$COLOR1 ${NC} Path        : /trojan-ws"
-echo -e "$COLOR1 ${NC} Path WSS    : wss://bug.com/trojan-ws" 
-echo -e "$COLOR1 ${NC} ServiceName : trojan-grpc" 
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1 ${NC} Link WS : "
-echo -e "$COLOR1 ${NC} ${trojanlink}" 
-echo -e "$COLOR1 ${NC} "
-echo -e "$COLOR1 ${NC} Link GRPC : "
-echo -e "$COLOR1 ${NC} ${trojanlink1}"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "Username      : $user"
+echo -e "Domain        : $domain"
+echo -e "Port WS       : $tr"
+echo -e "Port gRPC     : $tr"
+echo -e "UUID          : $uuid"
+echo -e "Limit IP      : $limitip IP"
+echo -e "Created       : $(date -d "0 days" +"%Y-%m-%d")"
+echo -e "Expired       : $exp"
+echo -e "-----------------------------------------------------"
+echo -e "Trojan WS     :"
+echo -e "$trojanlink"
+echo -e "-----------------------------------------------------"
+echo -e "Trojan gRPC   :"
+echo -e "$trojanlink1"
+echo -e "-----------------------------------------------------"
+
+# QR Code WS (opsional)
+if command -v qrencode &> /dev/null; then
+    echo -e "QR Code (Trojan WS):"
+    echo "$trojanlink" | qrencode -t ANSIUTF8
+else
+    echo -e "QR Code: qrencode tidak tersedia"
+fi
+
 echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo "" 
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo
 read -n 1 -s -r -p "   Press any key to back on menu"
 menu-trojan
 }
