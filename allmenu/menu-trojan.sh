@@ -59,43 +59,47 @@ red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 cek_trojan_login() {
     # Warna
     DF='\e[39m'; Bold='\e[1m'; red='\e[31m'; green='\e[32m'; blue='\e[34m'
-    PURPLE='\e[35m'; cyan='\e[36m'; header_color='\e[1;96m'; line_color='\e[1;94m'
-    banner_color='\e[1;92m'; NC='\e[0m'
+    cyan='\e[36m'; PURPLE='\e[35m'; NC='\e[0m'; line_color='\e[1;94m'
+    header_color='\e[1;96m'; banner_color='\e[1;92m'
 
     clear
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e " ${Bold}${cyan}                           CEK TROJAN ACCOUNT                             ${NC}"
+    echo -e " ${Bold}${header_color}                           CEK TROJAN ACCOUNT                             ${NC}"
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     printf "${header_color}%-15s %-20s %-10s\n${NC}" "USERNAME" "LOGIN" "LIMIT IP"
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-    akun_list=( $(grep '^#!' /etc/xray/config.json | cut -d ' ' -f 2 | sort -u) )
+    # Ambil daftar user Trojan
+    mapfile -t data < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
 
-    for akun in "${akun_list[@]}"; do
+    # Ambil koneksi aktif ke port Xray Trojan
+    mapfile -t aktif_ip < <(ss -tnp | grep -E 'xray.*ESTAB' | grep -E ':443|:8443' | awk '{print $5}' | cut -d: -f1 | sort -u)
+
+    for akun in "${data[@]}"; do
         [[ -z "$akun" ]] && continue
 
-        # Ambil IP unik dari log berdasarkan user
-        ip_login=( $(grep "email: $akun" /var/log/xray/access.log | cut -d ' ' -f 3 | sed 's/tcp://g' | cut -d ':' -f 1 | sort -u) )
-        jumlah_ip=${#ip_login[@]}
+        # Ambil IP login dari log terakhir (dicocokkan dengan IP yang sedang aktif)
+        mapfile -t ip_akun < <(
+            grep -w "$akun" /var/log/xray/access.log | tail -n 500 |
+            awk '{print $3}' | sed 's/tcp://g' | cut -d: -f1 | sort -u |
+            grep -Fxf <(printf "%s\n" "${aktif_ip[@]}")
+        )
 
-        # Limit IP
-        ip_limit="-"
-        [[ -f /etc/klmpk/limit/trojan/ip/${akun} ]] && ip_limit="$(cat /etc/klmpk/limit/trojan/ip/${akun}) IP"
-
-        # Output baris utama user
-        printf "${green}%-15s ${blue}%-20s ${red}%-10s\n${NC}" "$akun" "$jumlah_ip IP" "$ip_limit"
-
-        # Output daftar IP
-        for ip in "${ip_login[@]}"; do
-            echo -e "   ${PURPLE}↳${NC} $ip"
-        done
+        # Hitung dan tampilkan jika ada IP aktif
+        if [[ ${#ip_akun[@]} -gt 0 ]]; then
+            iplimit="-"
+            [[ -f /etc/klmpk/limit/trojan/ip/${akun} ]] && iplimit="$(cat /etc/klmpk/limit/trojan/ip/${akun}) IP"
+            printf "${green}%-15s ${blue}%-20s ${red}%-10s${NC}\n" "$akun" "${#ip_akun[@]} IP" "$iplimit"
+            for ip in "${ip_akun[@]}"; do
+                echo -e "   ${cyan}↳ $ip${NC}"
+            done
+        fi
     done
 
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "                  ${Bold}${cyan}Selamat menggunakan script by Andyyuda${NC}"
+    echo -e "${banner_color}                  Selamat menggunakan script by Kanghory${NC}"
     echo -e "${banner_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
-
 
 function deltrojan(){
     clear
