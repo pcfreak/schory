@@ -56,24 +56,23 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-function cek_user_online_trojan() {
+function list_user_online_trojan() {
     LOG="/var/log/xray/access.log"
-    USER_LIST=$(grep '^#trojan ' /etc/xray/config.json | cut -d ' ' -f2 | sort | uniq)
 
     echo -e "User Trojan yang sedang online dan jumlah IP-nya:\n"
 
-    for user in $USER_LIST; do
-        ip_list=$(grep "email: $user" "$LOG" | grep -oP 'from \K[\d\.]+' | sort -u)
+    users=$(grep 'email:' "$LOG" | awk '{print $NF}' | sort | uniq)
+    for user in $users; do
+        ip_list=$(grep "email: $user" "$LOG" | awk '{print $(NF-1)}' | cut -d: -f2 | sort -u)
         count=$(echo "$ip_list" | wc -l)
-        if [[ $count -gt 0 ]]; then
-            echo "User: $user"
-            echo "  Jumlah IP : $count"
-            echo "  IP Login  :"
-            echo "$ip_list" | sed 's/^/    - /'
-            echo ""
-        fi
+        echo "User : $user"
+        echo "  Jumlah IP : $count"
+        echo "  IP Login  :"
+        echo "$ip_list" | sed 's/^/    - /'
+        echo ""
     done
 }
+
 
 function deltrojan(){
     clear
@@ -311,7 +310,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; cek_user_online_trojan ;;
+04 | 4) clear ; list_user_online_trojan ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
