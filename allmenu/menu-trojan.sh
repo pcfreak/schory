@@ -58,41 +58,35 @@ red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
 cek_user_trojan_online() {
     LOG="/var/log/xray/access.log"
-    TMP_LOG="/tmp/log_trojan_online"
     LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
+    TMP="/tmp/trojan_latest.txt"
     NOW=$(date +%s)
 
-    > $TMP_LOG
+    > $TMP
 
-    # Ambil log 1 menit terakhir, parsing manual waktu format YYYY/MM/DD
-    while read -r line; do
-        ts=$(echo "$line" | awk '{print $1" "$2}' | cut -d. -f1)
-        log_epoch=$(date -d"${ts//\//-}" +%s 2>/dev/null)
-        [[ -z $log_epoch ]] && continue
-        [[ $((NOW - log_epoch)) -le 60 ]] && echo "$line" >> $TMP_LOG
-    done < "$LOG"
+    # Ambil log 1 menit terakhir
+    grep 'email:' "$LOG" | while read -r line; do
+        time_str=$(echo "$line" | awk '{print $1" "$2}' | cut -d. -f1)
+        timestamp=$(date -d"${time_str//\//-}" +%s 2>/dev/null)
+        [[ -z $timestamp ]] && continue
+        [[ $((NOW - timestamp)) -gt 60 ]] && continue
 
-    # Header
+        ip=$(echo "$line" | grep -oP 'from (\K[^ ]+)' | sed 's/^tcp://;s/^udp://')
+        user=$(echo "$line" | awk -F'email: ' '{print $2}')
+        echo "$timestamp $user $ip"
+    done | sort -nr | awk '!seen[$2]++ {print $2, $3}' > $TMP
+
     echo -e "\e[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                            CEK TROJAN ACCOUNT"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     printf "%-15s %-12s %-12s %-s\n" "USERNAME" "LIMIT IP" "JUMLAH IP" "IP LOGIN"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    # Ambil user unik dari email:
-    USER_LIST=$(grep 'email:' "$TMP_LOG" | awk -F'email: ' '{print $2}' | sort -u)
-
-    for user in $USER_LIST; do
-        IP_LIST=$(grep "email: $user" "$TMP_LOG" | grep -oP 'from \K[0-9.]+' | sort -u)
-        IP_COUNT=$(echo "$IP_LIST" | wc -l)
-        IP_JOINED=$(echo "$IP_LIST" | paste -sd ',' -)
-
-        # Ambil limit IP jika tersedia
+    while read -r user ip; do
         LIMIT="∞"
         [[ -f "$LIMIT_DIR/$user" ]] && LIMIT=$(cat "$LIMIT_DIR/$user")
-
-        printf "%-15s %-12s %-12s %-s\n" "$user" "$LIMIT" "$IP_COUNT" "$IP_JOINED"
-    done
+        printf "%-15s %-12s %-12s %-s\n" "$user" "$LIMIT" "1" "$ip"
+    done < $TMP
 
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                 Selamat menggunakan script by Andyyuda"
