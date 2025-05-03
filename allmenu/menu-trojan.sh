@@ -60,25 +60,22 @@ function cek_user_trojan_online() {
     clear
     LOG="/var/log/xray/access.log"
     USER_LIST=$(grep '^#trojan ' /etc/xray/config.json | awk '{print $2}' | sort | uniq)
-    NOW=$(date +%s)
-    
+    NOW_EPOCH=$(date +%s)
+
     printf "%-20s | %-10s | %-s\n" "User Trojan" "Jumlah IP" "IP Login"
     printf -- "---------------------+------------+---------------------------\n"
 
     for user in $USER_LIST; do
-        mapfile -t IP_LIST < <(awk -v u="$user" -v now="$NOW" '
-            /email:/ {
-                split($1, d, "/")
-                split($2, t, ":")
-                ts = mktime(d[1] " " d[2] " " d[3] " " t[1] " " t[2] " " int(t[3]))
-                if ($NF == u && (now - ts) <= 60) {
-                    match($0, /from ([^ ]+)/, m)
-                    if (m[1] != "") {
-                        split(m[1], ip, ":")
-                        print ip[1]
-                    }
-                }
-            }' "$LOG" | sort -u)
+        mapfile -t IP_LIST < <(grep "email: $user" "$LOG" | while read -r line; do
+            ts=$(echo "$line" | awk '{print $1 " " $2}')
+            log_epoch=$(date -d "$ts" +%s 2>/dev/null)
+            if [[ -z $log_epoch ]]; then continue; fi
+            delta=$((NOW_EPOCH - log_epoch))
+            if [[ $delta -le 60 ]]; then
+                ip=$(echo "$line" | grep -oP 'from \K[^:]+' || echo "-")
+                echo "$ip"
+            fi
+        done | sort -u)
 
         COUNT=${#IP_LIST[@]}
         if [[ $COUNT -gt 0 ]]; then
@@ -86,6 +83,7 @@ function cek_user_trojan_online() {
         fi
     done
 }
+
 
 
 function deltrojan(){
