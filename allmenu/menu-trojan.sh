@@ -56,50 +56,41 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-cek_trojan_login() {
-    # Warna
-    DF='\e[39m'; Bold='\e[1m'; red='\e[31m'; green='\e[32m'; blue='\e[34m'
-    cyan='\e[36m'; PURPLE='\e[35m'; NC='\e[0m'; line_color='\e[1;94m'
-    header_color='\e[1;96m'; banner_color='\e[1;92m'
+cek_login_trojan() {
+    echo -e "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "                            CEK TROJAN ACCOUNT"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "USERNAME        LOGIN                LIMIT IP"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    clear
-    echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e " ${Bold}${header_color}                           CEK TROJAN ACCOUNT                             ${NC}"
-    echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    printf "${header_color}%-15s %-20s %-10s\n${NC}" "USERNAME" "LOGIN" "LIMIT IP"
-    echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    conf_dir="/etc/xray"
+    log_file="/var/log/xray/access.log"
+    limit_dir="/etc/klmpk/limit/trojan/ip"
 
-    # Ambil daftar user Trojan
-    mapfile -t data < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
+    mapfile -t users < <(grep '^###' ${conf_dir}/config.json | awk '{print $2}' | sort -u)
 
-    # Ambil koneksi aktif ke port Xray Trojan
-    mapfile -t aktif_ip < <(ss -tnp | grep -E 'xray.*ESTAB' | grep -E ':443|:8443' | awk '{print $5}' | cut -d: -f1 | sort -u)
+    for user in "${users[@]}"; do
+        ip_list=$(grep -a "email: ${user}" $log_file | grep -oE 'from (tcp:)?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | \
+            sed 's/from //' | sed 's/tcp://' | sort -u)
 
-    for akun in "${data[@]}"; do
-        [[ -z "$akun" ]] && continue
+        ip_login_count=$(echo "$ip_list" | sed '/^$/d' | wc -l)
+        ip_login_count=${ip_login_count:-0}
 
-        # Ambil IP login dari log terakhir (dicocokkan dengan IP yang sedang aktif)
-        mapfile -t ip_akun < <(
-            grep -w "$akun" /var/log/xray/access.log | tail -n 500 |
-            awk '{print $3}' | sed 's/tcp://g' | cut -d: -f1 | sort -u |
-            grep -Fxf <(printf "%s\n" "${aktif_ip[@]}")
-        )
+        limit_ip="-"
+        [[ -e "${limit_dir}/${user}" ]] && limit_ip=$(cat "${limit_dir}/${user}")
 
-        # Hitung dan tampilkan jika ada IP aktif
-        if [[ ${#ip_akun[@]} -gt 0 ]]; then
-            iplimit="-"
-            [[ -f /etc/klmpk/limit/trojan/ip/${akun} ]] && iplimit="$(cat /etc/klmpk/limit/trojan/ip/${akun}) IP"
-            printf "${green}%-15s ${blue}%-20s ${red}%-10s${NC}\n" "$akun" "${#ip_akun[@]} IP" "$iplimit"
-            for ip in "${ip_akun[@]}"; do
-                echo -e "   ${cyan}↳ $ip${NC}"
-            done
-        fi
+        printf "%-15s %-20s %-10s\n" "$user" "$ip_login_count IP" "$limit_ip IP"
+
+        while IFS= read -r ip; do
+            [[ -n "$ip" ]] && echo "   ↳ $ip"
+        done <<< "$ip_list"
     done
 
-    echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${banner_color}                  Selamat menggunakan script by Kanghory${NC}"
-    echo -e "${banner_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "                  Selamat menggunakan script by Andyyuda"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
+
 
 function deltrojan(){
     clear
