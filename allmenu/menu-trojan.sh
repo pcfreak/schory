@@ -56,9 +56,8 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-#!/bin/bash
-
-cek_user_trojan_online() {
+function cek_user_trojan_online() {
+    clear
     LOG="/var/log/xray/access.log"
     TMP_LOG="/tmp/log_trojan_recent"
     NOW=$(date +%s)
@@ -95,8 +94,6 @@ cek_user_trojan_online() {
     echo -e "                  Selamat menggunakan script by Andyyuda"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
-
-cek_user_trojan_online
 
 function deltrojan(){
     clear
