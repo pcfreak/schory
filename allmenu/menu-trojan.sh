@@ -58,22 +58,15 @@ red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
 
 
-function cektrojanonline(){
-    clear
+function cek_user_online_trojan() {
     LOG="/var/log/xray/access.log"
-    CONFIG="/etc/xray/config.json"
+    USER_LIST=$(grep '^#trojan ' /etc/xray/config.json | cut -d ' ' -f2 | sort | uniq)
 
     echo -e "User Trojan yang sedang online dan jumlah IP-nya:\n"
 
-    # Ambil semua UUID + username dari config
-    grep '^#trojan ' "$CONFIG" | while read -r line; do
-        user=$(echo "$line" | cut -d ' ' -f2)
-        uuid=$(grep -A1 "#trojan $user" "$CONFIG" | grep password | cut -d '"' -f4)
-
-        # Cari IP yang sedang menggunakan UUID ini
-        ip_list=$(grep "$uuid" "$LOG" | awk '{print $3}' | cut -d: -f1 | sort -u)
+    for user in $USER_LIST; do
+        ip_list=$(grep "email: $user" "$LOG" | grep -oP 'from \K[\d\.]+' | sort -u)
         count=$(echo "$ip_list" | wc -l)
-
         if [[ $count -gt 0 ]]; then
             echo "User: $user"
             echo "  Jumlah IP : $count"
@@ -324,7 +317,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; cektrojanonline ;;
+04 | 4) clear ; cek_user_online_trojan ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
