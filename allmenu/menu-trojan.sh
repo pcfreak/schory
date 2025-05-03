@@ -58,21 +58,19 @@ red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
 function list_user_online_trojan() {
     LOG="/var/log/xray/access.log"
-
     echo -e "User Trojan yang sedang online dan jumlah IP-nya:\n"
 
     users=$(grep 'email:' "$LOG" | awk '{print $NF}' | sort | uniq)
     for user in $users; do
-        ip_list=$(grep "email: $user" "$LOG" | awk '{print $(NF-1)}' | cut -d: -f2 | sort -u)
-        count=$(echo "$ip_list" | wc -l)
+        ip_list=$(grep "email: $user" "$LOG" | sed -E 's/^.*from (tcp|udp):([^:]+):[0-9]+.*$/\2/' | sort -u)
+        count=$(echo "$ip_list" | grep -vc '^$')
         echo "User : $user"
         echo "  Jumlah IP : $count"
         echo "  IP Login  :"
-        echo "$ip_list" | sed 's/^/    - /'
+        echo "$ip_list" | grep -v '^$' | sed 's/^/    - /'
         echo ""
     done
 }
-
 
 function deltrojan(){
     clear
