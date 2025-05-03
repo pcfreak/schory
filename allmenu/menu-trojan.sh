@@ -56,41 +56,46 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-function cek_user_trojan_online() {
+cek_user_trojan_online() {
     LOG="/var/log/xray/access.log"
-    TMP_LOG="/tmp/log_trojan_recent"
+    TMP_LOG="/tmp/log_trojan_online"
+    LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
     NOW=$(date +%s)
 
-    # Ambil log 1 menit terakhir
     > $TMP_LOG
+
+    # Ambil log 1 menit terakhir, parsing manual waktu format YYYY/MM/DD
     while read -r line; do
-        ts_date=$(echo "$line" | awk '{print $1}' | cut -d. -f1)
-        ts_time=$(echo "$line" | awk '{print $2}')
-        ts_full="$ts_date $ts_time"
-        log_epoch=$(date -d "$ts_full" +%s 2>/dev/null)
+        ts=$(echo "$line" | awk '{print $1" "$2}' | cut -d. -f1)
+        log_epoch=$(date -d"${ts//\//-}" +%s 2>/dev/null)
         [[ -z $log_epoch ]] && continue
-        delta=$((NOW - log_epoch))
-        [[ $delta -le 60 ]] && echo "$line" >> $TMP_LOG
+        [[ $((NOW - log_epoch)) -le 60 ]] && echo "$line" >> $TMP_LOG
     done < "$LOG"
 
-    # Proses IP per user
+    # Header
     echo -e "\e[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                            CEK TROJAN ACCOUNT"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    printf "%-15s %-20s %-10s\n" "USERNAME" "LOGIN" "LIMIT IP"
+    printf "%-15s %-12s %-12s %-s\n" "USERNAME" "LIMIT IP" "JUMLAH IP" "IP LOGIN"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    USER_LIST=$(awk -F'email: ' '/email:/ {print $2}' "$TMP_LOG" | sort | uniq)
+    # Ambil user unik dari email:
+    USER_LIST=$(grep 'email:' "$TMP_LOG" | awk -F'email: ' '{print $2}' | sort -u)
 
     for user in $USER_LIST; do
-        IP_LIST=$(grep "email: $user" "$TMP_LOG" | grep -oP 'from \K[0-9.]+')
-        IP_UNIQ=$(echo "$IP_LIST" | sort -u)
-        IP_COUNT=$(echo "$IP_UNIQ" | wc -l)
-        printf "%-15s %-20s %-10s\n" "$user" "$IP_COUNT" "-"
+        IP_LIST=$(grep "email: $user" "$TMP_LOG" | grep -oP 'from \K[0-9.]+' | sort -u)
+        IP_COUNT=$(echo "$IP_LIST" | wc -l)
+        IP_JOINED=$(echo "$IP_LIST" | paste -sd ',' -)
+
+        # Ambil limit IP jika tersedia
+        LIMIT="∞"
+        [[ -f "$LIMIT_DIR/$user" ]] && LIMIT=$(cat "$LIMIT_DIR/$user")
+
+        printf "%-15s %-12s %-12s %-s\n" "$user" "$LIMIT" "$IP_COUNT" "$IP_JOINED"
     done
 
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "                  Selamat menggunakan script by Andyyuda"
+    echo -e "                 Selamat menggunakan script by Andyyuda"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
