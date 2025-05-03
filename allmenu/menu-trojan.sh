@@ -56,78 +56,46 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-# Warna
-DF='\e[39m'; Bold='\e[1m'; yell='\e[33m'; red='\e[31m'; green='\e[32m'
-blue='\e[34m'; PURPLE='\e[35m'; cyan='\e[36m'; Lred='\e[91m'; Lgreen='\e[92m'
-Lyellow='\e[93m'; NC='\e[0m'
-header_color='\e[1;96m'; line_color='\e[1;94m'; highlight='\e[1;97;41m'; banner_color='\e[1;92m'
+cek_trojan_login() {
+    # Warna
+    DF='\e[39m'; Bold='\e[1m'; red='\e[31m'; green='\e[32m'; blue='\e[34m'
+    PURPLE='\e[35m'; cyan='\e[36m'; header_color='\e[1;96m'; line_color='\e[1;94m'
+    banner_color='\e[1;92m'; NC='\e[0m'
 
-# Fungsi untuk konversi byte ke satuan readable
-con() {
-    local -i bytes=$1
-    if [[ $bytes -lt 1024 ]]; then
-        echo "${bytes}B"
-    elif [[ $bytes -lt 1048576 ]]; then
-        echo "$(( (bytes + 1023) / 1024 ))KB"
-    elif [[ $bytes -lt 1073741824 ]]; then
-        echo "$(( (bytes + 1048575) / 1048576 ))MB"
-    else
-        echo "$(( (bytes + 1073741823) / 1073741824 ))GB"
-    fi
-}
-
-# Fungsi untuk cek semua akun Trojan
-cek_trojan_account() {
-    # Ambil semua user Trojan dari config
-    local data=( $(grep '^#!' /etc/xray/config.json | cut -d ' ' -f 2 | sort -u) )
-
-    # Header
+    clear
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e " ${highlight}                           CEK TROJAN ACCOUNT                             ${NC}"
+    echo -e " ${Bold}${cyan}                           CEK TROJAN ACCOUNT                             ${NC}"
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    printf "${header_color}%-15s %-20s %-15s %-10s\n${NC}" "USERNAME" "LOGIN" "USAGE QUOTA" "LIMIT IP"
+    printf "${header_color}%-15s %-20s %-10s\n${NC}" "USERNAME" "LOGIN" "LIMIT IP"
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-    # Proses setiap akun
-    for akun in "${data[@]}"; do
+    akun_list=( $(grep '^#!' /etc/xray/config.json | cut -d ' ' -f 2 | sort -u) )
+
+    for akun in "${akun_list[@]}"; do
         [[ -z "$akun" ]] && continue
 
-        # Ambil IP login yang terkait user ini (last 500 baris log)
-        ip_list=( $(grep "email: $akun" /var/log/xray/access.log | tail -n 500 | grep -oP 'from \K[\d.]+' | sort -u) )
-        ip_count=${#ip_list[@]}
+        # Ambil IP unik dari log berdasarkan user
+        ip_login=( $(grep "email: $akun" /var/log/xray/access.log | cut -d ' ' -f 3 | sed 's/tcp://g' | cut -d ':' -f 1 | sort -u) )
+        jumlah_ip=${#ip_login[@]}
 
-        # Lewati jika tidak ada IP
-        [[ $ip_count -eq 0 ]] && continue
+        # Limit IP
+        ip_limit="-"
+        [[ -f /etc/klmpk/limit/trojan/ip/${akun} ]] && ip_limit="$(cat /etc/klmpk/limit/trojan/ip/${akun}) IP"
 
-        # Ambil kuota yang digunakan
-        usage_byte="0"
-        [[ -f /etc/trojan/${akun} ]] && usage_byte=$(cat /etc/trojan/${akun})
-        usage_human=$(con $usage_byte)
+        # Output baris utama user
+        printf "${green}%-15s ${blue}%-20s ${red}%-10s\n${NC}" "$akun" "$jumlah_ip IP" "$ip_limit"
 
-        # Ambil batasan IP
-        iplimit="-"
-        [[ -f /etc/klmpk/limit/trojan/ip/${akun} ]] && iplimit=$(cat /etc/klmpk/limit/trojan/ip/${akun})
-
-        # Tampilkan data utama
-        printf "${green}%-15s ${blue}%-20s ${cyan}%-15s ${red}%-10s\n${NC}" "$akun" "$ip_count IP" "$usage_human" "$iplimit IP"
-
-        # Tampilkan list IP-nya
-        for ip in "${ip_list[@]}"; do
-            echo -e "   ${cyan}↳${NC} $ip"
+        # Output daftar IP
+        for ip in "${ip_login[@]}"; do
+            echo -e "   ${PURPLE}↳${NC} $ip"
         done
     done
 
-    # Footer
-    echo ""
     echo -e "${line_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-    echo -e "${banner_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "                  ${Bold}${cyan}Selamat menggunakan script by Andyyuda${NC}"
     echo -e "${banner_color}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
-# Jalankan fungsi cek semua akun Trojan
-cek_trojan_account
 
 function deltrojan(){
     clear
@@ -365,7 +333,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; cek_trojan_account ;;
+04 | 4) clear ; cek_trojan_login ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
