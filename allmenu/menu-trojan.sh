@@ -59,22 +59,21 @@ red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 cek_user_trojan_online() {
     LOG="/var/log/xray/access.log"
     LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
-    TMP="/tmp/trojan_latest.txt"
+    TMP="/tmp/cek_trojan_ip.tmp"
     NOW=$(date +%s)
 
     > $TMP
 
     # Ambil log 1 menit terakhir
     grep 'email:' "$LOG" | while read -r line; do
-        time_str=$(echo "$line" | awk '{print $1" "$2}' | cut -d. -f1)
-        timestamp=$(date -d"${time_str//\//-}" +%s 2>/dev/null)
-        [[ -z $timestamp ]] && continue
-        [[ $((NOW - timestamp)) -gt 60 ]] && continue
+        ts=$(echo "$line" | awk '{print $1" "$2}' | cut -d. -f1)
+        ep=$(date -d"${ts//\//-}" +%s 2>/dev/null)
+        [[ -n $ep ]] && [[ $((NOW - ep)) -le 60 ]] || continue
 
-        ip=$(echo "$line" | grep -oP 'from (\K[^ ]+)' | sed 's/^tcp://;s/^udp://')
         user=$(echo "$line" | awk -F'email: ' '{print $2}')
-        echo "$timestamp $user $ip"
-    done | sort -nr | awk '!seen[$2]++ {print $2, $3}' > $TMP
+        ip=$(echo "$line" | grep -oP 'from (\K[^ ]+)' | sed 's/^tcp://;s/^udp://')
+        echo "$user $ip"
+    done | sort -u > $TMP
 
     echo -e "\e[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                            CEK TROJAN ACCOUNT"
@@ -82,14 +81,16 @@ cek_user_trojan_online() {
     printf "%-15s %-12s %-12s %-s\n" "USERNAME" "LIMIT IP" "JUMLAH IP" "IP LOGIN"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    while read -r user ip; do
-        LIMIT="∞"
-        [[ -f "$LIMIT_DIR/$user" ]] && LIMIT=$(cat "$LIMIT_DIR/$user")
-        printf "%-15s %-12s %-12s %-s\n" "$user" "$LIMIT" "1" "$ip"
-    done < $TMP
+    for user in $(cut -d' ' -f1 "$TMP" | sort -u); do
+        iplist=$(grep "^$user " "$TMP" | awk '{print $2}' | paste -sd ", ")
+        jumlah=$(echo "$iplist" | tr ',' '\n' | wc -l)
+        limit="∞"
+        [[ -f "$LIMIT_DIR/$user" ]] && limit=$(cat "$LIMIT_DIR/$user")
+        printf "%-15s %-12s %-12s %-s\n" "$user" "$limit" "$jumlah" "$iplist"
+    done
 
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "                 Selamat menggunakan script by Andyyuda"
+    echo -e "                 Selamat menggunakan script by Andbbb"
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
