@@ -1,0 +1,11 @@
+[Unit]
+Description=Monitor Limit IP Trojan Users
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/monitor-limit-ip-trojan.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
