@@ -57,12 +57,11 @@ green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
 function cek_user_trojan_online() {
-    clear
     LOG="/var/log/xray/access.log"
     TMP_LOG="/tmp/log_trojan_recent"
     NOW=$(date +%s)
 
-    # Ambil log 1 menit terakhir (60 detik)
+    # Ambil log 1 menit terakhir
     > $TMP_LOG
     while read -r line; do
         ts_date=$(echo "$line" | awk '{print $1}' | cut -d. -f1)
