@@ -56,33 +56,37 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-function list_user_online_trojan() {
+function cek_user_trojan_online() {
+    clear
     LOG="/var/log/xray/access.log"
-    printf "\n%-20s | %-10s | %-s\n" "User Trojan" "Jumlah IP" "IP Login"
-    echo "----------------------|------------|------------------------------------------"
+    USER_LIST=$(grep '^#trojan ' /etc/xray/config.json | awk '{print $2}' | sort | uniq)
+    NOW=$(date +%s)
+    
+    printf "%-20s | %-10s | %-s\n" "User Trojan" "Jumlah IP" "IP Login"
+    printf -- "---------------------+------------+---------------------------\n"
 
-    users=$(grep 'email:' "$LOG" | awk '{print $NF}' | sort | uniq)
+    for user in $USER_LIST; do
+        mapfile -t IP_LIST < <(awk -v u="$user" -v now="$NOW" '
+            /email:/ {
+                split($1, d, "/")
+                split($2, t, ":")
+                ts = mktime(d[1] " " d[2] " " d[3] " " t[1] " " t[2] " " int(t[3]))
+                if ($NF == u && (now - ts) <= 60) {
+                    match($0, /from ([^ ]+)/, m)
+                    if (m[1] != "") {
+                        split(m[1], ip, ":")
+                        print ip[1]
+                    }
+                }
+            }' "$LOG" | sort -u)
 
-    total_users=0
-    total_ips=0
-
-    for user in $users; do
-        ip_list=$(grep "email: $user" "$LOG" | sed -E 's/^.*from (tcp|udp):([^:]+):[0-9]+.*$/\2/' | sort -u)
-        count=$(echo "$ip_list" | grep -vc '^$')
-        ip_string=$(echo "$ip_list" | paste -sd ", ")
-
-        if [[ $count -gt 0 ]]; then
-            printf "%-20s | %-10s | %s\n" "$user" "$count" "$ip_string"
-            ((total_users++))
-            ((total_ips+=count))
+        COUNT=${#IP_LIST[@]}
+        if [[ $COUNT -gt 0 ]]; then
+            printf "%-20s | %-10s | %s\n" "$user" "$COUNT" "${IP_LIST[*]}"
         fi
     done
-
-    echo "----------------------|------------|------------------------------------------"
-    echo "Total User Online: $total_users"
-    echo "Total IP Login   : $total_ips"
-    echo ""
 }
+
 
 function deltrojan(){
     clear
@@ -320,7 +324,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; list_user_online_trojan ;;
+04 | 4) clear ; cek_user_trojan_online ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
