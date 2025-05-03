@@ -56,8 +56,6 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-
-
 function cek_user_online_trojan() {
     LOG="/var/log/xray/access.log"
     USER_LIST=$(grep '^#trojan ' /etc/xray/config.json | cut -d ' ' -f2 | sort | uniq)
@@ -75,11 +73,7 @@ function cek_user_online_trojan() {
             echo ""
         fi
     done
-echo ""
-read -n 1 -s -r -p "   Press any key to back on menu"
-menu-trojan
 }
-
 
 function deltrojan(){
     clear
