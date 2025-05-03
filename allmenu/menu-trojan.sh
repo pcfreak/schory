@@ -56,41 +56,47 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-cek_login_trojan() {
-    echo -e "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+#!/bin/bash
+
+cek_user_trojan_online() {
+    LOG="/var/log/xray/access.log"
+    TMP_LOG="/tmp/log_trojan_recent"
+    NOW=$(date +%s)
+
+    # Ambil log 1 menit terakhir (60 detik)
+    > $TMP_LOG
+    while read -r line; do
+        ts_date=$(echo "$line" | awk '{print $1}' | cut -d. -f1)
+        ts_time=$(echo "$line" | awk '{print $2}')
+        ts_full="$ts_date $ts_time"
+        log_epoch=$(date -d "$ts_full" +%s 2>/dev/null)
+        [[ -z $log_epoch ]] && continue
+        delta=$((NOW - log_epoch))
+        [[ $delta -le 60 ]] && echo "$line" >> $TMP_LOG
+    done < "$LOG"
+
+    # Proses IP per user
+    echo -e "\e[1;32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                            CEK TROJAN ACCOUNT"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "USERNAME        LOGIN                LIMIT IP"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "%-15s %-20s %-10s\n" "USERNAME" "LOGIN" "LIMIT IP"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-    conf_dir="/etc/xray"
-    log_file="/var/log/xray/access.log"
-    limit_dir="/etc/klmpk/limit/trojan/ip"
+    USER_LIST=$(awk -F'email: ' '/email:/ {print $2}' "$TMP_LOG" | sort | uniq)
 
-    mapfile -t users < <(grep '^###' ${conf_dir}/config.json | awk '{print $2}' | sort -u)
-
-    for user in "${users[@]}"; do
-        ip_list=$(grep -a "email: ${user}" $log_file | grep -oE 'from (tcp:)?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | \
-            sed 's/from //' | sed 's/tcp://' | sort -u)
-
-        ip_login_count=$(echo "$ip_list" | sed '/^$/d' | wc -l)
-        ip_login_count=${ip_login_count:-0}
-
-        limit_ip="-"
-        [[ -e "${limit_dir}/${user}" ]] && limit_ip=$(cat "${limit_dir}/${user}")
-
-        printf "%-15s %-20s %-10s\n" "$user" "$ip_login_count IP" "$limit_ip IP"
-
-        while IFS= read -r ip; do
-            [[ -n "$ip" ]] && echo "   ↳ $ip"
-        done <<< "$ip_list"
+    for user in $USER_LIST; do
+        IP_LIST=$(grep "email: $user" "$TMP_LOG" | grep -oP 'from \K[0-9.]+')
+        IP_UNIQ=$(echo "$IP_LIST" | sort -u)
+        IP_COUNT=$(echo "$IP_UNIQ" | wc -l)
+        printf "%-15s %-20s %-10s\n" "$user" "$IP_COUNT" "-"
     done
 
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "                  Selamat menggunakan script by Andyyuda"
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
+cek_user_trojan_online
 
 function deltrojan(){
     clear
@@ -328,7 +334,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; cek_login_trojan ;;
+04 | 4) clear ; cek_user_trojan_online ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
