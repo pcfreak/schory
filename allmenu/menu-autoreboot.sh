@@ -116,3 +116,9 @@ case $pilih in
 0) exit ;;
 *) echo "Pilihan tidak valid." ;;
 esac
+
+# Tambahkan perintah untuk menunggu Enter agar kembali ke menu
+echo -e "\nTekan Enter untuk kembali ke menu..."
+read
+clear
+exec "$0"
