@@ -113,9 +113,25 @@ case $pilih in
     send_telegram "✅ *Test Notifikasi Auto Reboot*\nBot berhasil terkoneksi!"
     echo "✓ Notifikasi dikirim (jika token dan ID valid)."
     ;;
-0) exit ;;
-*) echo "Pilihan tidak valid." ;;
-esac
+0)
+      echo -e "${green}Kembali ke menu utama...${plain}"
+      sleep 1
+      source /usr/bin/menu
+      break
+      ;;
+
+    *)
+      echo -e "${red}Pilihan tidak valid! Silakan coba lagi.${plain}"
+      ;;
+  esac
+
+  echo
+  echo "--------------------------------------------------------"
+  echo "Tekan Enter untuk kembali ke menu..."
+  echo "--------------------------------------------------------"
+  read
+done
+}
 
 # Tambahkan perintah untuk menunggu Enter agar kembali ke menu
 echo -e "\nTekan Enter untuk kembali ke menu..."
