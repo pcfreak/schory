@@ -16,7 +16,7 @@ send_telegram() {
     curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d chat_id="${CHAT_ID}" \
         -d parse_mode="Markdown" \
-        --data-urlencode "text=$1" >/dev/null 2>&1
+        --data-urlencode "text=$1
 
 *Hostname:* \`$HOSTNAME\`
 *IP VPS:* \`$IPVPS\`" >/dev/null 2>&1
@@ -88,7 +88,7 @@ autoreboot_script() {
 Log & cache telah dibersihkan, layanan telah direstart.
 
 ⏰ Waktu: $(date +"%d-%m-%Y %H:%M:%S")
-Server akan direboot dalam waktu 10 detik dari sekarang
+Server akan *reboot* dalam 10 detik...
 
 #AutoReboot
 EOF
