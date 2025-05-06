@@ -39,6 +39,24 @@ clear_logs_and_cache() {
     /var/log/bootstrap.log
     /var/log/messages
     /var/log/fail2ban.log
+    /var/log/cloud-init-output.log
+    /var/log/apt/term.log
+    /var/log/apt/history.log
+    /var/log/nginx/access.log
+    /var/log/nginx/error.log
+    /var/log/squid/access.log
+    /var/log/squid/cache.log
+    /var/log/landscape/sysinfo.log
+    /var/log/unattended-upgrades/unattended-upgrades-shutdown.log
+    /var/log/ubuntu-advantage-apt-hook.log
+    /var/log/stunnel4/stunnel.log
+    /var/log/ubuntu-advantage.log
+    /var/log/kern.log
+    /var/log/cloud-init.log
+    /var/log/xray/access.log
+    /var/log/xray/access2.log
+    /var/log/xray/error2.log
+    /var/log/xray/error.log
   )
 
   for log_file in "${LOGS[@]}"; do
