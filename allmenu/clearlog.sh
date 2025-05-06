@@ -26,7 +26,7 @@ send_telegram() {
     -d text="$MESSAGE" > /dev/null
 }
 
-# Fungsi membersihkan log dan cache
+# Fungsi membersihkan log dan cache dengan animasi
 clear_logs_and_cache() {
   LOGS=(
     /var/log/syslog
@@ -42,17 +42,27 @@ clear_logs_and_cache() {
   )
 
   for log_file in "${LOGS[@]}"; do
-    [[ -f "$log_file" ]] && cat /dev/null > "$log_file"
+    if [[ -f "$log_file" ]]; then
+      echo -n "Membersihkan $log_file..."
+      pv -q -L 10 < /dev/null > "$log_file"
+      cat /dev/null > "$log_file"
+      echo " Selesai!"
+    fi
   done
 
+  # Membersihkan log sistem dengan animasi
+  echo -n "Memutar ulang journalctl..."
   journalctl --rotate &>/dev/null
   journalctl --vacuum-time=1s &>/dev/null
+  echo " Selesai!"
 
+  # Menghapus cache
   rm -rf /var/crash/*
   find /var/log -type f -name "*.gz" -delete
   find /var/log -type f -name "*.1" -delete
   find /var/log -type f -name "*.old" -delete
   sync
+  echo "Cache dibersihkan!"
 
   send_telegram "🧹 *[CLEAR LOG]* Log dan cache berhasil dibersihkan."
 }
@@ -141,7 +151,7 @@ main_menu() {
       2)
         set_auto_cron
         ;;
-      0) clear : menu ;;
+      0) exit 0 ;;
       *) echo "Pilihan tidak valid." ;;
     esac
   done
