@@ -151,10 +151,24 @@ main_menu() {
       2)
         set_auto_cron
         ;;
-      0) exit 0 ;;
-      *) echo "Pilihan tidak valid." ;;
-    esac
-  done
+      0)
+      echo -e "${green}Kembali ke menu utama...${plain}"
+      sleep 1
+      source /usr/bin/menu
+      break
+      ;;
+
+    *)
+      echo -e "${red}Pilihan tidak valid! Silakan coba lagi.${plain}"
+      ;;
+  esac
+
+  echo
+  echo "--------------------------------------------------------"
+  echo "Tekan Enter untuk kembali ke menu..."
+  echo "--------------------------------------------------------"
+  read
+done
 }
 
 # Mode otomatis jika dipanggil oleh cron
