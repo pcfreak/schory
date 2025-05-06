@@ -1,32 +1,32 @@
 #!/bin/bash
 
-# Path penyimpanan konfigurasi Telegram
+# File konfigurasi Telegram
 TELEGRAM_CONF="/etc/bot/clearlog.db"
 
 # Fungsi kirim notifikasi Telegram
 send_telegram() {
-  [[ ! -f "$TELEGRAM_CONF" ]] && return
-  TOKEN=$(grep 'TOKEN=' "$TELEGRAM_CONF" | cut -d= -f2-)
-  CHAT_ID=$(grep 'CHAT_ID=' "$TELEGRAM_CONF" | cut -d= -f2-)
+  [[ ! -f $TELEGRAM_CONF ]] && return
+  source "$TELEGRAM_CONF"
   [[ -z "$TOKEN" || -z "$CHAT_ID" ]] && return
 
   VPS_IP=$(curl -s ifconfig.me)
-  CLIENT_IP=$(who | awk '{print $5}' | sed 's/[()]//g' | head -n1)
+  CLIENT_IP=$(who | awk '{print $5}' | tr -d '()' | head -n1)
   HOSTNAME=$(hostname)
 
   MESSAGE="$1
 
-Hostname: *$HOSTNAME*
-VPS IP: *${VPS_IP:-N/A}*
-Client IP: *${CLIENT_IP:-N/A}*"
+*Hostname:* \`$HOSTNAME\`
+*IP VPS:* \`$VPS_IP\`
+*IP Client:* \`${CLIENT_IP:-N/A}\`
+"
 
-  curl -s -X POST "https://api.telegram.org/bot${TOKEN}/sendMessage" \
+  curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
     -d chat_id="$CHAT_ID" \
-    -d text="$MESSAGE" \
-    -d parse_mode="Markdown" > /dev/null
+    -d parse_mode="Markdown" \
+    -d text="$MESSAGE" > /dev/null
 }
 
-# Fungsi clear log & cache
+# Fungsi membersihkan log dan cache
 clear_logs_and_cache() {
   LOGS=(
     /var/log/syslog
@@ -52,115 +52,103 @@ clear_logs_and_cache() {
   find /var/log -type f -name "*.gz" -delete
   find /var/log -type f -name "*.1" -delete
   find /var/log -type f -name "*.old" -delete
-  sync; echo 3 > /proc/sys/vm/drop_caches
+  sync
 
-  echo -e "\e[32m[OK]\e[0m Log dan cache berhasil dibersihkan."
+  send_telegram "🧹 *[CLEAR LOG]* Log dan cache berhasil dibersihkan."
 }
 
-# Fungsi ubah token dan ID Telegram
-edit_telegram_config() {
-  echo -e "\nUbah Token & Chat ID Telegram"
-  read -rp "Masukkan Bot Token: " token
-  read -rp "Masukkan Chat ID: " chatid
-
-  mkdir -p /etc/bot
-  {
-    echo "TOKEN=$token"
-    echo "CHAT_ID=$chatid"
-  } > "$TELEGRAM_CONF"
-
-  echo -e "\e[32m[OK]\e[0m Konfigurasi Telegram berhasil disimpan di $TELEGRAM_CONF"
-}
-
-# Fungsi atur auto cron
+# Fungsi atur jadwal Cron
 set_auto_cron() {
-  echo -e "\nAuto Clear Log & Cache"
-  echo "1) Aktifkan cron dan atur jadwal"
-  echo "2) Lihat cron aktif"
-  echo "3) Lihat status cron"
-  echo "4) Nonaktifkan cron"
-  echo "5) Ubah token & ID Telegram"
-  read -rp "Pilih [1-5]: " pilih
+  while true; do
+    echo -e "\nAuto Clear Log & Cache (Cron)"
+    echo "1) Aktifkan & atur jadwal"
+    echo "2) Lihat jadwal aktif"
+    echo "3) Lihat status cron"
+    echo "4) Ubah token & ID Telegram"
+    echo "5) Tes kirim pesan Telegram"
+    echo "0) Kembali"
+    read -rp "Pilih [0-5]: " opt
 
-  case $pilih in
-    1)
-      echo -e "\nPilih interval:"
-      echo "1) Setiap 10 menit"
-      echo "2) Setiap 30 menit"
-      echo "3) Setiap 1 jam"
-      echo "4) Setiap 6 jam"
-      echo "5) Setiap 12 jam"
-      echo "6) Setiap 24 jam"
-      read -rp "Pilih [1-6]: " interval
+    case $opt in
+      1)
+        echo -e "\nPilih interval:"
+        echo "1) Setiap 10 menit"
+        echo "2) Setiap 30 menit"
+        echo "3) Setiap 1 jam"
+        echo "4) Setiap 6 jam"
+        echo "5) Setiap 12 jam"
+        echo "6) Setiap 24 jam"
+        read -rp "Pilih [1-6]: " interval
 
-      case $interval in
-        1) cron_time="*/10 * * * *" ;;
-        2) cron_time="*/30 * * * *" ;;
-        3) cron_time="0 * * * *" ;;
-        4) cron_time="0 */6 * * *" ;;
-        5) cron_time="0 */12 * * *" ;;
-        6) cron_time="0 0 * * *" ;;
-        *) echo -e "\e[31m[ERROR]\e[0m Pilihan tidak valid."; return ;;
-      esac
+        case $interval in
+          1) TIME="*/10 * * * *" ;;
+          2) TIME="*/30 * * * *" ;;
+          3) TIME="0 * * * *" ;;
+          4) TIME="0 */6 * * *" ;;
+          5) TIME="0 */12 * * *" ;;
+          6) TIME="0 0 * * *" ;;
+          *) echo "Pilihan tidak valid."; continue ;;
+        esac
 
-      CMD="/usr/bin/clearlog >/dev/null 2>&1"
-      (crontab -l 2>/dev/null | grep -v "/usr/bin/clearlog"; echo "$cron_time $CMD") | crontab -
-      echo -e "\e[32m[OK]\e[0m Cron diaktifkan."
-
-      send_telegram "🛡️ *[AUTO CLEAR LOG]* telah diaktifkan.
-Interval: $cron_time"
-      ;;
-    2)
-      echo -e "\nCron aktif:"
-      crontab -l | grep '/usr/bin/clearlog' || echo "Tidak ada cron aktif."
-      ;;
-    3)
-      echo -e "\nStatus semua cron:"
-      crontab -l || echo "Tidak ada cron."
-      ;;
-    4)
-      (crontab -l 2>/dev/null | grep -v '/usr/bin/clearlog') | crontab -
-      echo -e "\e[32m[OK]\e[0m Cron clearlog berhasil dimatikan."
-      ;;
-    5)
-      edit_telegram_config
-      ;;
-    *)
-      echo -e "\e[31m[ERROR]\e[0m Pilihan tidak valid."
-      ;;
-  esac
-  read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
-  echo
+        (crontab -l 2>/dev/null | grep -v '/usr/bin/clearlog' ; echo "$TIME /usr/bin/clearlog auto") | crontab -
+        echo -e "\e[32m[OK]\e[0m Cron job diaktifkan dengan jadwal: $TIME"
+        ;;
+      2)
+        echo -e "\nJadwal aktif:"
+        crontab -l | grep '/usr/bin/clearlog' || echo "Tidak ada"
+        ;;
+      3)
+        echo -e "\nSemua cron job:"
+        crontab -l || echo "Tidak ada"
+        ;;
+      4)
+        mkdir -p /etc/bot
+        echo -n "Masukkan Token Bot: "
+        read TOKEN
+        echo -n "Masukkan Chat ID: "
+        read CHAT_ID
+        echo "TOKEN=$TOKEN" > "$TELEGRAM_CONF"
+        echo "CHAT_ID=$CHAT_ID" >> "$TELEGRAM_CONF"
+        echo -e "\e[32m[OK]\e[0m Konfigurasi Telegram disimpan."
+        ;;
+      5)
+        send_telegram "✅ *Tes kirim pesan berhasil!*"
+        echo -e "\e[32m[OK]\e[0m Pesan terkirim ke Telegram."
+        ;;
+      0) break ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+    read -n 1 -s -r -p "Tekan enter untuk kembali..."
+  done
 }
 
 # Menu utama
-while true; do
-  clear
-  echo -e "┌─────────────────────────────┐"
-  echo -e "│   MENU CLEAR LOG & CACHE    │"
-  echo -e "└─────────────────────────────┘"
-  echo "1) Clear log & cache manual"
-  echo "2) Auto clear log & cache (cron)"
-  echo "0) Keluar"
-  read -rp "Pilih [0-2]: " menu
+main_menu() {
+  while true; do
+    clear
+    echo "=== MENU CLEAR LOG & CACHE ==="
+    echo "1) Clear log & cache manual"
+    echo "2) Auto clear log & cache (Cron)"
+    echo "0) Keluar"
+    read -rp "Pilih [0-2]: " menu
 
-  case $menu in
-    1)
-      echo -e "\nMenjalankan clear log & cache manual..."
-      clear_logs_and_cache
-      send_telegram "🧹 *[CLEAR LOG MANUAL]* Log dan cache berhasil dibersihkan manual."
-      read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
-      echo
-      ;;
-    2)
-      set_auto_cron
-      ;;
-    0)
-      exit 0
-      ;;
-    *)
-      echo "Pilihan tidak valid."
-      sleep 1
-      ;;
-  esac
-done
+    case $menu in
+      1)
+        clear_logs_and_cache
+        echo -e "\e[32m[OK]\e[0m Clear log & cache manual selesai."
+        read -n 1 -s -r -p "Tekan enter untuk kembali..."
+        ;;
+      2)
+        set_auto_cron
+        ;;
+      0) exit 0 ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+  done
+}
+
+# Mode otomatis jika dipanggil oleh cron
+[[ $1 == "auto" ]] && clear_logs_and_cache && exit 0
+
+# Jalankan menu utama
+main_menu
