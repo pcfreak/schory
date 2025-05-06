@@ -333,8 +333,8 @@ wget -O /usr/local/sbin/cekssh https://raw.githubusercontent.com/kanghory/schory
 chmod +x /usr/local/sbin/cekssh
 
 #buat unlock_limit_ip_user_ssh_notif (sekedar buat notif jika akun terbuka)
-wget -O /usr/local/sbin/unlock_limit_ip_user_ssh_notif https://raw.githubusercontent.com/kanghory/schory/main/limit/unlock_limit_ip_user_ssh_notif
-chmod +x /usr/local/sbin/unlock_limit_ip_user_ssh_notif
+#wget -O /usr/local/sbin/unlock_limit_ip_user_ssh_notif https://raw.githubusercontent.com/kanghory/schory/main/limit/unlock_limit_ip_user_ssh_notif
+#chmod +x /usr/local/sbin/unlock_limit_ip_user_ssh_notif
 
 cd
 # Mengunduh dan mengatur limit.sh
