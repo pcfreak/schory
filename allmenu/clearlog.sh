@@ -141,9 +141,11 @@ main_menu() {
       2)
         set_auto_cron
         ;;
-      0) clear ; menu ;;
-*) echo -e "" ; echo "back on menu" ; sleep 1 ; menu ;;
-esac
+      0) clear : menu ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+  done
+}
 
 # Mode otomatis jika dipanggil oleh cron
 [[ $1 == "auto" ]] && clear_logs_and_cache && exit 0
