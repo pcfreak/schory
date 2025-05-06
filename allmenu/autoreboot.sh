@@ -17,9 +17,21 @@ send_telegram() {
         -d text="$TEXT" >/dev/null 2>&1
 }
 
+# === Fungsi animasi loading sederhana ===
+loading() {
+    delay=0.1
+    spin=( '|' '/' '-' '\' )
+    for ((i = 0; i < 10; i++)); do
+        printf "\r[%s] $1" "${spin[$i % 4]}"
+        sleep $delay
+    done
+    printf "\r[✔] $1\n"
+}
+
 # === Fungsi utama autoreboot ===
 autoreboot_script() {
-    # Daftar file log utama
+    echo -e "\n\e[1;32m=== AUTO REBOOT PROCESS STARTED ===\e[0m\n"
+
     LOGS=(
         /var/log/syslog
         /var/log/auth.log
@@ -33,49 +45,50 @@ autoreboot_script() {
         /var/log/fail2ban.log
     )
 
-    echo -e "\nMembersihkan log file:"
+    echo -e "\e[1;34m>> Membersihkan file log:\e[0m"
     for log_file in "${LOGS[@]}"; do
         if [[ -f "$log_file" ]]; then
-            echo -n "  > $log_file..."
-            cat /dev/null > "$log_file"
-            echo " Bersih!"
+            echo -n "  > $log_file "
+            : > "$log_file"
+            loading "Dibersihkan"
         fi
     done
 
-    echo -n "Memutar ulang journalctl... "
+    echo -n -e "\n\e[1;34m>> Memutar & vakum journalctl... \e[0m"
     journalctl --rotate &>/dev/null
     journalctl --vacuum-time=1s &>/dev/null
-    echo "Selesai!"
+    loading "Journal dibersihkan"
 
-    echo -n "Menghapus log lama & cache... "
+    echo -n -e "\n\e[1;34m>> Menghapus log lama & cache... \e[0m"
     rm -rf /var/crash/*
     find /var/log -type f -name "*.gz" -delete
     find /var/log -type f -name "*.1" -delete
     find /var/log -type f -name "*.old" -delete
     sync
-    echo "Selesai!"
+    loading "Selesai"
 
-    # Restart layanan penting
     services=("nginx" "dropbear" "ssh" "stunnel5" "stunnel4" "vnstat" "squid" "xray" "openvpn" "fail2ban")
-    echo -e "\nRestart layanan penting:"
+    echo -e "\n\e[1;34m>> Restart layanan penting:\e[0m"
     for svc in "${services[@]}"; do
-        if systemctl is-active --quiet "$svc"; then
-            echo -n "  > $svc... "
+        if systemctl list-unit-files | grep -qw "$svc"; then
+            echo -n "  > $svc "
             systemctl restart "$svc" &>/dev/null
-            echo "Restarted!"
+            loading "Restarted"
         fi
     done
 
-    # Kirim notifikasi sebelum reboot
     send_telegram "♻️ *[AUTO REBOOT]*  
 Log & cache telah dibersihkan, layanan telah direstart.
 
-⏰ Waktu: $(date +"%d-%m-%Y %H:%M:%S")  
-Server akan direboot otomatis sekarang.
+⏰ Waktu: $(date +"%d-%m-%Y %H:%M:%S")
+Server akan direboot otomatis dalam 10 detik...
 
 #AutoReboot"
 
-    echo -e "\nRebooting system now..."
+    echo -e "\n\e[1;33m>> Menunggu 10 detik sebelum reboot...\e[0m"
+    sleep 10
+
+    echo -e "\n\e[1;31m>> Rebooting system now...\e[0m"
     reboot
 }
 
