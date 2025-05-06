@@ -10,6 +10,7 @@ wget -q -O /usr/bin/add-vless "https://raw.githubusercontent.com/kanghory/schory
 wget -q -O /usr/bin/add-tr "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/add-tr.sh"
 wget -q -O /usr/bin/add-trgo "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/add-trgo.sh"
 wget -q -O /usr/bin/autoreboot "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/autoreboot.sh"
+wget -q -O /usr/bin/menu-autoreboot "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/menu-autoreboot.sh"
 wget -q -O /usr/bin/restarts "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/restarts.sh"
 wget -q -O /usr/bin/tendang "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/tendang.sh"
 wget -q -O /usr/bin/clearlog "https://raw.githubusercontent.com/kanghory/schory/main/allmenu/clearlog.sh"
@@ -65,6 +66,7 @@ chmod +x /usr/bin/dell
 chmod +x /usr/bin/renel
 chmod +x /usr/bin/usernew
 chmod +x /usr/bin/autoreboot
+chmod +x /usr/bin/menu-autoreboot
 chmod +x /usr/bin/addhost
 chmod +x /usr/bin/genssl
 chmod +x /usr/bin/restarts
