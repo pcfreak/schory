@@ -251,7 +251,7 @@ case $opt in
 4) clear ; menu-trojan ;;
 5) clear ; menu-ss ;;
 6) clear ; menu-backup ;;
-7) clear ; autoreboot ;;
+7) clear ; menu-autoreboot ;;
 8) clear ; reboot ;;
 9) clear ; restarts ;;
 10) clear ; trialssh ;;
