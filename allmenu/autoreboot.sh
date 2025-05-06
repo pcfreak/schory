@@ -84,7 +84,9 @@ Log & cache telah dibersihkan, layanan telah direstart.
 ⏰ Waktu: $(date +"%d-%m-%Y %H:%M:%S")
 Server akan direboot dalam waktu 10 detik dari sekarang
 
-#AutoReboot"
+#AutoReboot
+EOF
+)"
 
     echo -e "\n\e[1;33m>> Menunggu 10 detik sebelum reboot...\e[0m"
     sleep 10
