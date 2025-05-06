@@ -10,10 +10,16 @@ send_telegram() {
     CHAT_ID=$(awk -F= '/id/{print $2}' "$db_file")
     [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]] && return
 
+    HOSTNAME=$(hostname)
+    IPVPS=$(curl -s ifconfig.me || curl -s ipinfo.io/ip)
+
     curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d chat_id="${CHAT_ID}" \
         -d parse_mode="Markdown" \
         --data-urlencode "text=$1" >/dev/null 2>&1
+
+*Hostname:* \`$HOSTNAME\`
+*IP VPS:* \`$IPVPS\`" >/dev/null 2>&1
 }
 
 # === Fungsi animasi loading sederhana ===
