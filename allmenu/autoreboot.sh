@@ -10,11 +10,10 @@ send_telegram() {
     CHAT_ID=$(awk -F= '/id/{print $2}' "$db_file")
     [[ -z "$BOT_TOKEN" || -z "$CHAT_ID" ]] && return
 
-    TEXT="$1"
     curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d chat_id="${CHAT_ID}" \
         -d parse_mode="Markdown" \
-        -d text="$TEXT" >/dev/null 2>&1
+        --data-urlencode "text=$1" >/dev/null 2>&1
 }
 
 # === Fungsi animasi loading sederhana ===
@@ -77,11 +76,13 @@ autoreboot_script() {
         fi
     done
 
-    send_telegram "♻️ *[AUTO REBOOT]*  
+    send_telegram "$(cat <<EOF
+♻️ *[AUTO REBOOT]*
+
 Log & cache telah dibersihkan, layanan telah direstart.
 
 ⏰ Waktu: $(date +"%d-%m-%Y %H:%M:%S")
-Server akan direboot otomatis dalam 10 detik...
+Server akan direboot dalam waktu 10 detik dari sekarang
 
 #AutoReboot"
 
