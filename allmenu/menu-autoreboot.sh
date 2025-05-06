@@ -132,9 +132,3 @@ case $pilih in
   read
 done
 }
-
-# Tambahkan perintah untuk menunggu Enter agar kembali ke menu
-echo -e "\nTekan Enter untuk kembali ke menu..."
-read
-clear
-exec "$0"
