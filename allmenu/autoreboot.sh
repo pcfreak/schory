@@ -1,54 +1,51 @@
 #!/bin/bash
 
-CONFIG="/etc/bot/autoreboot.db"
+# Animasi proses
+spinner() {
+    local pid=$!
+    local delay=0.1
+    local spinstr='|/-\\'
+    while ps a | awk '{print $1}' | grep -q "$pid"; do
+        local temp=${spinstr#?}
+        printf " [%c]  " "$spinstr"
+        spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "      \b\b\b\b\b\b"
+}
 
-# Fungsi untuk mengirim notifikasi ke Telegram
-send_telegram_notif() {
-    if [[ -f $CONFIG ]]; then
-        source $CONFIG
-        if [[ -z $BOT_TOKEN || -z $CHAT_ID ]]; then
-            echo "Token atau ID kosong! Notifikasi gagal dikirim."
-            return
-        fi
+# Clear log dan cache
+echo -e "\e[1;33m[>] Membersihkan log dan cache...\e[0m"
+(journalctl --rotate && journalctl --vacuum-time=1s && rm -rf /var/log/*) & spinner
 
-        MESSAGE="Autoreboot Proses!
+# Restart layanan
+echo -e "\e[1;34m[>] Restart semua layanan penting...\e[0m"
+(systemctl daemon-reexec && systemctl restart ssh dropbear stunnel5 xray nginx 2>/dev/null) & spinner
 
-Hostname: $(hostname)
-IP VPS : $(curl -s ipv4.icanhazip.com)
-Waktu  : $(date '+%d-%m-%Y %H:%M:%S')"
+# Kirim notifikasi Telegram
+DB_FILE="/etc/bot/autoreboot.db"
+if [[ -f $DB_FILE ]]; then
+    source $DB_FILE
+    if [[ -n $token && -n $id ]]; then
+        MESSAGE="*AUTO REBOOT SERVER*
 
-        curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-             -d chat_id="${CHAT_ID}" \
-             -d text="${MESSAGE}" >/dev/null 2>&1
-        echo "✓ Notifikasi dikirim ke Telegram."
-    else
-        echo "File $CONFIG tidak ditemukan. Notifikasi gagal."
+Server berhasil menjalankan proses:
+✅ *Pembersihan log & cache*
+✅ *Restart layanan inti*
+⏱️ *Waktu:* _$(date '+%d-%m-%Y %H:%M:%S')_
+
+_Server akan reboot dalam beberapa saat..._
+
+#AutoReboot"
+        curl -s -X POST https://api.telegram.org/bot$token/sendMessage \
+            -d chat_id="$id" \
+            -d parse_mode="Markdown" \
+            -d text="$MESSAGE" > /dev/null 2>&1
     fi
-}
-
-# Membersihkan log dan cache
-clear_logs_cache() {
-    echo "=> Membersihkan log dan cache..."
-    journalctl --rotate
-    journalctl --vacuum-time=1s
-    rm -f /var/log/*.log /var/log/syslog* /var/log/wtmp /var/log/btmp
-    sync; echo 3 > /proc/sys/vm/drop_caches
-}
-
-# Restart semua layanan
-restart_services() {
-    echo "=> Merestart semua service..."
-    systemctl restart ssh dropbear stunnel4 openvpn xray udp-custom 2>/dev/null
-}
+fi
 
 # Reboot sistem
-reboot_system() {
-    echo "=> Reboot sistem sekarang..."
-    reboot
-}
-
-# Jalankan fungsi sesuai urutan
-clear_logs_cache
-restart_services
-send_telegram_notif
-reboot_system
+echo -e "\e[1;32m[>] Rebooting sistem...\e[0m"
+sleep 2
+reboot
