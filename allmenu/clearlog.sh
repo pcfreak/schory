@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script Clear Log + Setup/Update Cron Interval
-# By: kanghory
+# By: ChatGPT
 
 # Fungsi menambahkan atau memperbarui cron
 function setup_or_update_cron() {
@@ -20,7 +20,7 @@ function setup_or_update_cron() {
       ;;
     2)
       echo -e "\nMematikan cron job..."
-      (crontab -l 2>/dev/null | grep -v '/usr/local/bin/clearlog.sh') | crontab -
+      (crontab -l 2>/dev/null | grep -v '/usr/bin/clearlog') | crontab -
       echo -e "\e[32m[OK]\e[0m Cron job berhasil dimatikan."
       return 0
       ;;
@@ -50,7 +50,7 @@ function setup_or_update_cron() {
         *) echo -e "\e[31m[ERROR]\e[0m Pilihan tidak valid."; return 1 ;;
       esac
 
-      CRON_CMD="/usr/local/bin/clearlog.sh >/dev/null 2>&1"
+      CRON_CMD="/usr/bin/clearlog >/dev/null 2>&1"
       CRON_JOB="$interval $CRON_CMD"
       (crontab -l 2>/dev/null | grep -v "$CRON_CMD"; echo "$CRON_JOB") | crontab -
 
