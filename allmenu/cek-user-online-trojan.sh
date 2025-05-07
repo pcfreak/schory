@@ -13,6 +13,9 @@ cutoff=$(date -d "1 minute ago" +"%Y/%m/%d %H:%M")
 # Associative array
 declare -A ip_map user_active_ip
 
+# Debug: cek tanggal yang digunakan untuk cutoff
+echo "Cutoff: $cutoff"
+
 # Proses log yang 1 menit terakhir
 while IFS= read -r line; do
     timestamp=$(echo "$line" | cut -d ' ' -f1,2)
@@ -25,11 +28,15 @@ while IFS= read -r line; do
     subnet=$(echo "$ip" | cut -d '.' -f1-3) # subnet /24
     [[ -z "$subnet" ]] && continue
 
+    # Debug: print user dan subnet yang terdeteksi
+    echo "User: $user, IP: $ip, Subnet: $subnet"
+
     ip_map["$user:$subnet"]=1
     user_active_ip["$user"]=1
 done < <(grep "email:" "$log_file")
 
 # Tampilkan output
+echo "Menampilkan hasil deteksi user Trojan yang online:"
 printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
 printf "%s\n" "-----------------------------------------------"
 
