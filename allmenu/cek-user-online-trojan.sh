@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# Konfigurasi
+# File log akses Xray
 LOG_FILE="/var/log/xray/access.log"
+
+# Direktori limit IP per user
 LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
 
-# Ambil semua username dari config
-USER_LIST=$(grep -oP '"password":\s*"\K[^"]+' /etc/xray/config.json)
+# Ambil semua username dari config.json
+USER_LIST=$(grep '"email"' /etc/xray/config.json | cut -d':' -f2 | tr -d '", ' | sort -u)
 
-# Header
+# Header tampilan
 echo -e "=========================================================="
 echo -e "             MONITOR TROJAN ONLINE (Akurat)"
 echo -e "=========================================================="
@@ -15,11 +17,11 @@ printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
 echo -e "----------------------------------------------------------"
 
 for user in $USER_LIST; do
-    # Ambil IP unik dari log dengan mencocokkan username setelah "email:"
-    IP_LIST=$(grep "email: $user" "$LOG_FILE" | awk '{for(i=1;i<=NF;i++) if($i=="from") print $(i+1)}' | cut -d':' -f1 | sort -u)
-    IP_COUNT=$(echo "$IP_LIST" | grep -v '^$' | wc -l)
+    # Ambil semua IP yang login berdasarkan username
+    IP_LIST=$(grep "email: $user" "$LOG_FILE" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+    IP_COUNT=$(echo "$IP_LIST" | sort -u | grep -v '^$' | wc -l)
 
-    # Ambil limit
+    # Baca limit IP user dari file
     LIMIT_FILE="${LIMIT_DIR}/${user}"
     if [[ -f "$LIMIT_FILE" ]]; then
         LIMIT=$(cat "$LIMIT_FILE")
@@ -27,6 +29,7 @@ for user in $USER_LIST; do
         LIMIT="-"
     fi
 
+    # Tampilkan jika ada aktivitas
     if [[ "$IP_COUNT" -gt 0 ]]; then
         printf "%-20s %-10s %-10s\n" "$user" "$IP_COUNT" "$LIMIT"
     fi
