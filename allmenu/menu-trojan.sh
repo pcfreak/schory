@@ -330,7 +330,7 @@ case $opt in
 01 | 1) clear ; addtrojan ;;
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
-04 | 4) clear ; cek_user_trojan_online ;;
+04 | 4) clear ; cek-user-online-trojan ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
