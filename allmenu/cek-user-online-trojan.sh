@@ -7,18 +7,16 @@ limit_dir="/etc/klmpk/limit/trojan/ip"
 printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
 printf "%-40s\n" "-----------------------------------------------"
 
-# Ambil semua user trojan dari config
-users=$(grep -oP '"password":\s*"\K[^"]+' "$config_file")
+users=$(grep -oP '"email":\s*"\K[^"]+' "$config_file" | sort -u)
 
 for user in $users; do
-    # Ambil semua IP tcp user dari log (tanpa port)
+    # Ambil semua IP dari log (tcp saja) berdasarkan email
     ips=$(grep "accepted tcp" "$log_file" | grep "email: $user" | grep -oP 'from (\d+\.\d+\.\d+)' | awk '{print $2}')
     
-    # Hitung IP unik berdasarkan 3 oktet pertama
-    ip_subnets=$(echo "$ips" | cut -d'.' -f1-3 | sort -u)
-    ip_count=$(echo "$ip_subnets" | wc -l)
+    # Toleransi: anggap IP dari subnet yang sama = 1 device
+    ip_subnet=$(echo "$ips" | cut -d'.' -f1-3 | sort | uniq)
+    ip_count=$(echo "$ip_subnet" | wc -l)
 
-    # Ambil limit IP jika ada
     if [[ -f "$limit_dir/$user" ]]; then
         limit=$(cat "$limit_dir/$user")
     else
