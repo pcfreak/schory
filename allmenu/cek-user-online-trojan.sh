@@ -1,7 +1,7 @@
 #!/bin/bash
 
 log_file="/var/log/xray/access.log"
-user_json="/etc/xray/trojan.json"
+user_json="/etc/xray/config.json"
 limit_ip_dir="/etc/klmpk/limit/trojan/ip"
 
 declare -A user_ips
