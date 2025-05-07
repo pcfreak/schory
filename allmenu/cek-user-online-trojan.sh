@@ -1,49 +1,51 @@
 #!/bin/bash
 
-log_file="/var/log/xray/access.log"
-user_json="/etc/xray/config.json"
-limit_ip_dir="/etc/klmpk/limit/trojan/ip"
+# Path ke file log Xray
+LOG_FILE="/var/log/xray/access.log"
 
-declare -A user_ips
-declare -A user_ip_count
+# Path ke config Xray
+CONFIG_FILE="/etc/xray/config.json"
 
-# Ambil semua user Trojan dari config
-user_list=$(jq -r '.inbounds[] | select(.protocol=="trojan") | .settings.clients[].email' "$user_json")
+# Fungsi untuk mendeteksi IP aktif berdasarkan log
+detect_active_ips() {
+    echo "Menampilkan hasil deteksi user Trojan yang online:"
+    echo "Username             IP Aktif   Limit IP"
+    echo "-----------------------------------------------"
+    
+    # Ambil semua log dalam 1 menit terakhir (sesuaikan waktu sesuai kebutuhan)
+    LAST_MINUTE=$(date --date='1 minute ago' +%s)
+    CURRENT_TIME=$(date +%s)
+    
+    # Filter log berdasarkan waktu dan user
+    cat "$LOG_FILE" | while read -r line; do
+        LOG_TIME=$(echo "$line" | awk '{print $1" "$2}')
+        LOG_TIMESTAMP=$(date -d "$LOG_TIME" +%s)
 
-# Ambil 50 baris log terakhir (bisa diubah sesuai kebutuhan)
-tail -n 50 "$log_file" | while read -r line; do
-    [[ "$line" =~ accepted\ tcp|udp.*email:\ ([^[:space:]]+) ]] || continue
-    user="${BASH_REMATCH[1]}"
+        # Cek apakah log ada dalam 1 menit terakhir
+        if [ "$LOG_TIMESTAMP" -ge "$LAST_MINUTE" ] && [ "$LOG_TIMESTAMP" -le "$CURRENT_TIME" ]; then
+            USERNAME=$(echo "$line" | grep -oP '(?<=email: )\S+')
+            IP=$(echo "$line" | grep -oP '(?<=from )\d+\.\d+\.\d+\.\d+')
+            SUBNET=$(echo "$IP" | cut -d'.' -f1,2)
+            
+            # Deteksi dan tampilkan IP
+            if [ ! -z "$USERNAME" ] && [ ! -z "$IP" ]; then
+                ACTIVE_IPS["$USERNAME"]="$IP"
+                echo -e "$USERNAME \t $IP \t 1"  # Tampilkan IP aktif dan limit (sesuaikan dengan aturan limit IP)
+            fi
+        fi
+    done
+}
 
-    [[ "$line" =~ from\ ([^:]+): ]] || continue
-    ip="${BASH_REMATCH[1]}"
-
-    [[ -n "$user" && -n "$ip" ]] && ((user_ips["$user,$ip"]++))
-done
-
-# Hitung hanya IP yang muncul lebih dari 1x
-for key in "${!user_ips[@]}"; do
-    IFS=',' read -r user ip <<< "$key"
-    count=${user_ips["$key"]}
-    if (( count >= 2 )); then
-        ((user_ip_count["$user"]++))
+# Fungsi untuk membaca file JSON konfigurasi Xray dan memprosesnya
+process_config() {
+    echo "Memproses konfigurasi Xray..."
+    if ! jq . "$CONFIG_FILE" > /dev/null 2>&1; then
+        echo "Config JSON tidak valid, silakan periksa file $CONFIG_FILE"
+        exit 1
     fi
-done
+    # Lanjutkan dengan proses validasi config lainnya jika diperlukan
+}
 
-# Tampilkan hasil
-printf "Menampilkan hasil deteksi user Trojan yang online:\n"
-printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
-printf "%s\n" "-----------------------------------------------"
-
-for user in $user_list; do
-    ip_count=${user_ip_count["$user"]:--}
-    limit_ip_file="${limit_ip_dir}/${user}"
-    if [[ -f "$limit_ip_file" ]]; then
-        limit_ip=$(cat "$limit_ip_file")
-    else
-        limit_ip="Unlimited"
-    fi
-    if [[ "$ip_count" != "-" ]]; then
-        printf "%-20s %-10s %-10s\n" "$user" "$ip_count" "$limit_ip"
-    fi
-done
+# Menjalankan deteksi IP aktif dan validasi konfigurasi
+process_config
+detect_active_ips
