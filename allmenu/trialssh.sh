@@ -11,134 +11,113 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 LIGHT='\033[0;37m'
 # ==========================================
-export RED='\033[0;31m'
-export GREEN='\033[0;32m'
-export YELLOW='\033[0;33m'
-export BLUE='\033[0;34m'
-export PURPLE='\033[0;35m'
-export CYAN='\033[0;36m'
-export LIGHT='\033[0;37m'
-export NC='\033[0m'
-export ungu='\033[0;35m'
+export RED GREEN YELLOW BLUE PURPLE CYAN LIGHT NC
 
-# izin
-MYIP=$(wget -qO- ipinfo.io/ip);
-echo "memeriksa vps anda"
+# Izin
+MYIP=$(wget -qO- ipinfo.io/ip)
+echo "Memeriksa VPS Anda..."
 sleep 0.5
+
 CEKEXPIRED () {
-        today=$(date -d +1day +%Y -%m -%d)
-        Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep $MYIP | awk '{print $3}')
-        if [[ $today < $Exp1 ]]; then
-        echo "status script aktif.."
-        else
-        echo "SCRIPT ANDA EXPIRED";
+    today=$(date -d +1day +%Y-%m-%d)
+    Exp1=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | grep $MYIP | awk '{print $3}')
+    if [[ $today < $Exp1 ]]; then
+        echo "Status script aktif..."
+    else
+        echo "SCRIPT ANDA EXPIRED"
         exit 0
-fi
+    fi
 }
+
 IZIN=$(curl -sS https://raw.githubusercontent.com/kanghory/schory/main/izin | awk '{print $4}' | grep $MYIP)
-if [ $MYIP = $IZIN ]; then
-echo "IZIN DI TERIMA!!"
-CEKEXPIRED
+if [[ $MYIP == $IZIN ]]; then
+    echo "IZIN DITERIMA!!"
+    CEKEXPIRED
 else
-echo "Akses di tolak!! Benget sia hurung!!";
-exit 0
+    echo "Akses ditolak!!"
+    exit 0
 fi
 
-# Getting
+# Input user
 Login=trial`</dev/urandom tr -dc X-Z0-9 | head -c4`
-masaaktif="1"
 Pass="1"
-max="2"
+read -p "Limit IP (contoh 2): " max
+echo -e "Pilih masa aktif akun trial:"
+echo -e "1. 10 Menit"
+echo -e "2. 30 Menit"
+echo -e "3. 1 Jam"
+echo -e "4. 6 Jam"
+echo -e "5. 1 Hari"
+read -p "Pilih [1-5]: " pilih_exp
+
+case $pilih_exp in
+  1) masaaktif="10 minute" ;;
+  2) masaaktif="30 minute" ;;
+  3) masaaktif="1 hour" ;;
+  4) masaaktif="6 hour" ;;
+  5) masaaktif="1 day" ;;
+  *) echo "Pilihan tidak valid"; exit 1 ;;
+esac
+
+# Domain & Info
 domain=$(cat /etc/xray/domain)
 sldomain=$(cat /root/nsdomain)
 cdndomain=$(cat /root/awscdndomain)
 slkey=$(cat /etc/slowdns/server.pub)
-clear
+IP=$(wget -qO- ipinfo.io/ip)
 
-echo "Script AutoCreate Akun SSH dan OpenVPN By KANGHORY TUNNELING"
-sleep 3
-echo Ping Host
-echo Cek Hak Akses...
-sleep 0.5
-echo Permission Accepted
-clear
-sleep 0.5
-echo Membuat Akun: $Login
-sleep 0.5
-echo Setting Password: $Pass
-sleep 0.5
-IP=$(wget -qO- ipinfo.io/ip);
-ws="$(cat ~/log-install.txt | grep -w "Websocket TLS" | cut -d: -f2|sed 's/ //g')"
-ws2="$(cat ~/log-install.txt | grep -w "Websocket None TLS" | cut -d: -f2|sed 's/ //g')"
-
-ssl="$(cat ~/log-install.txt | grep -w "Stunnel5" | cut -d: -f2)"
-sqd="$(cat ~/log-install.txt | grep -w "Squid" | cut -d: -f2)"
+# Port Info
+ws="$(grep -w "Websocket TLS" ~/log-install.txt | cut -d: -f2|sed 's/ //g')"
+ws2="$(grep -w "Websocket None TLS" ~/log-install.txt | cut -d: -f2|sed 's/ //g')"
+ssl="$(grep -w "Stunnel5" ~/log-install.txt | cut -d: -f2)"
+sqd="$(grep -w "Squid" ~/log-install.txt | cut -d: -f2)"
 ovpn="$(netstat -nlpt | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
 ovpn2="$(netstat -nlpu | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2)"
-clear
-systemctl stop client-sldns
-systemctl stop server-sldns
-pkill sldns-server
-pkill sldns-client
-systemctl enable client-sldns
-systemctl enable server-sldns
-systemctl start client-sldns
-systemctl start server-sldns
-systemctl restart client-sldns
-systemctl restart server-sldns
 
-systemctl restart ssh-ohp
-systemctl restart rc-local
-systemctl restart dropbear-ohp
-systemctl restart openvpn-ohp
-useradd -e `date -d "$masaaktif days" +"%Y-%m-%d"` -s /bin/false -M $Login
-expi="$(chage -l $Login | grep "Account expires" | awk -F": " '{print $2}')"
+# Restart layanan
+systemctl restart client-sldns server-sldns ssh-ohp rc-local dropbear-ohp openvpn-ohp
+
+# Buat akun SSH
+useradd -e `date -d "$masaaktif" +"%Y-%m-%d %H:%M:%S"` -s /bin/false -M $Login
 echo -e "$Pass\n$Pass\n"|passwd $Login &> /dev/null
-hariini=`date -d "0 days" +"%Y-%m-%d"`
-expi=`date -d "$masaaktif days" +"%Y-%m-%d"`
+expi=$(date -d "$masaaktif" +"%Y-%m-%d %H:%M:%S")
+hariini=$(date +"%Y-%m-%d %H:%M:%S")
+
+# Simpan limit IP
+mkdir -p /etc/klmpk/limit/ssh/ip
+echo "$max" > /etc/klmpk/limit/ssh/ip/$Login
+
+# Output akun
 clear
-echo -e ""
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
-echo -e "\E[44;1;39m                 ⇱ TRIAL AKUN SSH ⇲            \E[0m"
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "\E[44;1;39m              ⇱ TRIAL AKUN SSH ⇲               \E[0m"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${LIGHT}Username: $Login"
 echo -e "Password: $Pass"
 echo -e "Created: $hariini"
 echo -e "Expired: $expi"
+echo -e "Limit IP: $max IP"
 echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "IP/Host: $IP"
 echo -e "Domain SSH: $domain"
-echo -e "Domain Cloudflare: $domain"
-echo -e "PubKey : $slkey"
+echo -e "PubKey: $slkey"
 echo -e "Nameserver: $sldomain"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "OpenSSH: 22"
 echo -e "Dropbear: 44, 69, 143"
 echo -e "STunnel4: 442,222,2096"
-echo -e "SlowDNS port: 53,5300,8080,443,80"
-echo -e "SSH Websocket SSL/TLS: 443"
-echo -e "SSH Websocket HTTP: 80,8080,8880"
-echo -e "SSH Websocket Direct: 8080"
-echo -e "OPEN VPN: 1194"
-echo -e "BadVPN UDPGW: 7100,7200,7300"
-echo -e "Proxy CloudFront: [OFF]"
-echo -e "Proxy Squid: [ON]"
+echo -e "SlowDNS: 53,5300,8080,443,80"
+echo -e "WS SSL: 443 | HTTP: 80,8080,8880 | Direct: 8080"
 echo -e "OVPN TCP: http://$IP:81/tcp.ovpn"
 echo -e "OVPN UDP: http://$IP:81/udp.ovpn"
 echo -e "OVPN SSL: http://$IP:81/ssl.ovpn"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "SNI/Server Spoof: isi dengan bug"
-echo -e "Payload Websocket SSL/TLS"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "Payload Websocket SSL:"
 echo -e "GET wss://bug.com/ HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf][crlf]"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "Payload Websocket HTTP"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "Payload Websocket HTTP:"
 echo -e "GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf][crlf]"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${CYAN}        Terimakasih sudah menggunakan" 
-echo -e "${CYAN}        script premium BY KANGHORY TUNNELING"
-echo -e "${LIGHT}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "Terimakasih sudah menggunakan script BY KANGHORY TUNNELING"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Tekan ENTER untuk kembali ke menu..."
 /usr/bin/menu
-
