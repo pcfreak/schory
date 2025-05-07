@@ -116,7 +116,7 @@ EOF
     sleep 10
 
     echo -e "\n\e[1;31m>> Rebooting system now...\e[0m"
-    reboot
+    /sbin/reboot
 }
 
 # Jalankan
