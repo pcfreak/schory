@@ -2,41 +2,50 @@
 
 log_file="/var/log/xray/access.log"
 config_file="/etc/xray/config.json"
-limit_dir="/etc/klmpk/limit/trojan/ip"
+limit_dir="/etc/klmpk/limit/trojan/ip" # Ganti sesuai lokasi penyimpanan limit IP
 
+# Ambil daftar user dari config Xray
+user_list=$(grep -oP '"password":\s*"\K[^"]+' "$config_file")
+
+# Ambil timestamp 1 menit terakhir dari log
+cutoff=$(date -d "1 minute ago" +"%Y/%m/%d %H:%M")
+
+# Associative array
+declare -A ip_map user_active_ip
+
+# Proses log yang 1 menit terakhir
+while IFS= read -r line; do
+    timestamp=$(echo "$line" | cut -d ' ' -f1,2)
+    [[ "$timestamp" < "$cutoff" ]] && continue
+
+    user=$(echo "$line" | grep -oP 'email:\s*\K\S+')
+    [[ -z "$user" ]] && continue
+
+    ip=$(echo "$line" | grep -oP 'from (\d{1,3}\.){3}\d{1,3}' | cut -d ' ' -f2)
+    subnet=$(echo "$ip" | cut -d '.' -f1-3) # subnet /24
+    [[ -z "$subnet" ]] && continue
+
+    ip_map["$user:$subnet"]=1
+    user_active_ip["$user"]=1
+done < <(grep "email:" "$log_file")
+
+# Tampilkan output
 printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
-printf "%-40s\n" "-----------------------------------------------"
+printf "%s\n" "-----------------------------------------------"
 
-# Waktu 5 menit terakhir
-time_limit=$(date -d "5 minutes ago" +%s)
+for user in $user_list; do
+    [[ -z "${user_active_ip[$user]}" ]] && continue # Skip user tidak aktif
 
-users=$(grep -oP '"email":\s*"\K[^"]+' "$config_file" | sort -u)
+    # Hitung IP unik berdasarkan subnet
+    ip_count=$(printf "%s\n" "${!ip_map[@]}" | grep "^$user:" | wc -l)
 
-for user in $users; do
-    declare -A ip_map=()
-    found_active=0
-
-    while IFS= read -r line; do
-        [[ "$line" =~ email:\ $user ]] || continue
-        [[ "$line" =~ accepted\ tcp ]] || continue
-
-        log_time=$(echo "$line" | awk '{print $1 " " $2}')
-        log_unix=$(date -d "$log_time" +%s 2>/dev/null)
-        [[ "$log_unix" =~ ^[0-9]+$ ]] || continue
-
-        (( log_unix < time_limit )) && continue
-
-        ip=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+')
-        ip_map["$ip"]=1
-        found_active=1
-    done < "$log_file"
-
-    if [[ $found_active -eq 1 ]]; then
-        ip_count=${#ip_map[@]}
+    # Cek limit dari file (jika ada)
+    limit_file="$limit_dir/$user"
+    if [[ -f $limit_file ]]; then
+        limit=$(cat "$limit_file")
+    else
         limit="-"
-        [[ -f "$limit_dir/$user" ]] && limit=$(cat "$limit_dir/$user")
-        printf "%-20s %-10s %-10s\n" "$user" "$ip_count" "$limit"
     fi
 
-    unset ip_map
+    printf "%-20s %-10s %-10s\n" "$user" "$ip_count" "$limit"
 done
