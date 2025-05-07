@@ -56,7 +56,7 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 
-cek_user_trojan_online() {
+xxxcek_user_trojan_online() {
     LOG="/var/log/xray/access.log"
     LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
     TMP="/tmp/cek_trojan_ip.tmp"
