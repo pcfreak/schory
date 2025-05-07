@@ -17,9 +17,16 @@ printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
 echo -e "----------------------------------------------------------"
 
 for user in $USER_LIST; do
-    # Ambil semua IP yang login berdasarkan username
-    IP_LIST=$(grep "email: $user" "$LOG_FILE" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-    IP_COUNT=$(echo "$IP_LIST" | sort -u | grep -v '^$' | wc -l)
+    echo -e "Memeriksa user: $user"
+    
+    # Ambil semua IP yang login dengan koneksi TCP berdasarkan username
+    IP_LIST=$(grep "email: $user" "$LOG_FILE" | grep -oP 'from tcp:[^ ]+' | cut -d':' -f2 | sort -u)
+
+    echo -e "IP List untuk user $user: $IP_LIST"
+    
+    IP_COUNT=$(echo "$IP_LIST" | grep -v '^$' | wc -l)
+
+    echo -e "Jumlah IP yang ditemukan: $IP_COUNT"
 
     # Baca limit IP user dari file
     LIMIT_FILE="${LIMIT_DIR}/${user}"
@@ -28,6 +35,8 @@ for user in $USER_LIST; do
     else
         LIMIT="-"
     fi
+
+    echo -e "Limit IP untuk user $user: $LIMIT"
 
     # Tampilkan jika ada aktivitas
     if [[ "$IP_COUNT" -gt 0 ]]; then
