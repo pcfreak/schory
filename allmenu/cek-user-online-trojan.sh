@@ -13,14 +13,12 @@ cutoff=$(date -d "1 minute ago" +"%Y/%m/%d %H:%M")
 # Associative array
 declare -A ip_map user_active_ip
 
-# Debug: cek tanggal yang digunakan untuk cutoff
-echo "Cutoff: $cutoff"
-
 # Proses log yang 1 menit terakhir
 while IFS= read -r line; do
     timestamp=$(echo "$line" | cut -d ' ' -f1,2)
     [[ "$timestamp" < "$cutoff" ]] && continue
 
+    # Ambil user dan IP dari log
     user=$(echo "$line" | grep -oP 'email:\s*\K\S+')
     [[ -z "$user" ]] && continue
 
@@ -28,9 +26,7 @@ while IFS= read -r line; do
     subnet=$(echo "$ip" | cut -d '.' -f1-3) # subnet /24
     [[ -z "$subnet" ]] && continue
 
-    # Debug: print user dan subnet yang terdeteksi
-    echo "User: $user, IP: $ip, Subnet: $subnet"
-
+    # Hanya simpan IP yang aktif dalam waktu 1 menit terakhir
     ip_map["$user:$subnet"]=1
     user_active_ip["$user"]=1
 done < <(grep "email:" "$log_file")
@@ -54,5 +50,6 @@ for user in $user_list; do
         limit="-"
     fi
 
+    # Tampilkan hasil deteksi IP aktif dan limit IP
     printf "%-20s %-10s %-10s\n" "$user" "$ip_count" "$limit"
 done
