@@ -1,47 +1,24 @@
 #!/bin/bash
 
-# File log akses Xray
 LOG_FILE="/var/log/xray/access.log"
-
-# Direktori limit IP per user
 LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
 
-# Ambil semua username dari config.json
-USER_LIST=$(grep '"email"' /etc/xray/config.json | cut -d':' -f2 | tr -d '", ' | sort -u)
+# Ambil semua username dari log TCP
+USER_LIST=$(grep "email:" "$LOG_FILE" | grep "from " | grep "accepted tcp:" | awk '{for(i=1;i<=NF;i++){if($i=="email:"){print $(i+1)}}}' | sort -u)
 
-# Header tampilan
-echo -e "=========================================================="
-echo -e "             MONITOR TROJAN ONLINE (Akurat)"
-echo -e "=========================================================="
+# Header
 printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
-echo -e "----------------------------------------------------------"
+echo "-----------------------------------------------"
 
 for user in $USER_LIST; do
-    echo -e "Memeriksa user: $user"
-    
-    # Ambil semua IP yang login dengan koneksi TCP berdasarkan username
-    IP_LIST=$(grep "email: $user" "$LOG_FILE" | grep -oP 'from tcp:[^ ]+' | cut -d':' -f2 | sort -u)
+    # Ambil semua IP unik dari log TCP user
+    IP_LIST=$(grep "email: $user" "$LOG_FILE" | grep "accepted tcp:" | grep "from " | awk '{for(i=1;i<=NF;i++){if($i=="from"){print $(i+1)}}}' | cut -d: -f1 | sort -u)
+    IP_COUNT=$(echo "$IP_LIST" | grep -c .)
 
-    echo -e "IP List untuk user $user: $IP_LIST"
-    
-    IP_COUNT=$(echo "$IP_LIST" | grep -v '^$' | wc -l)
-
-    echo -e "Jumlah IP yang ditemukan: $IP_COUNT"
-
-    # Baca limit IP user dari file
+    # Ambil limit dari file (jika ada)
     LIMIT_FILE="${LIMIT_DIR}/${user}"
-    if [[ -f "$LIMIT_FILE" ]]; then
-        LIMIT=$(cat "$LIMIT_FILE")
-    else
-        LIMIT="-"
-    fi
+    [[ -f "$LIMIT_FILE" ]] && LIMIT=$(cat "$LIMIT_FILE") || LIMIT="-"
 
-    echo -e "Limit IP untuk user $user: $LIMIT"
-
-    # Tampilkan jika ada aktivitas
-    if [[ "$IP_COUNT" -gt 0 ]]; then
-        printf "%-20s %-10s %-10s\n" "$user" "$IP_COUNT" "$LIMIT"
-    fi
+    # Output
+    printf "%-20s %-10s %-10s\n" "$user" "$IP_COUNT" "$LIMIT"
 done
-
-echo -e "=========================================================="
