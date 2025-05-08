@@ -50,12 +50,12 @@ while true; do
 
     case $pilih in
     1)
-        echo "10 17 * * * root $script_path" > /etc/cron.d/autoreboot-0010
+        echo "10 0 * * * root $script_path" > /etc/cron.d/autoreboot-0010
         chmod 644 /etc/cron.d/autoreboot-0010
         echo "✓ Jadwal 00:10 WIB ditambahkan."
         ;;
     2)
-        echo "15 22 * * * root $script_path" > /etc/cron.d/autoreboot-0515
+        echo "15 5 * * * root $script_path" > /etc/cron.d/autoreboot-0515
         chmod 644 /etc/cron.d/autoreboot-0515
         echo "✓ Jadwal 05:15 WIB ditambahkan."
         ;;
