@@ -1,70 +1,50 @@
-#!/bin/bash
+function cektrojan(){
+clear
+echo -n > /tmp/other.txt
+data=( `cat /etc/xray/config.json | grep '^#!' | cut -d ' ' -f 2 | sort | uniq`);
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
+echo -e "$COLOR1│${NC} ${COLBG1}            • TROJAN ONLINE NOW •              ${NC} $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
+echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 
-# Path ke file log Xray dan direktori limit IP
-log="/var/log/xray/access.log"
-limit_dir="/etc/klmpk/limit/trojan/ip"
-now=$(date +%s)
+for akun in "${data[@]}"
+do
+if [[ -z "$akun" ]]; then
+akun="tidakada"
+fi
 
-# Deklarasi array untuk IP per user, jumlah IP aktif, dan limit per user
-declare -A user_ip_prefix
-declare -A user_ip_count
-declare -A user_limit
+echo -n > /tmp/iptrojan.txt
+data2=( `cat /var/log/xray/access.log | tail -n 500 | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | sort | uniq`);
+for ip in "${data2[@]}"
+do
 
-# Baca log dan proses baris yang relevan (dalam 1 menit terakhir)
-while IFS= read -r line; do
-    # Ekstrak username (email)
-    [[ "$line" =~ email:\ ([^[:space:]]+) ]] || continue
-    user="${BASH_REMATCH[1]}"
-
-    # Ekstrak IP dan port
-    [[ "$line" =~ from\ ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):([0-9]+) ]] || continue
-    ip="${BASH_REMATCH[1]}"
-    port="${BASH_REMATCH[2]}"
-
-    # Hanya proses koneksi ke port 443 (Trojan)
-    [[ "$port" != "443" ]] && continue
-
-    # Ambil waktu dari log dan konversi ke epoch
-    log_time=$(echo "$line" | awk '{print $1" "$2}')
-    log_epoch=$(date -d "$log_time" +%s 2>/dev/null)
-    [[ -z "$log_epoch" ]] && continue
-
-    # Lewati log yang lebih dari 60 detik lalu
-    ((now - log_epoch > 60)) && continue
-
-    # Ambil 3 oktet pertama dari IP sebagai prefix (contoh: 192.168.1)
-    ip_prefix=$(echo "$ip" | awk -F '.' '{print $1"."$2"."$3}')
-
-    # Simpan unik prefix per user
-    user_ip_prefix["$user,$ip_prefix"]=1
-done < "$log"
-
-# Hitung IP-prefix unik per user
-for key in "${!user_ip_prefix[@]}"; do
-    IFS=',' read -r user prefix <<< "$key"
-    ((user_ip_count["$user"]++))
+jum=$(cat /var/log/xray/access.log | grep -w "$akun" | tail -n 500 | cut -d " " -f 3 | sed 's/tcp://g' | cut -d ":" -f 1 | grep -w "$ip" | sort | uniq)
+if [[ "$jum" = "$ip" ]]; then
+echo "$jum" >> /tmp/iptrojan.txt
+else
+echo "$ip" >> /tmp/other.txt
+fi
+jum2=$(cat /tmp/iptrojan.txt)
+sed -i "/$jum2/d" /tmp/other.txt > /dev/null 2>&1
 done
 
-# Ambil limit IP dari file masing-masing user
-for user in $(ls "$limit_dir" 2>/dev/null); do
-    limit=$(cat "$limit_dir/$user" 2>/dev/null)
-    user_limit["$user"]=$limit
+jum=$(cat /tmp/iptrojan.txt)
+if [[ -z "$jum" ]]; then
+echo > /dev/null
+else
+jum2=$(cat /tmp/iptrojan.txt | nl)
+echo -e "$COLOR1│${NC}   user : $akun";
+echo -e "$COLOR1│${NC}   $jum2";
+fi
+rm -rf /tmp/iptrojan.txt
 done
 
-# Tampilkan hasil
-echo -e "\nMenampilkan hasil deteksi user Trojan yang online:"
-printf "%-20s %-10s %-10s\n" "Username" "IP Aktif" "Limit IP"
-echo "-----------------------------------------------"
-
-for user in "${!user_ip_count[@]}"; do
-    count=${user_ip_count["$user"]}
-    limit=${user_limit["$user"]:-0}
-
-    if (( count > 0 )); then
-        if (( count > limit && limit > 0 )); then
-            printf "\e[31m%-20s %-10s %-10s\e[0m\n" "$user" "$count" "$limit"
-        else
-            printf "%-20s %-10s %-10s\n" "$user" "$count" "$limit"
-        fi
-    fi
-done
+rm -rf /tmp/other.txt
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
+echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo ""
+read -n 1 -s -r -p "   Press any key to back on menu"
+menu-trojan
+}
