@@ -1,40 +1,40 @@
 #!/bin/bash
 
-log="/var/log/xray/access.log"
-limit_ip=1
-durasi_menit=5
-batas_epoch=$(date -d "$durasi_menit minutes ago" +"%s")
+# Menentukan nama user
+USER="kanghoryTESTTT"  # Ganti dengan nama user yang sesuai
 
+# Menentukan path file limit IP Trojan untuk user
+LIMIT_FILE="/etc/klmpk/limit/trojan/ip/$USER"  # Menggunakan path yang benar sesuai permintaan
+
+# Mengecek apakah file limit IP Trojan ada
+if [ ! -f "$LIMIT_FILE" ]; then
+  echo "File limit IP Trojan untuk user $USER tidak ditemukan di $LIMIT_FILE. Pastikan file limit IP sudah ada."
+  exit 1
+fi
+
+# Membaca limit IP dari file
+LIMIT_IP=$(cat "$LIMIT_FILE")
+
+# Mengambil dua oktet pertama dari IP yang terdeteksi di log
+ACTIVE_IPS=$(grep "email: $USER" /var/log/xray/access.log | awk '{print $3}' | cut -d'.' -f1,2 | sort | uniq)
+
+# Cek jumlah IP unik yang terdeteksi
+ACTIVE_COUNT=$(echo "$ACTIVE_IPS" | wc -l)
+
+# Menampilkan hasil jumlah IP aktif yang terdeteksi
+echo "───────────────────────────────────────────────────────────"
+echo "              • TROJAN ONLINE NOW (Last 5 Min) •              "
+echo "───────────────────────────────────────────────────────────"
+echo ""
+echo "USERNAME           IP AKTIF       LIMIT IP       STATUS"
+echo "───────────────────────────────────────────────────────────"
+echo "$USER     $ACTIVE_COUNT            $LIMIT_IP         $(if [ "$ACTIVE_COUNT" -gt "$LIMIT_IP" ]; then echo -e "\e[31mMelebihi\e[0m"; else echo "Dalam Batas"; fi)"
+echo "───────────────────────────────────────────────────────────"
+echo ""
+echo "Tekan enter untuk kembali ke menu..."
+read -n 1 -s
 clear
-echo -e "┌────────────────────────────────────────────────────────────┐"
-echo -e "│              • TROJAN ONLINE NOW (Last $durasi_menit Min) •              │"
-echo -e "└────────────────────────────────────────────────────────────┘"
-printf "%-18s %-14s %-14s %s\n" "USERNAME" "IP AKTIF" "LIMIT IP" "STATUS"
-echo -e "┌────────────────────────────────────────────────────────────┐"
 
-users=$(grep 'accepted' "$log" | grep 'email:' | awk -F 'email: ' '{print $2}' | sort | uniq)
-
-for user in $users; do
-    ip_list=$(grep "accepted" "$log" | grep "email: $user" | while read -r line; do
-        waktu_log=$(echo "$line" | awk '{print $1" "$2}' | sed 's/\//-/g') # convert tanggal ke YYYY-MM-DD
-        ip_full=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-        ip_group=$(echo "$ip_full" | cut -d. -f1,2)  # hanya dua oktet pertama
-
-        epoch_log=$(date -d "${waktu_log%.*}" +"%s" 2>/dev/null)
-
-        if [[ "$epoch_log" -ge "$batas_epoch" ]]; then
-            echo "$ip_group"
-        fi
-    done | sort -u)
-
-    total_ip=$(echo "$ip_list" | wc -l)
-    [[ -z "$ip_list" ]] && total_ip=0
-
-    status="\e[32mAktif\e[0m"
-    [ "$total_ip" -gt "$limit_ip" ] && status="\e[31mMelebihi\e[0m"
-
-    printf "%-18s %-14s %-14s %b\n" "$user" "$total_ip" "$limit_ip" "$status"
-done
-
-echo -e "└────────────────────────────────────────────────────────────┘"
-read -p "Tekan enter untuk kembali ke menu..."
+# Menampilkan daftar IP yang terdeteksi (2 oktet pertama)
+echo "Daftar IP Aktif (2 Oktet Pertama):"
+echo "$ACTIVE_IPS"
