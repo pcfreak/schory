@@ -18,30 +18,29 @@ echo -e "$COLOR1├────────────────────�
 # Ambil user trojan
 mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
 
-# Ambil log 5 menit terakhir
-log_lines=$(awk -v t="$(date -d '5 min ago' +%s)" '
+# Ambil log 5 menit terakhir dari log akses
+log_lines=$(awk -v t=$(date -d '5 minutes ago' +%s) '
 {
-  split($1, d, "/")
-  split(d[3], dt, ":")
-  cmd = "date -d \"" d[1] "/" d[2] "/" dt[1] " " dt[2] ":" dt[3] ":" dt[4] "\" +%s"
-  cmd | getline ts
-  close(cmd)
-  if (ts >= t) print
+    ts_str = $1 " " $2  # Contoh: 2025/05/09 15:10:35.572694
+    gsub(/\..*/, "", ts_str)  # Hilangkan microsecond
+    cmd = "date -d \"" ts_str "\" +%s"
+    cmd | getline ts
+    close(cmd)
+    if (ts >= t) print
 }' /var/log/xray/access.log)
 
 for user in "${users[@]}"; do
     [[ -z "$user" ]] && continue
     ips=()
 
-    # Ambil semua IP untuk user ini dari log_lines
-    while IFS= read -r line; do
-        if [[ "$line" == *"email: $user"* ]]; then
-            ip=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-            [[ -n "$ip" ]] && ips+=("$ip")
-        fi
+    # Ambil IP-IP user dari log yang valid
+    while read -r line; do
+        [[ "$line" == *"email: $user"* ]] || continue
+        ip=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+        [[ -n "$ip" ]] && ips+=("$ip")
     done <<< "$log_lines"
 
-    # Normalisasi IP (pakai 3 oktet pertama)
+    # Hitung IP unik berdasarkan 3 oktet pertama (prefix)
     ip_prefixes=()
     for ip in "${ips[@]}"; do
         prefix=$(echo "$ip" | cut -d '.' -f1-3)
@@ -51,16 +50,11 @@ for user in "${users[@]}"; do
     ipaktif=${#ip_prefixes[@]}
     [[ "$ipaktif" == 0 ]] && continue
 
-    # Ambil limit IP user
+    # Baca limit
     limitfile="/etc/klmpk/limit/trojan/ip/$user"
-    if [[ -f "$limitfile" ]]; then
-        limit=$(cat "$limitfile")
-    else
-        limit=1
-    fi
+    [[ -f "$limitfile" ]] && limit=$(cat "$limitfile") || limit=1
 
-    # Status warna
-    if [[ "$ipaktif" -gt "$limit" ]]; then
+    if (( ipaktif > limit )); then
         status="${RED}Melebihi${NC}"
     else
         status="${GREEN}Normal${NC}"
