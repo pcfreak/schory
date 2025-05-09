@@ -18,7 +18,7 @@ for user in $users; do
     ip_list=$(grep "accepted" "$log" | grep "email: $user" | while read -r line; do
         waktu_log=$(echo "$line" | awk '{print $1" "$2}' | sed 's/\//-/g') # convert tanggal ke YYYY-MM-DD
         ip_full=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-        ip_group=$(echo "$ip_full" | cut -d. -f1,2)
+        ip_group=$(echo "$ip_full" | cut -d. -f1,2)  # hanya dua oktet pertama
 
         epoch_log=$(date -d "${waktu_log%.*}" +"%s" 2>/dev/null)
 
