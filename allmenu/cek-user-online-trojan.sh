@@ -18,6 +18,10 @@ LIMIT_IP=$(cat "$LIMIT_FILE")
 # Mengambil dua oktet pertama dari IP yang terdeteksi di log
 ACTIVE_IPS=$(grep "email: $USER" /var/log/xray/access.log | awk '{print $3}' | cut -d'.' -f1,2 | sort | uniq)
 
+# Menampilkan daftar IP yang terdeteksi (2 oktet pertama)
+echo "Daftar IP Aktif (2 Oktet Pertama):"
+echo "$ACTIVE_IPS"
+
 # Cek jumlah IP unik yang terdeteksi
 ACTIVE_COUNT=$(echo "$ACTIVE_IPS" | wc -l)
 
@@ -34,7 +38,3 @@ echo ""
 echo "Tekan enter untuk kembali ke menu..."
 read -n 1 -s
 clear
-
-# Menampilkan daftar IP yang terdeteksi (2 oktet pertama)
-echo "Daftar IP Aktif (2 Oktet Pertama):"
-echo "$ACTIVE_IPS"
