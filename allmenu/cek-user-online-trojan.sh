@@ -1,71 +1,46 @@
 #!/bin/bash
+
+log="/var/log/xray/access.log"
+batas_menit=5
+limit_ip=1
+
+# Ambil waktu sekarang - 5 menit
+waktu_batas=$(date -d "$batas_menit min ago" '+%Y/%m/%d %H:%M:%S')
+
+# Ambil semua email (user) unik dari log
+users=$(grep "accepted" "$log" | awk '{for(i=1;i<=NF;i++) if ($i ~ /^email:/) print $i}' | cut -d: -f2 | sort | uniq)
+
 clear
+echo -e "┌────────────────────────────────────────────────────────────┐"
+echo -e "│              • TROJAN ONLINE NOW (Last $batas_menit Min) •              │"
+echo -e "└────────────────────────────────────────────────────────────┘"
+printf "%-18s %-14s %-14s %s\n" "USERNAME" "IP AKTIF" "LIMIT IP" "STATUS"
+echo -e "┌────────────────────────────────────────────────────────────┐"
 
-RED='\e[31m'
-GREEN='\e[32m'
-NC='\e[0m'
-COLOR1='\e[0;36m'
-COLBG1='\e[44;97m'
+for user in $users; do
+    ip_list=$(awk -v user="$user" -v waktu="$waktu_batas" '
+    $0 ~ user {
+        split($1, d, "/")
+        split($2, t, ":")
+        waktu_log = d[1] "/" d[2] "/" d[3] " " t[1] ":" t[2] ":" t[3]
+        if (waktu_log >= waktu) {
+            match($0, /from ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/, ip)
+            if (ip[1] != "") {
+                split(ip[1], o, ".")
+                print o[1] "." o[2]
+            }
+        }
+    }
+    ' "$log" | sort | uniq)
 
-echo "" | pv -qL 20
-echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1}            • TROJAN ONLINE NOW •              ${NC} $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
-echo -e "$COLOR1┌────────────────────────────────────────────────────────────────────┐${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1} USERNAME        IP AKTIF       LIMIT IP        STATUS                 ${NC} $COLOR1│$NC"
-echo -e "$COLOR1├────────────────────────────────────────────────────────────────────┤${NC}"
+    jumlah_ip=$(echo "$ip_list" | wc -l)
 
-# Ambil user trojan dari config
-mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
+    status="\e[32mAktif\e[0m"
+    [ "$jumlah_ip" -gt "$limit_ip" ] && status="\e[31mMelebihi\e[0m"
 
-# Ambil log 5 menit terakhir dan proses
-mapfile -t log5mnt < <(awk -v t="$(date +%s)" '$1 ~ /^[0-9]{4}/ {
-    split($2, time_parts, "."); waktu = $1 " " time_parts[1];
-    gsub("/", "-", waktu);
-    cmd = "date -d \"" waktu "\" +%s"
-    cmd | getline ts; close(cmd)
-    if (t - ts <= 300) print $0
-}' /var/log/xray/access.log)
-
-for user in "${users[@]}"; do
-    [[ -z "$user" ]] && continue
-    iplist=()
-
-    for line in "${log5mnt[@]}"; do
-        email=$(echo "$line" | grep -oE "email: *${user}$")
-        [[ -n "$email" ]] || continue
-
-        ip=$(echo "$line" | grep -oE 'from [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:' | cut -d ' ' -f2 | cut -d ':' -f1)
-        ip3=$(echo "$ip" | cut -d '.' -f1-3)
-
-        # Jika IP3 belum ada dalam list, tambahkan
-        if [[ ! " ${iplist[*]} " =~ " $ip3 " ]]; then
-            iplist+=("$ip3")
-        fi
-    done
-
-    ipaktif=${#iplist[@]}
-    [[ "$ipaktif" = "0" ]] && continue
-
-    # Baca limit IP user
-    limitfile="/etc/klmpk/limit/trojan/ip/$user"
-    [[ -f "$limitfile" ]] && limit=$(cat "$limitfile") || limit=1
-
-    # Status warna
-    if [[ "$ipaktif" -gt "$limit" ]]; then
-        status="${RED}Melebihi${NC}"
-    else
-        status="${GREEN}Normal${NC}"
-    fi
-
-    # Tampilkan tabel
-    printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipaktif" "$limit" "$status"
+    printf "%-18s %-14s %-14s %b\n" "$user" "$jumlah_ip" "$limit_ip" "$status"
 done
 
-echo -e "$COLOR1└────────────────────────────────────────────────────────────────────┘${NC}" 
-echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
-echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
-echo ""
-read -n 1 -s -r -p "   Tekan sembarang tombol untuk kembali ke menu"
-menu-trojan
+echo -e "└────────────────────────────────────────────────────────────┘"
+echo -e "   Tekan Enter untuk kembali ke menu"
+read
