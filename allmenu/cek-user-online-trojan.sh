@@ -1,14 +1,12 @@
 #!/bin/bash
 clear
 
-# Warna
 RED='\e[31m'
 GREEN='\e[32m'
 NC='\e[0m'
 COLOR1='\e[0;36m'
 COLBG1='\e[44;97m'
 
-# Header
 echo "" | pv -qL 20
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}            • TROJAN ONLINE NOW •              ${NC} $COLOR1│$NC"
@@ -17,34 +15,30 @@ echo -e "$COLOR1┌────────────────────�
 echo -e "$COLOR1│${NC} ${COLBG1} USERNAME        IP AKTIF       LIMIT IP        STATUS                 ${NC} $COLOR1│$NC"
 echo -e "$COLOR1├────────────────────────────────────────────────────────────────────┤${NC}"
 
-# Ambil daftar user Trojan
-mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
+declare -A ip_per_user
 
-for user in "${users[@]}"; do
-    [[ -z "$user" ]] && continue
+# Ambil baris log terakhir (500 baris)
+log_lines=$(tail -n 500 /var/log/xray/access.log)
 
-    # Cari semua IP yang terkoneksi dengan user tersebut
-    mapfile -t iplist < <(grep -a "$user" /var/log/xray/access.log | tail -n 500 | awk '{print $1}' | sort -u)
+# Proses log untuk menghitung IP per username
+while read -r line; do
+    ip=$(echo "$line" | awk '{for(i=1;i<=NF;i++) if($i=="from") print $(i+1)}' | cut -d':' -f1)
+    user=$(echo "$line" | grep -oP 'email:\s*\K\S+')
+    [[ -n "$ip" && -n "$user" ]] && ip_per_user["$user"]+="$ip"$'\n'
+done <<< "$log_lines"
 
-    ipaktif=${#iplist[@]}
-    [[ "$ipaktif" = "0" ]] && continue
+# Tampilkan tabel
+for user in "${!ip_per_user[@]}"; do
+    iplist=$(echo "${ip_per_user[$user]}" | sort -u)
+    ipcount=$(echo "$iplist" | wc -l)
 
-    # Ambil limit IP user
     limitfile="/etc/klmpk/limit/trojan/ip/$user"
     [[ -f "$limitfile" ]] && limit=$(cat "$limitfile") || limit=1
 
-    # Status warna
-    if [[ "$ipaktif" -gt "$limit" ]]; then
-        status="${RED}Melebihi${NC}"
-    else
-        status="${GREEN}Normal${NC}"
-    fi
-
-    # Cetak tabel
-    printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipaktif" "$limit" "$status"
+    [[ "$ipcount" -gt "$limit" ]] && status="${RED}Melebihi${NC}" || status="${GREEN}Normal${NC}"
+    printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipcount" "$limit" "$status"
 done
 
-# Footer
 echo -e "$COLOR1└────────────────────────────────────────────────────────────────────┘${NC}" 
 echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
