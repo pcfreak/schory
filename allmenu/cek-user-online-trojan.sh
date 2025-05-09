@@ -31,7 +31,7 @@ fi
 LIMIT_IP=$(cat "$LIMIT_FILE")
 
 # Mengambil dua oktet pertama dari IP yang terdeteksi di log
-ACTIVE_IPS=$(grep "email: $USER" "$LOG_FILE" | awk '{print $3}' | cut -d':' -f1 | cut -d'.' -f1,2 | sort | uniq)
+ACTIVE_IPS=$(grep "email: $USER" "$LOG_FILE" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | cut -d'.' -f1,2 | sort -u)
 
 # Menampilkan daftar IP yang terdeteksi (2 oktet pertama)
 echo "Daftar IP Aktif (2 Oktet Pertama):"
