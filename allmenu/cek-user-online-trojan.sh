@@ -17,25 +17,21 @@ echo -e "$COLOR1┌────────────────────�
 echo -e "$COLOR1│${NC} ${COLBG1} USERNAME        IP AKTIF       LIMIT IP        STATUS                 ${NC} $COLOR1│$NC"
 echo -e "$COLOR1├────────────────────────────────────────────────────────────────────┤${NC}"
 
-# Ambil daftar user Trojan dari config
+# Ambil daftar user Trojan
 mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
 
-# Proses masing-masing user
 for user in "${users[@]}"; do
     [[ -z "$user" ]] && continue
 
-    # Ambil IP unik dari log xray untuk user ini
-    ipaktif=$(grep -w "$user" /var/log/xray/access.log | tail -n 500 | awk '{for(i=1;i<=NF;i++) if($i ~ /^tcp:\/\//) print $i}' | sed 's/tcp:\/\///' | cut -d ':' -f1 | sort -u | wc -l)
+    # Cari semua IP yang terkoneksi dengan user tersebut
+    mapfile -t iplist < <(grep -a "$user" /var/log/xray/access.log | tail -n 500 | awk '{print $1}' | sort -u)
 
+    ipaktif=${#iplist[@]}
     [[ "$ipaktif" = "0" ]] && continue
 
-    # Baca limit IP dari file
+    # Ambil limit IP user
     limitfile="/etc/klmpk/limit/trojan/ip/$user"
-    if [[ -f "$limitfile" ]]; then
-        limit=$(cat "$limitfile")
-    else
-        limit=1
-    fi
+    [[ -f "$limitfile" ]] && limit=$(cat "$limitfile") || limit=1
 
     # Status warna
     if [[ "$ipaktif" -gt "$limit" ]]; then
@@ -44,7 +40,7 @@ for user in "${users[@]}"; do
         status="${GREEN}Normal${NC}"
     fi
 
-    # Tampilkan tabel
+    # Cetak tabel
     printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipaktif" "$limit" "$status"
 done
 
