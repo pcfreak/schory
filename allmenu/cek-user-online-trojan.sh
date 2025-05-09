@@ -50,6 +50,5 @@ echo "────────────────────────�
 echo "$USER     $ACTIVE_COUNT            $LIMIT_IP         $(if [ "$ACTIVE_COUNT" -gt "$LIMIT_IP" ]; then echo -e "\e[31mMelebihi\e[0m"; else echo "Dalam Batas"; fi)"
 echo "───────────────────────────────────────────────────────────"
 echo ""
-echo "Tekan enter untuk kembali ke menu..."
-read -n 1 -s
-clear
+read -n 1 -s -r -p "   Tekan sembarang tombol untuk kembali ke menu"
+menu-trojan
