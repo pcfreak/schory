@@ -1,13 +1,14 @@
 #!/bin/bash
 clear
 
+# Warna
 RED='\e[31m'
 GREEN='\e[32m'
 NC='\e[0m'
 COLOR1='\e[0;36m'
 COLBG1='\e[44;97m'
 
-# Tampilkan header
+# Header
 echo "" | pv -qL 20
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC} ${COLBG1}            • TROJAN ONLINE NOW •              ${NC} $COLOR1│$NC"
@@ -16,21 +17,16 @@ echo -e "$COLOR1┌────────────────────�
 echo -e "$COLOR1│${NC} ${COLBG1} USERNAME        IP AKTIF       LIMIT IP        STATUS                 ${NC} $COLOR1│$NC"
 echo -e "$COLOR1├────────────────────────────────────────────────────────────────────┤${NC}"
 
-# Ambil user trojan dari config
+# Ambil daftar user Trojan dari config
 mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
 
-# Ambil IP dari log akses terakhir
-mapfile -t iplog < <(tail -n 500 /var/log/xray/access.log | awk '{print $3}' | sed 's/tcp://g' | cut -d ':' -f1 | sort -u)
-
+# Proses masing-masing user
 for user in "${users[@]}"; do
     [[ -z "$user" ]] && continue
-    > /tmp/iptrojan.txt
 
-    for ip in "${iplog[@]}"; do
-        grep -w "$user" /var/log/xray/access.log | tail -n 500 | grep -w "$ip" > /dev/null && echo "$ip" >> /tmp/iptrojan.txt
-    done
+    # Ambil IP unik dari log xray untuk user ini
+    ipaktif=$(grep -w "$user" /var/log/xray/access.log | tail -n 500 | awk '{for(i=1;i<=NF;i++) if($i ~ /^tcp:\/\//) print $i}' | sed 's/tcp:\/\///' | cut -d ':' -f1 | sort -u | wc -l)
 
-    ipaktif=$(sort -u /tmp/iptrojan.txt | wc -l)
     [[ "$ipaktif" = "0" ]] && continue
 
     # Baca limit IP dari file
@@ -41,18 +37,18 @@ for user in "${users[@]}"; do
         limit=1
     fi
 
-    # Tentukan status warna
+    # Status warna
     if [[ "$ipaktif" -gt "$limit" ]]; then
         status="${RED}Melebihi${NC}"
     else
         status="${GREEN}Normal${NC}"
     fi
 
-    # Cetak tabel
+    # Tampilkan tabel
     printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipaktif" "$limit" "$status"
-    rm -f /tmp/iptrojan.txt
 done
 
+# Footer
 echo -e "$COLOR1└────────────────────────────────────────────────────────────────────┘${NC}" 
 echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
