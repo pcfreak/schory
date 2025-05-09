@@ -15,34 +15,64 @@ echo -e "$COLOR1┌────────────────────�
 echo -e "$COLOR1│${NC} ${COLBG1} USERNAME        IP AKTIF       LIMIT IP        STATUS                 ${NC} $COLOR1│$NC"
 echo -e "$COLOR1├────────────────────────────────────────────────────────────────────┤${NC}"
 
-declare -A ip_per_user
+# Ambil user trojan
+mapfile -t users < <(grep '^#!' /etc/xray/config.json | awk '{print $2}' | sort -u)
 
-# Ambil baris log terakhir (500 baris)
-log_lines=$(tail -n 500 /var/log/xray/access.log)
+# Ambil log 5 menit terakhir
+log_lines=$(awk -v t="$(date -d '5 min ago' +%s)" '
+{
+  split($1, d, "/")
+  split(d[3], dt, ":")
+  cmd = "date -d \"" d[1] "/" d[2] "/" dt[1] " " dt[2] ":" dt[3] ":" dt[4] "\" +%s"
+  cmd | getline ts
+  close(cmd)
+  if (ts >= t) print
+}' /var/log/xray/access.log)
 
-# Proses log untuk menghitung IP per username
-while read -r line; do
-    ip=$(echo "$line" | awk '{for(i=1;i<=NF;i++) if($i=="from") print $(i+1)}' | cut -d':' -f1)
-    user=$(echo "$line" | grep -oP 'email:\s*\K\S+')
-    [[ -n "$ip" && -n "$user" ]] && ip_per_user["$user"]+="$ip"$'\n'
-done <<< "$log_lines"
+for user in "${users[@]}"; do
+    [[ -z "$user" ]] && continue
+    ips=()
 
-# Tampilkan tabel
-for user in "${!ip_per_user[@]}"; do
-    iplist=$(echo "${ip_per_user[$user]}" | sort -u)
-    ipcount=$(echo "$iplist" | wc -l)
+    # Ambil semua IP untuk user ini dari log_lines
+    while IFS= read -r line; do
+        if [[ "$line" == *"email: $user"* ]]; then
+            ip=$(echo "$line" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+            [[ -n "$ip" ]] && ips+=("$ip")
+        fi
+    done <<< "$log_lines"
 
+    # Normalisasi IP (pakai 3 oktet pertama)
+    ip_prefixes=()
+    for ip in "${ips[@]}"; do
+        prefix=$(echo "$ip" | cut -d '.' -f1-3)
+        [[ ! " ${ip_prefixes[*]} " =~ " $prefix " ]] && ip_prefixes+=("$prefix")
+    done
+
+    ipaktif=${#ip_prefixes[@]}
+    [[ "$ipaktif" == 0 ]] && continue
+
+    # Ambil limit IP user
     limitfile="/etc/klmpk/limit/trojan/ip/$user"
-    [[ -f "$limitfile" ]] && limit=$(cat "$limitfile") || limit=1
+    if [[ -f "$limitfile" ]]; then
+        limit=$(cat "$limitfile")
+    else
+        limit=1
+    fi
 
-    [[ "$ipcount" -gt "$limit" ]] && status="${RED}Melebihi${NC}" || status="${GREEN}Normal${NC}"
-    printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipcount" "$limit" "$status"
+    # Status warna
+    if [[ "$ipaktif" -gt "$limit" ]]; then
+        status="${RED}Melebihi${NC}"
+    else
+        status="${GREEN}Normal${NC}"
+    fi
+
+    printf "$COLOR1│${NC} %-14s %-14s %-14s %-20s $COLOR1│${NC}\n" "$user" "$ipaktif" "$limit" "$status"
 done
 
-echo -e "$COLOR1└────────────────────────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1└────────────────────────────────────────────────────────────────────┘${NC}"
 echo -e "$COLOR1┌────────────────────── BY ───────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}                • KANGHORY •                 $COLOR1│$NC"
-echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}" 
+echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 echo ""
 read -n 1 -s -r -p "   Tekan sembarang tombol untuk kembali ke menu"
 menu-trojan
