@@ -7,7 +7,7 @@ LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
 LOG_FILE="/var/log/xray/access.log"
 
 # Mengambil username yang aktif dari log terakhir (dari email atau data yang sesuai)
-USER=$(grep -oP '(?<=email: )[^\s]+' "$LOG_FILE" | sort | uniq | head -n 1)
+USER=$(grep -oP '(?<=email: )[^\s]+' "$LOG_FILE" | sort | uniq)
 
 # Cek apakah ada user yang ditemukan di log
 if [ -z "$USER" ]; then
