@@ -1,54 +1,55 @@
 #!/bin/bash
 
-# Menentukan path file limit IP Trojan (pastikan file sesuai dengan user yang aktif)
 LIMIT_DIR="/etc/klmpk/limit/trojan/ip"
-
-# Menentukan path log Xray untuk mengambil username yang aktif
 LOG_FILE="/var/log/xray/access.log"
 
-# Mengambil username yang aktif dari log terakhir (dari email atau data yang sesuai)
-USER=$(grep -oP '(?<=email: )[^\s]+' "$LOG_FILE" | sort | uniq | head -n 1)
+# Ambil log 1 menit terakhir
+RECENT_LOG=$(awk -v date="$(date --date='1 minute ago' '+%Y/%m/%d %H:%M')" '$0 > date' "$LOG_FILE")
 
-# Cek apakah ada user yang ditemukan di log
-if [ -z "$USER" ]; then
-  echo "Tidak ada user yang aktif ditemukan di log Xray."
-  exit 1
+# Ambil daftar user aktif dari log
+USERS=$(echo "$RECENT_LOG" | grep -oP 'email: \K[^\s]+' | sort -u)
+
+if [ -z "$USERS" ]; then
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Tidak ada user Trojan yang aktif dalam 1 menit terakhir."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  exit 0
 fi
 
-# Menampilkan nama user yang ditemukan
-echo "User yang aktif: $USER"
+TOTAL_IP=0
 
-# Menentukan path file limit IP Trojan untuk user yang terdeteksi
-LIMIT_FILE="$LIMIT_DIR/$USER"
+echo "──────────────────────────────────────────────────────────────"
+echo "              • TROJAN ONLINE NOW (Last 1 Min) •              "
+echo "──────────────────────────────────────────────────────────────"
+printf "%-15s %-15s %-15s %-10s\n" "USERNAME" "IP AKTIF" "LIMIT IP" "STATUS"
+echo "──────────────────────────────────────────────────────────────"
 
-# Mengecek apakah file limit IP Trojan ada untuk user
-if [ ! -f "$LIMIT_FILE" ]; then
-  echo "File limit IP Trojan untuk user $USER tidak ditemukan di $LIMIT_FILE. Pastikan file limit IP sudah ada."
-  exit 1
-fi
+for USER in $USERS; do
+  LIMIT_FILE="$LIMIT_DIR/$USER"
 
-# Membaca limit IP dari file
-LIMIT_IP=$(cat "$LIMIT_FILE")
+  if [ ! -f "$LIMIT_FILE" ]; then
+    LIMIT_IP=0
+  else
+    LIMIT_IP=$(cat "$LIMIT_FILE")
+  fi
 
-# Mengambil dua oktet pertama dari IP yang terdeteksi di log
-ACTIVE_IPS=$(grep "email: $USER" "$LOG_FILE" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | cut -d'.' -f1,2 | sort -u)
+  # Ambil IP 3 oktet dari user
+  USER_IPS=$(echo "$RECENT_LOG" | grep "email: $USER" | grep -oP 'from \K[0-9]+\.[0-9]+\.[0-9]+' | sort -u)
+  IP_COUNT=$(echo "$USER_IPS" | wc -l)
+  TOTAL_IP=$((TOTAL_IP + IP_COUNT))
 
-# Menampilkan daftar IP yang terdeteksi (2 oktet pertama)
-echo "Daftar IP Aktif (2 Oktet Pertama):"
-echo "$ACTIVE_IPS"
+  STATUS=$(if [ "$IP_COUNT" -gt "$LIMIT_IP" ]; then echo -e "\e[31mMelebihi\e[0m"; else echo "Dalam Batas"; fi)
 
-# Cek jumlah IP unik yang terdeteksi
-ACTIVE_COUNT=$(echo "$ACTIVE_IPS" | wc -l)
+  printf "%-15s %-15s %-15s %-10b\n" "$USER" "$IP_COUNT" "$LIMIT_IP" "$STATUS"
+  
+  # Tampilkan IP yang terdeteksi (3 oktet)
+  echo "  # IP Aktif (3 Oktet):"
+  echo "$USER_IPS" | sed 's/^/   - /'
+  echo ""
+done
 
-# Menampilkan hasil jumlah IP aktif yang terdeteksi
-echo "───────────────────────────────────────────────────────────"
-echo "              • TROJAN ONLINE NOW (Last 5 Min) •              "
-echo "───────────────────────────────────────────────────────────"
-echo ""
-echo "USERNAME           IP AKTIF       LIMIT IP       STATUS"
-echo "───────────────────────────────────────────────────────────"
-echo "$USER     $ACTIVE_COUNT            $LIMIT_IP         $(if [ "$ACTIVE_COUNT" -gt "$LIMIT_IP" ]; then echo -e "\e[31mMelebihi\e[0m"; else echo "Dalam Batas"; fi)"
-echo "───────────────────────────────────────────────────────────"
-echo ""
+echo "──────────────────────────────────────────────────────────────"
+echo "Total IP aktif terdeteksi (3 oktet): $TOTAL_IP"
+echo "──────────────────────────────────────────────────────────────"
 read -n 1 -s -r -p "   Tekan sembarang tombol untuk kembali ke menu"
 menu-trojan
