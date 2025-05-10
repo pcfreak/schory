@@ -317,6 +317,7 @@ echo -e "$COLOR1└────────────────────�
 echo -e " $COLOR1┌───────────────────────────────────────────────┐${NC}"
 echo -e " $COLOR1│$NC   ${COLOR1}[01]${NC} • ADD TROJAN    ${COLOR1}[03]${NC} • DELETE TROJAN${NC}   $COLOR1│$NC"
 echo -e " $COLOR1│$NC   ${COLOR1}[02]${NC} • RENEW TROJAN${NC}  ${COLOR1}[04]${NC} • USER ONLINE     $COLOR1│$NC"
+echo -e " $COLOR1│$NC   ${COLOR1}[05]${NC} • MONITOR LIMIT IP${NC}  ${COLOR1}[06]${NC} • HEMMM     $COLOR1│$NC"
 echo -e " $COLOR1│$NC                                              ${NC} $COLOR1│$NC"
 echo -e " $COLOR1│$NC   ${COLOR1}[00]${NC} • GO BACK${NC}                              $COLOR1│$NC"
 echo -e " $COLOR1└───────────────────────────────────────────────┘${NC}"
@@ -331,6 +332,8 @@ case $opt in
 02 | 2) clear ; renewtrojan ;;
 03 | 3) clear ; deltrojan ;;
 04 | 4) clear ; cek-user-online-trojan ;;
+05 | 5) clear ; monitor-limit-ip-trojan ;;
+06 | 6) clear ; hemmm ;;
 00 | 0) clear ; menu ;;
 *) clear ; menu-trojan ;;
 esac
