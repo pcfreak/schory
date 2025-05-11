@@ -16,33 +16,29 @@ read -r _ bottoken idtelegram < <(grep '^#bot#' "$BOT_FILE")
 
 mkdir -p "$BACKUP_DIR" "$LOCK_DIR"
 
-# Jalankan script cek user online tanpa input, simpan outputnya
+# Jalankan script cek user online tanpa input
 /usr/bin/cek-user-online-trojan-noinput > "$TEMP_STATUS"
 
-# Baca baris hasil status
-grep -E "^\w" "$TEMP_STATUS" | tail -n +5 | while read -r user ipaktif limitip toleransi status; do
+# Baca baris hasil status (parsing aman)
+grep -E "^\w" "$TEMP_STATUS" | tail -n +5 | awk '{print $1,$2,$3,$4,$5}' | while read -r user ipaktif limitip toleransi status; do
     user=$(echo "$user" | tr -d '[:space:]')
-    toleransi=$(echo "$toleransi" | tr -d '[:space:]')
     limitip=$(echo "$limitip" | tr -d '[:space:]')
+    toleransi=$(echo "$toleransi" | tr -d '[:space:]')
 
-    [[ -z "$user" || -z "$toleransi" || -z "$limitip" ]] && continue
+    [[ -z "$user" || -z "$limitip" || -z "$toleransi" ]] && continue
 
-    # Cek jika sudah melebihi
     if [[ "$toleransi" -gt "$limitip" ]]; then
-        # Cek apakah belum dikunci
         if [[ ! -f "$LOCK_DIR/$user.lock" ]]; then
-            # Backup akun dari config.json
+            # Backup
             jq ".inbounds[].settings.clients[] | select(.email==\"$user\")" "$CONFIG_FILE" > "$BACKUP_DIR/$user.json"
 
-            # Hapus user dari config
+            # Hapus akun dari config
             TMP=$(mktemp)
             jq "(.inbounds[].settings.clients) |= map(select(.email!=\"$user\"))" "$CONFIG_FILE" > "$TMP" && mv "$TMP" "$CONFIG_FILE"
             systemctl restart xray
 
-            # Simpan waktu lock
             date +%s > "$LOCK_DIR/$user.lock"
 
-            # Kirim notifikasi Telegram
             curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
                 -d chat_id="${idtelegram}" \
                 -d text="Akun Trojan *$user* melebihi batas IP, akun *terkunci!*" \
@@ -51,7 +47,7 @@ grep -E "^\w" "$TEMP_STATUS" | tail -n +5 | while read -r user ipaktif limitip t
     fi
 done
 
-# Cek akun yang harus dibuka kembali
+# Cek akun yang waktunya dibuka kembali
 for lock_file in "$LOCK_DIR"/*.lock; do
     [[ -f "$lock_file" ]] || continue
     user=$(basename "$lock_file" .lock)
@@ -60,17 +56,14 @@ for lock_file in "$LOCK_DIR"/*.lock; do
     selisih=$((sekarang - waktu_kunci))
 
     if [[ "$selisih" -ge "$DURASI_LOCK" ]]; then
-        # Restore dari backup jika ada
         if [[ -f "$BACKUP_DIR/$user.json" ]]; then
             TMP=$(mktemp)
             jq --argjson data "$(cat "$BACKUP_DIR/$user.json")" \
                '(.inbounds[].settings.clients) += [$data]' "$CONFIG_FILE" > "$TMP" && mv "$TMP" "$CONFIG_FILE"
             systemctl restart xray
 
-            # Hapus file lock dan backup
             rm -f "$lock_file" "$BACKUP_DIR/$user.json"
 
-            # Kirim notifikasi buka akun
             curl -s -X POST "https://api.telegram.org/bot${bottoken}/sendMessage" \
                 -d chat_id="${idtelegram}" \
                 -d text="Akun Trojan *$user* sudah dibuka kembali setelah terkunci 15 menit." \
