@@ -30,8 +30,7 @@ CEKIZIN
 clear
 
 domain=$(cat /etc/xray/domain)
-mkdir -p /root/akun/vless
-mkdir -p /var/www/html
+mkdir -p /etc/klmpk/log-vless
 
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
     clear
@@ -130,32 +129,38 @@ END
 systemctl restart xray
 systemctl restart nginx
 
-# Tampilkan info akun & simpan log
-tee /etc/klmpk/log-vless/${user}.txt > /dev/null <<-EOF
+# Tampilkan info akun dengan format log dan warna
+clear
+echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "\E[0;41;36m          VLESS ACCOUNT LOG          \E[0m"
+echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+
+cat <<-EOF
 ────────────────────────────
-    Xray/Vless Account
+    Xray/Vless Account Log
 ────────────────────────────
-Remarks     : ${user}
-Domain      : ${domain}
-Port TLS    : 443
-Port NTLS   : 80
-Port gRPC   : 443
-User ID     : ${uuid}
-Encryption  : none
-Path TLS    : /vless
-ServiceName : vless-grpc
-────────────────────────────
-Link TLS    : ${vlesslink1}
-Link NTLS   : ${vlesslink2}
-Link GRPC   : ${vlesslink3}
-Format OpenClash : https://${domain}:81/vless-${user}.txt
-────────────────────────────
-Expired On  : ${exp}
+User       : ${user}
+Domain     : ${domain}
+UUID       : ${uuid}
+Expired    : ${exp}
+TLS        : ${vlesslink1}
+NonTLS     : ${vlesslink2}
+gRPC       : ${vlesslink3}
+OpenClash  : https://${domain}:81/vless-${user}.txt
 ────────────────────────────
 EOF
 
-# Juga tampilkan ke layar
-cat /etc/klmpk/log-vless/${user}.txt
+# Menyimpan log ke direktori /etc/klmpk/log-vless (bukan di /root/akun/vless)
+cat <<-EOF > /etc/klmpk/log-vless/${user}.txt
+User       : ${user}
+Domain     : ${domain}
+UUID       : ${uuid}
+Expired    : ${exp}
+TLS        : ${vlesslink1}
+NonTLS     : ${vlesslink2}
+gRPC       : ${vlesslink3}
+OpenClash  : https://${domain}:81/vless-${user}.txt
+EOF
 
 read -n 1 -s -r -p "Press any key to return to menu"
 menu
