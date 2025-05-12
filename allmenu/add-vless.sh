@@ -137,7 +137,7 @@ echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━�
 
 cat <<-EOF
 ────────────────────────────
-    Xray/Vless Account Log
+    Xray/Vless Account Loguy
 ────────────────────────────
 User       : ${user}
 Domain     : ${domain}
