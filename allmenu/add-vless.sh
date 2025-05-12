@@ -49,6 +49,7 @@ done
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
+created=$(date +"%Y-%m-%d")
 
 # Tambah user ke config.json
 sed -i "/#vless$/a\#& ${user} ${exp}\
@@ -69,6 +70,7 @@ systemctl restart nginx
 tee /etc/klmpk/log-vless/${user}.txt > /dev/null <<-EOF
 ────────────────────────────
     Xray/Vless Account
+  by.Kang Hory tunneling 
 ────────────────────────────
 Remarks     : ${user}
 Domain      : ${domain}
@@ -84,6 +86,7 @@ Link TLS    : ${vlesslink1}
 Link NTLS   : ${vlesslink2}
 Link GRPC   : ${vlesslink3}
 ────────────────────────────
+Created On  : ${created}
 Expired On  : ${exp}
 ────────────────────────────
 EOF
