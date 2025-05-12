@@ -233,11 +233,11 @@ wget -q -O open-vpn.sh https://raw.githubusercontent.com/kanghory/schory/main/au
 #systemctl enable trip
 clear
 sleep2
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-echo -e "$green      Install Limit Quota              $NC"
-echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+#echo -e "$green      Install Limit Quota              $NC"
+#echo -e "\e[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 
-cd
+#cd
 # Mengunduh dan mengatur limit.sh
 #wget https://raw.githubusercontent.com/Andyyuda/vip/main/limit/limit.sh -O limit.sh
 #chmod +x limit.sh
