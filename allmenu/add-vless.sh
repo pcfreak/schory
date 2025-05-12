@@ -164,4 +164,4 @@ echo -e "\033[1;93m────────────────────�
 echo -e "" | tee -a /root/akun/vless/$user.txt
 read -n 1 -s -r -p "Press any key to back on menu"
 
-menu-vless
+menu
