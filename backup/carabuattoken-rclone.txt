@@ -6,6 +6,9 @@
 #Opsi 1: Menggunakan Windows PowerShellBuka PowerShell:Tekan Win + X dan pilih "Windows PowerShell".Jalankan instalasi rclone menggunakan PowerShell:Anda dapat mengunduh file rclone untuk Windows secara langsung menggunakan perintah ini di PowerShell:iwr https://downloads.rclone.org/rclone-current-windows-amd64.zip -OutFile rclone.zipEkstrak file zip:Gunakan perintah ini untuk mengekstrak file zip yang telah diunduh:Expand-Archive rclone.zip -DestinationPath .\rclonePindahkan rclone.exe ke sistem PATH:Arahkan ke folder tempat rclone.exe diekstrak (dalam folder rclone).Pindahkan rclone.exe ke lokasi yang ada di PATH sistem Anda (misalnya, C:\Windows).Move-Item .\rclone\rclone.exe C:\Windows\Verifikasi instalasi:Setelah file executable ada di PATH, verifikasi instalasi dengan menjalankan:rclone versionOpsi 2: Menggunakan Windows Subsystem for Linux (WSL)Jika Anda lebih suka menggunakan perintah Linux seperti bash, sudo, dll., Anda dapat menginstal Windows Subsystem for Linux (WSL). Berikut caranya:Instal WSL:Buka PowerShell sebagai Administrator dan jalankan perintah berikut:wsl --installSetup distribusi Linux:Setelah WSL terinstal, Anda akan diminta untuk mengatur distribusi Linux (misalnya, Ubuntu).Instal rclone di WSL:Buka terminal WSL dan gunakan perintah berikut untuk menginstal rclone:sudo apt update lanjut sudo apt install rclone
 https://youtu.be/SU8yvbp7amM?si=_HqLc9Ya4onlxT6z
 
+download bahan
+https://rclone.org/downloads/
+
 #keterangan pemahaman
 Untuk membuat konfigurasi seperti contoh tersebut (misalnya untuk mengkonfigurasi remote Google Drive menggunakan rclone), langkah-langkahnya adalah sebagai berikut:
 
