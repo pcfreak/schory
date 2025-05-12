@@ -26,7 +26,6 @@ fi
 clear
 
 domain=$(cat /etc/xray/domain)
-mkdir -p /root/akun/vless/
 clear
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
   echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
