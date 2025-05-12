@@ -49,13 +49,15 @@ done
 
 uuid=$(cat /proc/sys/kernel/random/uuid)
 exp=$(date -d "$masaaktif days" +"%Y-%m-%d")
-created=$(date +"%Y-%m-%d")
 
-# Tambah user ke config.json
+# Membuat format email sesuai yang diinginkan (tanpa domain)
+formatted_email="${user}"
+
+# Menambahkan akun ke config.json
 sed -i "/#vless$/a\#& ${user} ${exp}\
-},{\"id\": \"${uuid}\",\"email\": \"${user}\"" /etc/xray/config.json
+},{\"id\": \"${uuid}\",\"email\": \"${formatted_email}\"" /etc/xray/config.json
 sed -i "/#vlessgrpc$/a\#& ${user} ${exp}\
-},{\"id\": \"${uuid}\",\"email\": \"${user}\"" /etc/xray/config.json
+},{\"id\": \"${uuid}\",\"email\": \"${formatted_email}\"" /etc/xray/config.json
 
 # Link VLESS
 vlesslink1="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&type=ws#${user}"
@@ -70,7 +72,6 @@ systemctl restart nginx
 tee /etc/klmpk/log-vless/${user}.txt > /dev/null <<-EOF
 ────────────────────────────
     Xray/Vless Account
-  by.Kang Hory tunneling 
 ────────────────────────────
 Remarks     : ${user}
 Domain      : ${domain}
@@ -86,8 +87,9 @@ Link TLS    : ${vlesslink1}
 Link NTLS   : ${vlesslink2}
 Link GRPC   : ${vlesslink3}
 ────────────────────────────
-Created On  : ${created}
 Expired On  : ${exp}
+────────────────────────────
+Account Created: $(date)
 ────────────────────────────
 EOF
 
