@@ -26,25 +26,25 @@ fi
 clear
 
 domain=$(cat /etc/xray/domain)
-mkdir -p /root/akun/vless
+mkdir -p /root/akun/vless/
 clear
 until [[ $user =~ ^[a-zA-Z0-9_]+$ && ${CLIENT_EXISTS} == '0' ]]; do
-  echo -e "\033[1;93mâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\033[0m"
+  echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
   echo -e "\E[0;41;36m             VLESS ACCOUNT           \E[0m"
-  echo -e "\033[1;93mâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\033[0m"
+  echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 
   read -rp "User: " -e user
   CLIENT_EXISTS=$(grep -w $user /etc/xray/config.json | wc -l)
 
   if [[ ${CLIENT_EXISTS} == '1' ]]; then
     clear
-    echo -e "\033[1;93mâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\033[0m"
+    echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo -e "\E[0;41;36m             VLESS ACCOUNT           \E[0m"
-    echo -e "\033[1;93mâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\033[0m"
+    echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo ""
     echo "A client with the specified name was already created, please choose another name."
     echo ""
-    echo -e "\033[1;93mâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\033[0m"
+    echo -e "\033[1;93m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     read -n 1 -s -r -p "Press any key to back on menu"
     menu
   fi
@@ -138,9 +138,9 @@ fi
 echo "#& ${user} ${exp} ${uuid}" >>/root/akun/vless/.vless.conf
 
 clear
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "\E[0;41;36m    Xray/Vless Account     \E[0m" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Remarks     : ${user}" | tee -a /root/akun/vless/$user.txt
 echo -e "Domain      : ${domain}" | tee -a /root/akun/vless/$user.txt
 echo -e "port TLS    : 443" | tee -a /root/akun/vless/$user.txt
@@ -150,17 +150,17 @@ echo -e "User ID     : ${uuid}" | tee -a /root/akun/vless/$user.txt
 echo -e "Encryption  : none" | tee -a /root/akun/vless/$user.txt
 echo -e "Path TLS    : /vless " | tee -a /root/akun/vless/$user.txt
 echo -e "ServiceName : vless-grpc" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Link TLS    : ${vlesslink1}" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Link NTLS   : ${vlesslink2}" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Link GRPC   : ${vlesslink3}" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Format OpenClash : https://${domain}:81/vless-$user.txt" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "Expired On : $exp" | tee -a /root/akun/vless/$user.txt
-echo -e "\033[1;93mâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\033[0m" | tee -a /root/akun/vless/$user.txt
+echo -e "\033[1;93m───────────────────────────\033[0m" | tee -a /root/akun/vless/$user.txt
 echo -e "" | tee -a /root/akun/vless/$user.txt
 read -n 1 -s -r -p "Press any key to back on menu"
 
